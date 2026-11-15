@@ -58,7 +58,8 @@
     check(await encrypted.blob.slice(0,8).text()==='CSPCS4!!','CipherSplat preserves the CS4 package format');
     cipher.document.getElementById('password').value='synthetic smoke test password';
     const unlocked=await cipher.decryptFilesChunked(new cipher.File([await encrypted.blob.arrayBuffer()],'desktop.csplat'));
-    check(unlocked.files[0].blob.size===edited.blob.size,'CS4 decrypt restores the original PDF bytes');
+    const originalBytes=new Uint8Array(await edited.blob.arrayBuffer()),restoredBytes=new Uint8Array(await unlocked.files[0].blob.arrayBuffer());
+    check(restoredBytes.length===originalBytes.length&&restoredBytes.every((value,index)=>value===originalBytes[index]),'CS4 decrypt restores the original PDF bytes');
     const tampered=new Uint8Array(await encrypted.blob.arrayBuffer());tampered[tampered.length-1]^=1;
     let rejected=false;try{await cipher.decryptFilesChunked(new cipher.File([tampered],'bad.csplat'));}catch{rejected=true;}
     check(rejected,'modified encrypted package fails authentication');

@@ -6,11 +6,7 @@ test -f /usr/share/applications/splatworks-desktop.desktop
 mkdir -p output/installed-native
 sudo -E unshare --net -- bash -c 'ip link set lo up; xvfb-run -a dbus-run-session -- timeout 240 /usr/bin/splatworks-desktop --smoke-test "$PWD/output/installed-native"'
 sudo chown -R "$(id -u):$(id -g)" output/installed-native
-python3 - <<'PY'
-import json,pathlib
-r=json.loads(pathlib.Path('output/installed-native/native-smoke.json').read_text())
-assert r['passed'],r
-PY
+python3 scripts/verify-native.py output/installed-native
 sudo apt-get remove -y splatworks-desktop
 test ! -e /usr/bin/splatworks-desktop
 python3 - <<'PY'

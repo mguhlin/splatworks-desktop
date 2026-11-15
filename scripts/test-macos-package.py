@@ -27,5 +27,5 @@ checked('ditto','-x','-k',str(archives[0]),str(unpacked))
 apps=list(unpacked.glob('*/*.app'));assert len(apps)==1,'Expected one application bundle'
 checked('codesign','--verify','--deep','--strict',str(apps[0]))
 binaries=list((apps[0]/'Contents/MacOS').iterdir());assert len(binaries)==1
-checked('lipo','-verify_arch','x86_64','arm64',str(binaries[0]))
+checked('lipo',str(binaries[0]),'-verify_arch','x86_64','arm64')
 (root/'output/native/macos-package.json').write_text(json.dumps({'passed':True,'checks':['disk image verification','archived code signature','Intel and Apple silicon slices']},indent=2)+'\n')

@@ -22,6 +22,8 @@ New-Item -ItemType Directory -Force $report | Out-Null
 Run-Wait "$install/SplatWorks-Desktop.exe" @('--smoke-test',"`"$report`"")
 $result=Get-Content "$report/native-smoke.json" -Raw | ConvertFrom-Json
 if(-not $result.passed){throw 'Installed application smoke test failed'}
+python3 "$root/scripts/verify-native.py" $report
+if($LASTEXITCODE -ne 0){throw 'Installed application output verification failed'}
 Run-Wait "$install/Uninstall.exe" @('/S',"_?=$install")
 if(Test-Path "$install/SplatWorks-Desktop.exe"){throw 'Uninstall left the app executable behind'}
 if(Test-Path 'HKCU:/Software/Microsoft/Windows/CurrentVersion/Uninstall/SplatWorksDesktop'){throw 'Uninstall registry entry remains'}
