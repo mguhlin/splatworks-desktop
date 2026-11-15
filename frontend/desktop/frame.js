@@ -24,7 +24,7 @@
   },true);
   window.open=(url)=>{if(url)void desktop.openLink(new URL(url,location.href).href);return null;};
   document.addEventListener('DOMContentLoaded',()=>{
-    const id=location.pathname.includes('/CipherSplat/')?'ciphersplat':'pdfsplat';
+    const id=desktop.toolId(location.pathname);
     for(const type of ['input','change','click'])document.addEventListener(type,()=>queueMicrotask(()=>desktop.changed(id)));
     // Keep unvalidated hardware workflows out of the desktop feature contract.
     for(const key of ['websiteButton','websiteStartButton','scanCamera','scanCapture']){
@@ -38,6 +38,6 @@
     const docs=document.querySelectorAll('a[href*="docs/pdfsplat"]');for(const a of docs)a.addEventListener('click',event=>{event.preventDefault();desktop.help();});
   });
   window.addEventListener('keydown',event=>{
-    if((event.ctrlKey||event.metaKey)&&['1','2'].includes(event.key)){event.preventDefault();desktop.selectTool(event.key==='1'?'pdfsplat':'ciphersplat');}
+    if((event.ctrlKey||event.metaKey)&&['1','2'].includes(event.key)){event.preventDefault();desktop.selectIndex(Number(event.key)-1);}
   });
 })();

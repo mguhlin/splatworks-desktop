@@ -72,8 +72,11 @@ subprocess.run(['node',str(dest/'scripts/build-pdfsplat.mjs')],check=True)
 (dest / 'tools.json').write_text(json.dumps(registry, indent=2) + '\n', encoding='utf-8')
 revision = subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()
 files = {}
+owned = [t['source']+'/' for t in registry]+['vendor/','scripts/','docs/','assets/icons/']
+shared = {'LICENSE','NOTICE.md','tools.json'} | {'splatworks/shared/'+n for n in ['google-drive.js','google-drive-auth.js','LICENSE.txt']} | {'assets/js/'+n for n in ['app-language.js','pdf-ui-strings.js','pdf-language-loader.js','action-cards.js']} | {'assets/css/'+n for n in ['app-language.css','action-cards.css','action-icons.css']}
 for file in sorted(dest.rglob('*')):
-    if file.is_file() and 'node_modules' not in file.parts and file.relative_to(dest).parts[0] not in ['desktop'] and file.name not in ['index.html', 'source-manifest.json']:
+    rel=file.relative_to(dest).as_posix()
+    if (rel in shared or any(rel.startswith(prefix) for prefix in owned)) and file.is_file() and 'node_modules' not in file.parts and file.relative_to(dest).parts[0] not in ['desktop'] and file.name not in ['index.html', 'source-manifest.json']:
         files[file.relative_to(dest).as_posix()] = hashlib.sha256(file.read_bytes()).hexdigest()
 # Include adapted tool entry pages too, excluding only the shell entry page.
 for tool in registry:

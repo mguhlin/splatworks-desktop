@@ -22,7 +22,7 @@ import (
 //go:embed all:frontend
 var bundled embed.FS
 
-var version = "1.0.0-rc.3"
+var version = "1.0.0-rc.4"
 
 func main() {
 	serve := flag.Bool("serve", false, "serve the bundled tools in a browser on loopback (no native file APIs)")
@@ -33,12 +33,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	info, err := loadDesktopInfo(assets)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if *serve {
 		listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", *port))
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("SplatWorks Desktop %s\nhttp://%s\nPress Ctrl+C to close.\n", version, listener.Addr())
+		fmt.Printf("%s %s\nhttp://%s\nPress Ctrl+C to close.\n", info.Name, version, listener.Addr())
 		server := &http.Server{Handler: security(http.FileServer(http.FS(assets))), ReadHeaderTimeout: 10 * time.Second}
 		log.Fatal(server.Serve(listener))
 		return
@@ -53,16 +57,16 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	icon, _ := fs.ReadFile(assets, "solutions/pdfsplat/pdfsplat.png")
+	icon, _ := fs.ReadFile(assets, info.Icon)
 	err = wails.Run(&options.App{
-		Title: "SplatWorks Desktop — PDFsplat + CipherSplat", Width: 1360, Height: 900, MinWidth: 800, MinHeight: 600,
+		Title: info.Name, Width: 1360, Height: 900, MinWidth: 800, MinHeight: 600,
 		BackgroundColour: options.NewRGB(245, 247, 250),
 		AssetServer:      &assetserver.Options{Assets: assets, Middleware: security},
 		OnStartup:        app.startup, OnShutdown: app.shutdown,
 		OnBeforeClose: app.beforeClose,
 		Bind:          []interface{}{app},
-		Linux:         &linux.Options{Icon: icon, ProgramName: "splatworks-desktop", WebviewGpuPolicy: linux.WebviewGpuPolicyOnDemand},
-		Mac:           &mac.Options{About: &mac.AboutInfo{Title: "SplatWorks Desktop", Message: "PDFsplat + CipherSplat\nLocal tools by Miguel Guhlin\nAGPL-3.0-or-later", Icon: icon}},
+		Linux:         &linux.Options{Icon: icon, ProgramName: info.Slug, WebviewGpuPolicy: linux.WebviewGpuPolicyOnDemand},
+		Mac:           &mac.Options{About: &mac.AboutInfo{Title: info.Name, Message: info.Description + "\nLocal tools by Miguel Guhlin\nAGPL-3.0-or-later", Icon: icon}},
 	})
 	if err != nil {
 		log.Fatal(err)

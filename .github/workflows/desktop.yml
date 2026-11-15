@@ -109,7 +109,7 @@ jobs:
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#v}"
-          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="1.0.0-rc.3"; fi
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="1.0.0-rc.4"; fi
           args=()
           if [[ "$RUNNER_OS" == "Linux" ]]; then args+=(-tags webkit2_41); fi
           wails build -platform '${{ matrix.target }}' "${args[@]}" -ldflags "-X main.version=$version"

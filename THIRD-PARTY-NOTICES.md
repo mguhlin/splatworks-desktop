@@ -3,7 +3,8 @@
 The application embeds the SplatWorks browser tools and their corresponding source
 under `frontend/solutions/`. Original component and dependency notices remain
 beside their assets. `frontend/source-manifest.json` identifies the imported
-DrawSplat revision and asset hashes.
+DrawSplat revision and asset hashes. The smaller tool imports are recorded in
+`frontend/standalone-manifest.json`; individual profiles include only their dependencies.
 
 | Component | Purpose | License / notice |
 | --- | --- | --- |
@@ -15,6 +16,7 @@ DrawSplat revision and asset hashes.
 | Tesseract.js and Tesseract core | Offline OCR | Apache-2.0; `frontend/solutions/pdfsplat/vendor/ocr/` |
 | hash-wasm | Argon2id | MIT; each tool's `vendor/hash-wasm/LICENSE` |
 | OpenPGP.js | Optional public-key encryption | LGPL-3.0; `frontend/solutions/CipherSplat/vendor/openpgp/LICENSE` |
+| QR Code Generator (Kazuhiko Arase) | QRSplat QR encoding | MIT; header in `frontend/solutions/qrsplat/vendor/qrcode.js`, full text in `licenses/QRCode-MIT.txt` |
 | WebDeck framework v5 | Exported presentation runtime | MIT; `frontend/solutions/pdfsplat/webdeck/LICENSE` |
 
 Go module versions and checksums are pinned in `go.mod` and `go.sum`. Dependency

@@ -1,0 +1,62 @@
+{
+  "ciphersplat": {
+    "id": "ciphersplat",
+    "name": "CipherSplat",
+    "slug": "ciphersplat",
+    "binary": "CipherSplat",
+    "registry": "SplatWorksCipherSplat",
+    "settingsKey": "CipherSplat",
+    "icon": "desktop/icons/ciphersplat.png",
+    "description": "Encrypt and unlock files, folders, and text on this device.",
+    "smoke": "native-smoke-tools.js",
+    "help": [
+      "Use password encryption for .csplat packages or OpenPGP for public-key encryption. Keep a recoverable original until you have tested decryption.",
+      "Folder restoration creates a new folder. Passwords and private keys are not stored. Website links open in your browser."
+    ]
+  },
+  "gifsplat": {
+    "id": "gifsplat",
+    "name": "GIFsplat",
+    "slug": "gifsplat",
+    "binary": "GIFsplat",
+    "registry": "SplatWorksGIFsplat",
+    "settingsKey": "GIFsplat",
+    "icon": "desktop/icons/gifsplat.png",
+    "description": "Turn local images into animated GIFs, reorder frames, adjust timing, and save locally.",
+    "smoke": "native-smoke-tools.js",
+    "help": [
+      "Import image files as frames, arrange them, choose timing and quality, generate the animation, then save it.",
+      "Each imported file supplies one frame. This edition focuses on GIF creation. Very large image sets remain limited by device memory."
+    ]
+  },
+  "qrsplat": {
+    "id": "qrsplat",
+    "name": "QRSplat",
+    "slug": "qrsplat",
+    "binary": "QRSplat",
+    "registry": "SplatWorksQRSplat",
+    "settingsKey": "QRSplat",
+    "icon": "desktop/icons/qrsplat.png",
+    "description": "Generate standard QR codes for text, websites, email, phone, and Wi-Fi without a network service.",
+    "smoke": "native-smoke-tools.js",
+    "help": [
+      "Download PNG or SVG and test the code with a real scanner before printing. A QR code exposes its encoded content to anyone who scans it.",
+      "Editable redirect services are available in the browser edition. Explicitly saved designs use local preferences; Wi-Fi passwords are excluded."
+    ]
+  },
+  "imagesplat": {
+    "id": "imagesplat",
+    "name": "ImageSplat",
+    "slug": "imagesplat",
+    "binary": "ImageSplat",
+    "registry": "SplatWorksImageSplat",
+    "settingsKey": "ImageSplat",
+    "icon": "desktop/icons/imagesplat.png",
+    "description": "Edit images with layers, text, shapes, crop, photo adjustments, blur, and local PNG/GIF exports.",
+    "smoke": "native-smoke-tools.js",
+    "help": [
+      "Import existing images or paste an image when your operating system supports it. Export PNG preserves transparent areas around your artwork.",
+      "White and color background removal run locally. AI photo-subject models, live cameras, online background URLs, and the separate FontSplat service are outside this small offline edition."
+    ]
+  }
+}

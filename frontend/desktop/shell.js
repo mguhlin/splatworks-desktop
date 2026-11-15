@@ -3,7 +3,7 @@
   'use strict';
   const status = document.getElementById('desktopStatus');
   const help = document.getElementById('helpDialog');
-  let backend, tools = [], active = '', saving = Promise.resolve();
+  let backend, tools = [], active = '', saving = Promise.resolve(),info;
   const frames = new Map();
   const workspaces=new Map();
   const leave=document.getElementById('leaveDialog'),leaveMessage=document.getElementById('leaveMessage'),discard=document.getElementById('discardWork');
@@ -107,7 +107,9 @@
       await openLink('https://splatworks.org'+url.pathname+url.search+url.hash);
     }
   }
-  const bridge={saveBlob,saveFolder,selectTool,openLink,beginOperation,confirmReplace,requestClose,changed,
+  const bridge={saveBlob,saveFolder,selectTool,selectIndex:index=>{if(tools[index])selectTool(tools[index].id);},openLink,beginOperation,confirmReplace,requestClose,changed,
+    toolId:path=>tools.find(tool=>path.startsWith(tool.path))?.id,
+    get profile(){return info;},
     registerWorkspace:(id,workspace)=>{workspaces.set(id,workspace);changed(id);},
     get dirty(){return dirtyTools();},get busy(){return operations>0;},
     help:()=>help.showModal(),status:say,fullscreen:()=>backend?.ToggleFullscreen(),get native(){return !!backend},get active(){return active},get frames(){return frames}};
@@ -120,11 +122,20 @@
   });
   document.addEventListener('keydown',event=>{
     if(event.key==='F1'){event.preventDefault();help.showModal();}
-    if((event.ctrlKey||event.metaKey)&&event.key==='1'){event.preventDefault();selectTool('pdfsplat');}
-    if((event.ctrlKey||event.metaKey)&&event.key==='2'){event.preventDefault();selectTool('ciphersplat');}
+    if((event.ctrlKey||event.metaKey)&&event.key==='1'){event.preventDefault();bridge.selectIndex(0);}
+    if((event.ctrlKey||event.metaKey)&&event.key==='2'){event.preventDefault();bridge.selectIndex(1);}
   });
   (async()=>{
     backend=window.go?.main?.App;
+    info=await (await fetch('/app.json')).json();
+    document.title=info.name;document.querySelector('.desktop-brand').textContent=info.name;document.querySelector('.desktop-brand').setAttribute('aria-label',info.name+' home');
+    document.querySelector('link[rel="icon"]').href='/'+info.icon;
+    if(info.id!=='desktop'){
+      const form=help.querySelector('form');help.replaceChildren();
+      const heading=document.createElement('h1');heading.id='helpTitle';heading.textContent=info.name;help.append(heading);
+      for(const text of [info.description,'Files are processed on this device. Use the tool controls to import files. Saving opens a native destination picker. Unsaved work is protected by a close warning; automatic recovery copies are not created.',...(info.help||[]),'AGPL-3.0-or-later. Source, notices, and downloads: github.com/mguhlin/splatworks-desktop.']){const p=document.createElement('p');p.textContent=text;help.append(p);}
+      help.append(form);
+    }
     if(backend&&window.runtime?.EventsOn)window.runtime.EventsOn('desktop:close-requested',()=>void requestClose());
     tools=await (await fetch('/tools.json')).json();
     for(const tool of tools){const button=document.createElement('button');button.type='button';button.textContent=tool.name;button.setAttribute('aria-label',tool.name);button.dataset.tool=tool.id;button.onclick=()=>selectTool(tool.id);document.getElementById('tools').append(button);}
@@ -132,7 +143,7 @@
     selectTool(tools.some(t=>t.id===location.hash.slice(1))?location.hash.slice(1):tools[0].id);
     say(backend?'Local tools ready. Open a file to begin.':'Local browser mode. Saves use browser downloads.');
     await backend?.Ready?.();
-    if(backend&&await backend.SmokeEnabled()){const script=document.createElement('script');script.src='/desktop/native-smoke.js';document.head.append(script);}
+    if(backend&&await backend.SmokeEnabled()){const script=document.createElement('script');script.src='/desktop/'+info.smoke;document.head.append(script);}
   })().catch(error=>say('Could not start: '+error.message));
   window.addEventListener('beforeunload',event=>{if(!approvedQuit&&(operations||dirtyTools().length)){event.preventDefault();event.returnValue='';}});
 })();

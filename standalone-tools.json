@@ -1,0 +1,5 @@
+[
+ {"id":"gifsplat","name":"GIFsplat","path":"/solutions/gifsplat/","description":"Create animated GIFs from local image frames.","source":"solutions/gifsplat"},
+ {"id":"qrsplat","name":"QRSplat","path":"/solutions/qrsplat/","description":"Create standard QR codes offline, including text, links, and Wi-Fi.","source":"solutions/qrsplat"},
+ {"id":"imagesplat","name":"ImageSplat","path":"/solutions/imagesplat/","description":"Edit, annotate, crop, blur, and export images locally.","source":"solutions/imagesplat"}
+]

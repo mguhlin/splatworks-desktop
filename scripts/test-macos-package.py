@@ -26,7 +26,8 @@ unpacked=root/'output/unpacked';unpacked.mkdir(exist_ok=True)
 checked('ditto','-x','-k',str(archives[0]),str(unpacked))
 apps=list(unpacked.glob('*/*.app'));assert len(apps)==1,'Expected one application bundle'
 metadata=plistlib.loads((apps[0]/'Contents/Info.plist').read_bytes(),fmt=plistlib.FMT_XML)
-assert metadata['CFBundleIdentifier']=='org.splatworks.desktop','Unexpected application identity'
+info=json.loads((root/'frontend/app.json').read_text())
+assert metadata['CFBundleIdentifier']=='org.splatworks.'+('desktop' if info['id']=='desktop' else info['slug']),'Unexpected application identity'
 assert metadata['LSMinimumSystemVersion']=='14.0','Unexpected support baseline'
 checked('codesign','--verify','--deep','--strict',str(apps[0]))
 binaries=list((apps[0]/'Contents/MacOS').iterdir());assert len(binaries)==1

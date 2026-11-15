@@ -59,6 +59,10 @@ scanning or use the browser edition for capture. WebDeck exports open in
 a browser for presentation and printing. Google Drive integration is omitted from
 the desktop interface.
 
+## Smaller standalone apps
+
+[Download GIFsplat, CipherSplat, QRSplat and ImageSplat](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v0.1.0-preview). Each has its own executable, installer and icon, with native saves and unsaved-work protection. The GIF, QR and image editions omit PDF/OCR engines. These are previews pending developer signing and physical validation. See [standalone scope and build instructions](docs/STANDALONE.md).
+
 ## Repository boundaries
 
 This repository owns the shared Go shell, desktop adapters, installers, and

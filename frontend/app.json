@@ -1,0 +1,12 @@
+{
+  "id": "desktop",
+  "name": "SplatWorks Desktop",
+  "slug": "splatworks-desktop",
+  "binary": "SplatWorks-Desktop",
+  "icon": "solutions/pdfsplat/pdfsplat.png",
+  "description": "PDFsplat and CipherSplat with local editing, OCR, and encryption.",
+  "smoke": "native-smoke.js",
+  "help": [],
+  "registry": "SplatWorksDesktop",
+  "settingsKey": "Desktop"
+}

@@ -5,15 +5,15 @@ Unicode true
 !ifndef VERSION
   !error "VERSION is required"
 !endif
-Name "SplatWorks Desktop"
+Name "${APPNAME}"
 VIProductVersion "${NUMERIC_VERSION}"
-VIAddVersionKey "ProductName" "SplatWorks Desktop"
-VIAddVersionKey "FileDescription" "SplatWorks Desktop Installer"
+VIAddVersionKey "ProductName" "${APPNAME}"
+VIAddVersionKey "FileDescription" "${APPNAME} Installer"
 VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "LegalCopyright" "DrawSplat Developer(s)"
 OutFile "${OUTPUT}"
-InstallDir "$LOCALAPPDATA\Programs\SplatWorks Desktop"
-InstallDirRegKey HKCU "Software\SplatWorks\Desktop" "InstallLocation"
+InstallDir "$LOCALAPPDATA\Programs\${APPNAME}"
+InstallDirRegKey HKCU "Software\SplatWorks\${APPKEY}" "InstallLocation"
 RequestExecutionLevel user
 ManifestDPIAware true
 SetCompressor /SOLID lzma
@@ -59,18 +59,18 @@ Section "Application"
   SetOutPath "$INSTDIR"
   File /r "${STAGE}\*.*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
-  WriteRegStr HKCU "Software\SplatWorks\Desktop" "InstallLocation" "$INSTDIR"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop" "DisplayName" "SplatWorks Desktop"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop" "DisplayVersion" "${VERSION}"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop" "Publisher" "SplatWorks"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop" "InstallLocation" "$INSTDIR"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop" "DisplayIcon" "$INSTDIR\SplatWorks-Desktop.exe"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop" "UninstallString" '$\"$INSTDIR\Uninstall.exe$\"'
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop" "QuietUninstallString" '$\"$INSTDIR\Uninstall.exe$\" /S'
-  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop" "NoModify" 1
-  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop" "NoRepair" 1
-  CreateShortcut "$SMPROGRAMS\SplatWorks Desktop.lnk" "$INSTDIR\SplatWorks-Desktop.exe"
-  CreateShortcut "$DESKTOP\SplatWorks Desktop.lnk" "$INSTDIR\SplatWorks-Desktop.exe"
+  WriteRegStr HKCU "Software\SplatWorks\${APPKEY}" "InstallLocation" "$INSTDIR"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}" "DisplayName" "${APPNAME}"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}" "DisplayVersion" "${VERSION}"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}" "Publisher" "SplatWorks"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}" "InstallLocation" "$INSTDIR"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}" "DisplayIcon" "$INSTDIR\${BINARY}.exe"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}" "UninstallString" '$\"$INSTDIR\Uninstall.exe$\"'
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}" "QuietUninstallString" '$\"$INSTDIR\Uninstall.exe$\" /S'
+  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}" "NoModify" 1
+  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}" "NoRepair" 1
+  CreateShortcut "$SMPROGRAMS\${APPNAME}.lnk" "$INSTDIR\${BINARY}.exe"
+  CreateShortcut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\${BINARY}.exe"
 SectionEnd
 Section "Uninstall"
   SetShellVarContext current
@@ -78,8 +78,8 @@ Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"
   !include "${UNINSTALL_FILES}"
   RMDir "$INSTDIR"
-  Delete "$SMPROGRAMS\SplatWorks Desktop.lnk"
-  Delete "$DESKTOP\SplatWorks Desktop.lnk"
-  DeleteRegKey HKCU "Software\SplatWorks\Desktop"
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\SplatWorksDesktop"
+  Delete "$SMPROGRAMS\${APPNAME}.lnk"
+  Delete "$DESKTOP\${APPNAME}.lnk"
+  DeleteRegKey HKCU "Software\SplatWorks\${APPKEY}"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPREGISTRY}"
 SectionEnd

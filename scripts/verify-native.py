@@ -2,7 +2,48 @@
 """Check synthetic smoke results and the actual files written by the native app."""
 import hashlib,json,pathlib,sys
 root=pathlib.Path(sys.argv[1]);report=json.loads((root/'native-smoke.json').read_text(encoding='utf-8'))
-assert report['passed'] and len(report['checks'])>=23,report
+assert report['passed'] and not report.get('errors'),report
+if report.get('profile'):
+    import struct,xml.etree.ElementTree as ET
+    profile=report['profile'];assert len(report['checks'])>=10,report
+    if profile=='ciphersplat':
+        assert (root/'sample.txt.csplat').read_bytes().startswith(b'CSPCS4!!')
+        assert (root/'decrypted-message.txt').read_text()=='Standalone OpenPGP round trip'
+        restored=list(root.glob('CipherSplat-restored-*/nested/sample.txt'));assert restored
+        assert restored[0].read_text()=='Standalone Unicode: español 日本語'
+        assert restored[0].with_name('empty.txt').stat().st_size==0
+    elif profile=='gifsplat':
+        data=(root/'GIFsplat-animation.gif').read_bytes();assert data[:6]==b'GIF89a' and data[-1:]==b';'
+        assert struct.unpack('<HH',data[6:10])==(80,60)
+        # Parse the GIF block structure, counting image descriptors and timing.
+        pos=13+(3*(2**((data[10]&7)+1)) if data[10]&128 else 0);frames=0;delays=[]
+        def blocks(pos):
+            while data[pos]:pos+=1+data[pos]
+            return pos+1
+        while data[pos]!=59:
+            tag=data[pos];pos+=1
+            if tag==33:
+                label=data[pos];pos+=1
+                if label==249:delays.append(struct.unpack('<H',data[pos+2:pos+4])[0])
+                pos=blocks(pos)
+            elif tag==44:
+                flags=data[pos+8];pos+=9
+                if flags&128:pos+=3*2**((flags&7)+1)
+                pos=blocks(pos+1);frames+=1
+            else:raise AssertionError('Invalid GIF block')
+        assert frames==2 and delays==[20,20],(frames,delays)
+    elif profile=='qrsplat':
+        svg=ET.parse(root/'native-qr.svg');assert svg.getroot().tag.endswith('svg')
+        data=(root/'native-qr.png').read_bytes();assert data[:8]==b'\x89PNG\r\n\x1a\n'
+        assert min(struct.unpack('>II',data[16:24]))>=128
+    elif profile=='imagesplat':
+        for name,size in [('ImageSplat.png',(80,60)),('ImageSplat-cutout.png',(80,60))]:
+            data=(root/name).read_bytes();assert data[:8]==b'\x89PNG\r\n\x1a\n'
+            assert struct.unpack('>II',data[16:24])==size
+    else:raise AssertionError(profile)
+    assert not list(root.glob('.splatworks-*')),'Unfinished output remains'
+    print(f'Native {profile} report and actual export files verified: {root}');sys.exit()
+assert len(report['checks'])>=23,report
 pdf=root/'desktop-lesson-edited.pdf';assert pdf.read_bytes().startswith(b'%PDF-')
 restored=list(root.glob('CipherSplat-restored-*/classroom/lesson.pdf'));assert restored,'Missing restored PDF'
 assert any(hashlib.sha256(file.read_bytes()).digest()==hashlib.sha256(pdf.read_bytes()).digest() for file in restored),'Restored bytes differ from the saved PDF'
