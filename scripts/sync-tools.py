@@ -14,7 +14,7 @@ parser.add_argument('source', type=Path, help='local DrawSplat repository')
 args = parser.parse_args()
 source = args.source.resolve()
 dest = ROOT / 'frontend'
-registry = json.loads((ROOT / 'tools.json').read_text())
+registry = json.loads((ROOT / 'tools.json').read_text(encoding='utf-8'))
 ignored = shutil.ignore_patterns('node_modules', 'downloads', 'test-results', 'playwright-report', '.DS_Store', '*.zip', 'integrity.json')
 
 def copy_file(rel):
@@ -48,7 +48,7 @@ for name in ['pdfsplat-save-as.md', 'pdfsplat-ocr.md', 'pdfsplat-odt-toolbar.md'
 
 for tool in registry:
     page = dest / tool['source'] / 'index.html'
-    text = page.read_text()
+    text = page.read_text(encoding='utf-8')
     text = re.sub(r'<!-- splat-privacy:start -->.*?<!-- splat-privacy:end -->', '', text)
     text = re.sub(r'\s*<meta http-equiv="Content-Security-Policy"[^>]*>', '', text)
     # These files are adapted below. Integrity is verified for the complete
@@ -57,22 +57,22 @@ for tool in registry:
     text = text.replace('</head>', '<link rel="stylesheet" href="/desktop/frame.css"><script src="/desktop/frame.js"></script></head>')
     text = re.sub(r'<link rel="stylesheet" href="../../assets/css/(?:tool-launcher|launcher-trigger)\.css[^\"]*">', '', text)
     text = re.sub(r'<a class="offline-download"[^>]*>.*?</a>', '', text)
-    page.write_text(text)
+    page.write_text(text, encoding='utf-8')
 
 boot = dest / 'solutions/pdfsplat/src/boot.js'
-text = boot.read_text().replace("void load('../../assets/js/tool-launcher.js?v=2', true).catch(console.error);", '/* Desktop shell supplies the installed tool switcher. */')
-boot.write_text(text)
+text = boot.read_text(encoding='utf-8').replace("void load('../../assets/js/tool-launcher.js?v=2', true).catch(console.error);", '/* Desktop shell supplies the installed tool switcher. */')
+boot.write_text(text, encoding='utf-8')
 
 cipher = dest / 'solutions/CipherSplat/app.js'
-text = cipher.read_text()
+text = cipher.read_text(encoding='utf-8')
 old = 'async function downloadResult(){if(resultFiles.length){'
 assert text.count(old) == 1, 'Upstream folder download changed; review the adapter.'
 text = text.replace(old, 'async function downloadResult(){if(resultFiles.length&&window.SplatDesktop?.native){try{await window.SplatDesktop.saveFolder(resultFiles)}catch(error){els.error.textContent=error.message}return}if(resultFiles.length){')
-cipher.write_text(text)
+cipher.write_text(text, encoding='utf-8')
 
 # Export docs are kept as source material. The shell supplies a short offline
 # help page instead of navigating away from an open document.
-(dest / 'tools.json').write_text(json.dumps(registry, indent=2) + '\n')
+(dest / 'tools.json').write_text(json.dumps(registry, indent=2) + '\n', encoding='utf-8')
 revision = subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()
 files = {}
 for file in sorted(dest.rglob('*')):
@@ -83,6 +83,6 @@ for tool in registry:
     name = tool['source'] + '/index.html'
     files[name] = hashlib.sha256((dest/name).read_bytes()).hexdigest()
 manifest = {'repository':'https://github.com/mguhlin/drawsplat', 'revision':revision, 'tools':[t['id'] for t in registry], 'files':dict(sorted(files.items()))}
-(dest/'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+(dest/'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 shutil.copy2(source/'solutions/pdfsplat/pdfsplat.png', ROOT/'build/appicon.png')
 print(f'Imported {len(registry)} tools from DrawSplat {revision[:12]} ({len(files)} bundled files).')

@@ -8,6 +8,8 @@ existing SplatWorks web tools provide PDF rendering, editing, OCR, and encryptio
 [SplatWorks](https://splatworks.org) ·
 [Browser-tool source](https://github.com/mguhlin/drawsplat)
 
+![SplatWorks Desktop running PDFsplat on Linux](docs/desktop-preview.png)
+
 ## Install
 
 This initial preview is unsigned. Windows and macOS may show an application
