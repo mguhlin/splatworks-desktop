@@ -22,8 +22,8 @@ source=replaceOnce(source,'async function downloadResult(){','async function dow
 source=replaceOnce(source,'function resetResult(){','function resetResult(){desktopCipherGeneration++;');
 // Generation counters prevent saving an earlier crypto result from clearing a
 // newer unsaved result; no secret or plaintext is written to preferences.
-source='let desktopCipherGeneration=0,desktopCipherSaved="";\n'+source;
-source+='\nfunction desktopCipherStamp(){return JSON.stringify({generation:desktopCipherGeneration,text:els.text.value,hasResult:!!resultBlob||!!resultFiles.length});}\nglobalThis.SplatDesktop?.registerWorkspace("ciphersplat",{isDirty:()=>!!(els.text.value||resultBlob||resultFiles.length)&&desktopCipherStamp()!==desktopCipherSaved,stamp:desktopCipherStamp,markSaved:stamp=>{desktopCipherSaved=stamp;}});\n';
+source='let desktopCipherGeneration=0,desktopCipherTextRevision=0,desktopCipherSaved="";\n'+source;
+source+='\nels.text.addEventListener("input",()=>{desktopCipherTextRevision++;});\nfunction desktopCipherStamp(){return JSON.stringify({generation:desktopCipherGeneration,textRevision:desktopCipherTextRevision,hasResult:!!resultBlob||!!resultFiles.length});}\nglobalThis.SplatDesktop?.registerWorkspace("ciphersplat",{isDirty:()=>!!(els.text.value||resultBlob||resultFiles.length)&&desktopCipherStamp()!==desktopCipherSaved,stamp:desktopCipherStamp,markSaved:stamp=>{desktopCipherSaved=stamp;}});\n';
 await writeFile(cipher,source);
 
 function walk(node,ancestors,visit){

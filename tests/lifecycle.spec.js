@@ -41,6 +41,7 @@ test('text encryption is reviewed, saved, and decrypted through the UI',async({p
   await page.goto('/#ciphersplat');const cipher=page.frameLocator('#tool-ciphersplat');await cipher.locator('#textTab').click();await cipher.locator('#textInput').fill('Private note: español 日本語');await cipher.locator('#password').fill('synthetic text roundtrip password');await cipher.locator('#runButton').click();await expect(cipher.locator('#resultTitle')).toContainText('Encryption complete');
   expect(await page.evaluate(()=>SplatDesktop.dirty)).toEqual(['CipherSplat']);const promise=page.waitForEvent('download');await cipher.locator('#downloadResult').click();const download=await promise;
   const encrypted=await require('fs/promises').readFile(await download.path(),'utf8');expect(encrypted).toMatch(/^PRISMVAULT3\./);expect(await page.evaluate(()=>SplatDesktop.dirty)).toEqual([]);
+  await cipher.locator('#textInput').fill('Changed note: español 日本語');expect(await page.evaluate(()=>SplatDesktop.dirty)).toEqual(['CipherSplat']);
   await cipher.locator('[data-op="decrypt"]').click();await cipher.locator('#textInput').fill(encrypted);await cipher.locator('#password').fill('synthetic text roundtrip password');await cipher.locator('#runButton').click();await expect(cipher.locator('#resultTitle')).toContainText('Vault unlocked');
   const plainPromise=page.waitForEvent('download');await cipher.locator('#downloadResult').click();const plain=await plainPromise;expect(await require('fs/promises').readFile(await plain.path(),'utf8')).toBe('Private note: español 日本語');
 });

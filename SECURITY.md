@@ -1,8 +1,10 @@
 # Desktop security boundaries
 
 Documents, passwords, private keys, and recovery content are not persisted to
-preferences or sent to a server. Explicit saves use destinations chosen by native
-dialogs. The application does not overwrite an original until staged output has
+preferences or sent to a server. CipherSplat save bookkeeping uses change counters
+instead of copies of plaintext, so clearing the workspace leaves no saved-state
+copy of its text. Explicit saves use destinations chosen by native dialogs. The
+application does not overwrite an original until staged output has
 been successfully written and synchronized. Folder restoration creates a new
 directory and rejects traversal, absolute paths, device names, duplicate files,
 and conflicting paths. Go's rooted filesystem API prevents restoration writes

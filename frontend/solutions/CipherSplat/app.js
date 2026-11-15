@@ -1,4 +1,4 @@
-let desktopCipherGeneration=0,desktopCipherSaved="";
+let desktopCipherGeneration=0,desktopCipherTextRevision=0,desktopCipherSaved="";
 if(window.trustedTypes?.createPolicy){try{trustedTypes.createPolicy('default',{createScriptURL:value=>{if(value==='argon2-worker.js')return value;throw new TypeError('Blocked script URL: '+value)},createHTML:()=>{throw new TypeError('HTML injection is blocked in CipherSplat.')},createScript:()=>{throw new TypeError('Dynamic script evaluation is blocked in CipherSplat.')}})}catch{}}
 const $=s=>document.querySelector(s),enc=new TextEncoder(),dec=new TextDecoder(),APP_VERSION='1.0.2',PACKAGE_EXTENSION='.csplat',LEGACY_PACKAGE_EXTENSION='.ciphersplat',MAGIC=enc.encode('NIVORA1!'),MAGIC_TEXT2=enc.encode('CSPTXT2!'),MAGIC_TEXT3=enc.encode('CSPTXT3!'),ITERATIONS=600000;
 const ARGON2_MEMORY=65536,ARGON2_ITERATIONS=3,ARGON2_PARALLELISM=1,ARGON2_KEY_LENGTH=32;
@@ -117,5 +117,6 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleId
 scheduleIdleClear();
 sync();
 
-function desktopCipherStamp(){return JSON.stringify({generation:desktopCipherGeneration,text:els.text.value,hasResult:!!resultBlob||!!resultFiles.length});}
+els.text.addEventListener("input",()=>{desktopCipherTextRevision++;});
+function desktopCipherStamp(){return JSON.stringify({generation:desktopCipherGeneration,textRevision:desktopCipherTextRevision,hasResult:!!resultBlob||!!resultFiles.length});}
 globalThis.SplatDesktop?.registerWorkspace("ciphersplat",{isDirty:()=>!!(els.text.value||resultBlob||resultFiles.length)&&desktopCipherStamp()!==desktopCipherSaved,stamp:desktopCipherStamp,markSaved:stamp=>{desktopCipherSaved=stamp;}});
