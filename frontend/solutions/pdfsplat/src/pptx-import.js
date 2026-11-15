@@ -171,17 +171,17 @@ function geometry(ctx, props, box, connector) {
  } else ctx.rect(x,y,w,h);
 }
 
-export async function pptxPdf(zip, helpers) {
+export async function pptxPdf(zip, helpers) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
  const {readXml,relationships,zipImage,attribute} = helpers, {PDFDocument} = globalThis.PDFLib;
  const docs = new Map(), rels = new Map(), images = new Map();
- const read = async path => {if(!path || !zip.file(path))return null;if(!docs.has(path))docs.set(path,await readXml(zip,path));return docs.get(path);};
- const relations = async path => {if(!path)return new Map();if(!rels.has(path))rels.set(path,await relationships(zip,path));return rels.get(path);};
+ const read = async path => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{if(!path || !zip.file(path))return null;if(!docs.has(path))docs.set(path,await readXml(zip,path));return docs.get(path);}finally{__desktopDone?.();}};
+ const relations = async path => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{if(!path)return new Map();if(!rels.has(path))rels.set(path,await relationships(zip,path));return rels.get(path);}finally{__desktopDone?.();}};
  const related = (map, directory) => [...map.values()].find(p => p.includes(directory+'/'));
  const presentation = await readXml(zip,'ppt/presentation.xml'), presentationRels = await relations('ppt/presentation.xml');
  const sz = child(presentation.documentElement,'sldSz'), w = pt(at(sz,'cx',9144000)), h = pt(at(sz,'cy',6858000));
  if (!Number.isFinite(w) || !Number.isFinite(h) || w<=0 || h<=0 || Math.max(w,h)>14400) throw Error('Invalid PowerPoint slide dimensions.');
  const doc = await PDFDocument.create();
- async function picture(ctx, fill, box, map) {
+ async function picture(ctx, fill, box, map) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const path = map.get(attribute(child(fill,'blip'),'embed')); if (!path) return;
   if (!images.has(path)) {
    const data = await zipImage(zip,path);if(!data)return;
@@ -191,7 +191,7 @@ export async function pptxPdf(zip, helpers) {
   const image=images.get(path),crop=child(fill,'srcRect');
   const l=Number(at(crop,'l',0))/100000,t=Number(at(crop,'t',0))/100000,r=Number(at(crop,'r',0))/100000,b=Number(at(crop,'b',0))/100000;
   if(l+r<1 && t+b<1)ctx.drawImage(image,l*image.width,t*image.height,(1-l-r)*image.width,(1-t-b)*image.height,box.x,box.y,box.w,box.h);
- }
+ }finally{__desktopDone?.();}}
  for (const id of children(child(presentation.documentElement,'sldIdLst'),'sldId')) {
   const path = presentationRels.get([...id.attributes].find(a=>a.localName==='id'&&a.namespaceURI?.includes('relationships'))?.value);
   if (!path) throw Error('A PowerPoint slide relationship is missing.');
@@ -201,7 +201,7 @@ export async function pptxPdf(zip, helpers) {
   const env={color:colors(theme,master,layout,slide),theme,master,defaultText:child(presentation.documentElement,'defaultTextStyle')};
   const canvas=document.createElement('canvas'),factor=Math.min(2,4096/Math.max(w,h));canvas.width=Math.ceil(w*factor);canvas.height=Math.ceil(h*factor);
   const ctx=canvas.getContext('2d');ctx.scale(canvas.width/w,canvas.height/h);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);
-  const paint = async (fill, box, map, reference) => {
+  const paint = async (fill, box, map, reference) => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
    if(!fill || fill.localName==='noFill')return false;
    if(fill.localName==='blipFill') {await picture(ctx,fill,box,map);return false;}
    if(fill.localName==='gradFill') {
@@ -211,13 +211,13 @@ export async function pptxPdf(zip, helpers) {
     ctx.fillStyle=gradient;
    } else ctx.fillStyle=env.color(fill,'#000000',reference);
    return true;
-  };
+  }finally{__desktopDone?.();}};
   for(const [part,map] of [[slide,slideRels],[layout,layoutRels],[master,masterRels]]) {
    const bg=child(child(part?.documentElement,'cSld'),'bg');if(!bg)continue;
    const fill=fillNode([child(bg,'bgPr')]);
    if(await paint(fill,{x:0,y:0,w,h},map))ctx.fillRect(0,0,w,h);break;
   }
-  async function draw(shape, map, inheritedLayer=false) {
+  async function draw(shape, map, inheritedLayer=false) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
    if(truth(at(child(shape,'cNvPr'),'hidden')) || truth(at(shape.getElementsByTagNameNS('*','cNvPr')[0],'hidden')))return;
    if(inheritedLayer && placeholder(shape))return;
    if(shape.localName==='grpSp') {
@@ -266,7 +266,7 @@ export async function pptxPdf(zip, helpers) {
     drawText(ctx,shape,chain,box,env);
    }
    ctx.restore();
-  }
+  }finally{__desktopDone?.();}}
   if(!tree(slide))throw Error('A PowerPoint slide has no content tree.');
   if(!['0','false'].includes(at(slide.documentElement,'showMasterSp','1')) && !['0','false'].includes(at(layout?.documentElement,'showMasterSp','1')))for(const shape of children(tree(master)))await draw(shape,masterRels,true);
   for(const shape of children(tree(layout)))await draw(shape,layoutRels,true);
@@ -275,4 +275,4 @@ export async function pptxPdf(zip, helpers) {
   doc.addPage([w,h]).drawImage(image,{x:0,y:0,width:w,height:h});
  }
  if(!doc.getPageCount())throw Error('No slides found in this PowerPoint file.');return doc;
-}
+}finally{__desktopDone?.();}}

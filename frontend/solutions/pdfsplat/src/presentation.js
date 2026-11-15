@@ -9,9 +9,9 @@ export function setupPresentation({ pdfjs, buildPdf, state, announce }) {
   const stage = viewer.querySelector('.presentation-stage'), canvas = viewer.querySelector('canvas'), position = viewer.querySelector('[data-position]'), play = viewer.querySelector('[data-action="play"]');
   let pdf, index = 0, timer, busy = false, previousFocus, blank = false, generation = 0;
   function pause() { clearTimeout(timer); timer = undefined; play.textContent = 'Start slideshow'; play.setAttribute('aria-pressed', 'false'); }
-  function schedule() { timer = setTimeout(async () => { timer = undefined; if (index + 1 === pdf.numPages && !viewer.querySelector('[data-loop]').checked) { pause(); return; } await show((index + 1) % pdf.numPages); if (!viewer.hidden) schedule(); }, Math.max(1, Math.min(3600, Number(viewer.querySelector('[data-interval]').value) || 10)) * 1000); play.textContent = 'Pause slideshow'; play.setAttribute('aria-pressed', 'true'); }
+  function schedule() { timer = setTimeout(async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{ timer = undefined; if (index + 1 === pdf.numPages && !viewer.querySelector('[data-loop]').checked) { pause(); return; } await show((index + 1) % pdf.numPages); if (!viewer.hidden) schedule(); }finally{__desktopDone?.();}}, Math.max(1, Math.min(3600, Number(viewer.querySelector('[data-interval]').value) || 10)) * 1000); play.textContent = 'Pause slideshow'; play.setAttribute('aria-pressed', 'true'); }
   function unblank() { blank = false; stage.classList.remove('blank-white', 'blank-black'); }
-  async function show(next) {
+  async function show(next) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     if (!pdf || busy || viewer.hidden) return;
     busy = true; unblank(); index = Math.max(0, Math.min(pdf.numPages - 1, next));
     try {
@@ -25,18 +25,18 @@ export function setupPresentation({ pdfjs, buildPdf, state, announce }) {
       page.cleanup();
     } catch (error) { console.error(error); announce('Presentation could not render this page.'); }
     finally { busy = false; }
-  }
-  async function fullscreen() {
+  }finally{__desktopDone?.();}}
+  async function fullscreen() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     try { if (document.fullscreenElement) await document.exitFullscreen(); else if (viewer.requestFullscreen) await viewer.requestFullscreen(); }
     catch { /* Browser may deny fullscreen; the distraction-free viewer still works. */ }
-  }
-  async function exit() {
+  }finally{__desktopDone?.();}}
+  async function exit() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     generation++; pause(); viewer.hidden = true;
     document.querySelector('#workspace').inert = false; document.querySelector('header.topbar').inert = false; document.querySelector('footer.statusbar').inert = false;
     if (document.fullscreenElement === viewer) await document.exitFullscreen().catch(() => {});
     const old = pdf; pdf = undefined; await old?.destroy(); canvas.width = canvas.height = 0; previousFocus?.focus(); announce('Presentation closed. Your edits are unchanged.');
-  }
-  async function open(useFullscreen = false) {
+  }finally{__desktopDone?.();}}
+  async function open(useFullscreen = false) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     if (!state.pages.length || busy || !viewer.hidden || document.querySelector('dialog[open]')) return;
     previousFocus = document.activeElement; const token = ++generation;
     present.disabled = true;
@@ -45,10 +45,10 @@ export function setupPresentation({ pdfjs, buildPdf, state, announce }) {
     document.querySelector('#workspace').inert = true; document.querySelector('header.topbar').inert = true; document.querySelector('footer.statusbar').inert = true;
     if (useFullscreen) void fullscreen();
     announce('Preparing presentation…');
-    try { const bytes = await buildPdf(); const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise; if (token !== generation) { await doc.destroy(); return; } pdf = doc; await show(state.current); announce('Presentation ready.'); }
+    try { const bytes = await buildPdf(); const doc = await pdfjs.getDocument({isEvalSupported:false, data: bytes.slice() }).promise; if (token !== generation) { await doc.destroy(); return; } pdf = doc; await show(state.current); announce('Presentation ready.'); }
     catch (error) { console.error(error); await exit(); announce('Presentation could not open. The source PDF is unchanged.'); }
     finally { present.disabled = !state.pages.length; }
-  }
+  }finally{__desktopDone?.();}}
   present.onclick = () => open(); full.onclick = () => open(true);
   viewer.addEventListener('click', event => {
     const action = event.target.closest('[data-action]')?.dataset.action;

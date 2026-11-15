@@ -102,6 +102,7 @@ function mutate(label, fn) {
   commit(before, label);
 }
 function syncHistory() {
+  globalThis.SplatDesktop?.changed("pdfsplat");
   els.undoButton.disabled = !state.history.length;
   $("inkUndo").disabled = state.history.at(-1)?.label !== "Draw";
   els.redoButton.disabled = !state.future.length;
@@ -153,12 +154,12 @@ function setMode(mode) {
   updateTextFormatTools();
 }
 
-async function loadSource(file) {
+async function loadSource(file) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if (!file || !file.name.toLowerCase().endsWith(".pdf")) throw Error("Choose a PDF file.");
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const pdf = await pdfjs.getDocument({ data: bytes.slice(), fontExtraProperties: true }).promise;
+  const pdf = await pdfjs.getDocument({isEvalSupported:false, data: bytes.slice(), fontExtraProperties: true }).promise;
   return { id: uid(), name: file.name, bytes, pdf };
-}
+}finally{__desktopDone?.();}}
 function pagesFor(source) {
   return Array.from({ length: source.pdf.numPages }, (_, sourceIndex) => ({
     id: uid(),
@@ -170,7 +171,8 @@ function pagesFor(source) {
 }
 let importToken = 0;
 els.fileInput.accept = importAccept;
-async function openFile(input) {
+async function openFile(input) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
+  if (globalThis.SplatDesktop && !await SplatDesktop.confirmReplace("pdfsplat")) return false;
   const files = input instanceof File ? [input] : [...(input || [])];
   if (!files.length) return false;
   ocr?.reset();
@@ -192,6 +194,8 @@ async function openFile(input) {
     selectOnlyPage(0);
     state.zoom = 1;
     state.selectedId = null;
+    desktopSavedState = prepared.converted ? "" : desktopDocumentState();
+    globalThis.SplatDesktop?.changed("pdfsplat");
     state.history = [];
     state.future = [];
     setMode("select");
@@ -212,8 +216,8 @@ async function openFile(input) {
   } finally {
     els.fileInput.value = "";
   }
-}
-async function mergeFile(file) {
+}finally{__desktopDone?.();}}
+async function mergeFile(file) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   try {
     announce(`Adding ${file?.name || "PDF"}…`);
     const source = await loadSource(file),
@@ -232,16 +236,16 @@ async function mergeFile(file) {
   } finally {
     els.mergeInput.value = "";
   }
-}
-async function sourcePage(item) {
+}finally{__desktopDone?.();}}
+async function sourcePage(item) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   return state.sources.get(item.sourceId).pdf.getPage(item.sourceIndex + 1);
-}
+}finally{__desktopDone?.();}}
 
-async function renderAll() {
+async function renderAll() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   els.pageCount.textContent = state.pages.length;
   await Promise.all([renderCurrent(), renderThumbnails()]);
-}
-async function renderCurrent() {
+}finally{__desktopDone?.();}}
+async function renderCurrent() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   cancelInk?.();
   if (placement.active && placement.pageId !== currentPage()?.id) setMode("select");
   const token = ++state.renderToken,
@@ -276,8 +280,8 @@ async function renderCurrent() {
     node.classList.toggle("current", i === state.current);
     node.setAttribute("aria-selected", String(state.selectedPageIds.has(state.pages[i].id)));
   });
-}
-async function renderTextHits(page, viewport, token) {
+}finally{__desktopDone?.();}}
+async function renderTextHits(page, viewport, token) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   els.textHitLayer.replaceChildren();
   await page.getOperatorList();
   const content = await page.getTextContent();
@@ -360,7 +364,7 @@ async function renderTextHits(page, viewport, token) {
     };
     els.textHitLayer.append(hit);
   }
-}
+}finally{__desktopDone?.();}}
 function textAppearanceForLine(line) {
   // A mixed-style line adopts the dominant run, measured by character count.
   const run = line.runs.reduce((a,b)=>a.text.length >= b.text.length ? a : b);
@@ -376,7 +380,7 @@ function queueThumbnailRefresh() {
     }
   },180);
 }
-async function renderThumbnail(li) {
+async function renderThumbnail(li) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const index=Number(li.dataset.index), original=state.pages[index];
   if(!original)return;
   const item=structuredClone(original),key=JSON.stringify(item);
@@ -388,7 +392,7 @@ async function renderThumbnail(li) {
     let page,viewport;
     if(item.annotations.length||item.crop||item.fineRotation){
       const bytes=await buildPdf([item],{finishEditing:false});
-      edited=await pdfjs.getDocument({data:bytes}).promise;page=await edited.getPage(1);viewport=page.getViewport({scale:.2});
+      edited=await pdfjs.getDocument({isEvalSupported:false,data:bytes}).promise;page=await edited.getPage(1);viewport=page.getViewport({scale:.2});
     } else {page=await sourcePage(item);viewport=page.getViewport({scale:.2,rotation:(page.rotate+item.rotation)%360});}
     canvas.width=Math.max(1,Math.ceil(viewport.width));canvas.height=Math.max(1,Math.ceil(viewport.height));
     await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
@@ -397,8 +401,8 @@ async function renderThumbnail(li) {
     li.renderedKey=key;delete li.dataset.previewError;
   } catch(error) {if(li.isConnected&&state.pages[index]?.id===item.id){li.dataset.previewError=error.message;console.warn('Page preview could not refresh',error);}}
   finally {canvas.width=canvas.height=0;if(edited)await edited.destroy();if(token===li.thumbnailToken){li.pendingThumbnailKey=null;li.removeAttribute('aria-busy');}}
-}
-async function renderThumbnails() {
+}finally{__desktopDone?.();}}
+async function renderThumbnails() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   state.thumbnailObserver?.disconnect();
   els.thumbnails.replaceChildren();
   state.thumbnailObserver = new IntersectionObserver(
@@ -453,7 +457,7 @@ async function renderThumbnails() {
     };
     state.thumbnailObserver.observe(li);
   }
-}
+}finally{__desktopDone?.();}}
 function selectPage(index, event = {}) {
   finishInlineTextEditing();
   if (event.shiftKey) {
@@ -575,7 +579,7 @@ function reversePages() {
   renderAll();
   announce("Page order reversed. Undo is available.");
 }
-async function insertBlankPage() {
+async function insertBlankPage() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const document = await PDFDocument.create(), reference = currentPage() ? await sourcePage(currentPage()) : null;
   const viewport = reference?.getViewport({ scale: 1, rotation: 0 });
   document.addPage(viewport ? [viewport.width, viewport.height] : [612, 792]);
@@ -587,7 +591,7 @@ async function insertBlankPage() {
   commit(before, "Insert blank page");
   await renderAll();
   announce(`Blank page inserted at page ${position + 1}.`);
-}
+}finally{__desktopDone?.();}}
 function openCropDialog() {
   const crop = currentPage()?.crop || { top: 0, right: 0, bottom: 0, left: 0 };
   for (const side of ["Top", "Right", "Bottom", "Left"]) els[`crop${side}`].value = (crop[side.toLowerCase()] * 100).toFixed(1).replace(/\.0$/, "");
@@ -613,7 +617,7 @@ function applyCustomRotation(event) {
   renderAll();
   announce(`${indexes.length} page(s) set to ${angle}° fine rotation.`);
 }
-async function addImagePages(files) {
+async function addImagePages(files) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const chosen = [...(files || [])].filter((file) => ["image/png", "image/jpeg"].includes(file.type));
   if (!chosen.length) return announce("Choose one or more PNG or JPEG images.");
   try {
@@ -637,8 +641,8 @@ async function addImagePages(files) {
     console.error(error);
     announce("The image pages could not be created.");
   } finally { els.imagePagesInput.value = ""; }
-}
-async function renderPdfPageToBlob(page, scale = 2, mime = "image/png") {
+}finally{__desktopDone?.();}}
+async function renderPdfPageToBlob(page, scale = 2, mime = "image/png") {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const viewport = page.getViewport({ scale }), canvas = document.createElement("canvas");
   canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
   await page.render({ canvasContext: canvas.getContext("2d", { alpha: false }), viewport, background: "#ffffff" }).promise;
@@ -646,27 +650,27 @@ async function renderPdfPageToBlob(page, scale = 2, mime = "image/png") {
     canvas.width = canvas.height = 0;
     blob && blob.type === mime ? resolve(blob) : reject(Error("Image export failed."));
   }, mime, 0.92));
-}
-async function exportWebDeck() {
+}finally{__desktopDone?.();}}
+async function exportWebDeck() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if (!state.pages.length) return;
   let pdf;
   els.saveAsSelect.disabled = true;
   announce("Exporting WebDeck…");
   try {
     const bytes = await buildPdf(state.pages), images = [];
-    pdf = await pdfjs.getDocument({ data: bytes.slice() }).promise;
+    pdf = await pdfjs.getDocument({isEvalSupported:false, data: bytes.slice() }).promise;
     for (let number = 1; number <= pdf.numPages; number++) {
       const page = await pdf.getPage(number), viewport = page.getViewport({ scale: 1 });
       images.push(await blobDataUrl(await renderPdfPageToBlob(page, Math.min(2, 1200 / Math.max(viewport.width, viewport.height)), "image/webp")));
       page.cleanup();
     }
     const base = state.fileName.replace(/\.pdf$/i, "");
-    downloadBytes(createWebDeck(base, images), `${base}-webdeck.html`, "text/html;charset=utf-8");
-    announce("WebDeck downloaded. Open the HTML file to present.");
+    { if (!await downloadBytes(createWebDeck(base, images),`${base}-webdeck.html`,"text/html;charset=utf-8")) return; }
+    announce("WebDeck saved. Open the HTML file to present.");
   } catch (error) { console.error(error); announce("WebDeck export failed. The source PDF is unchanged."); }
   finally { await pdf?.destroy(); els.saveAsSelect.disabled = !state.pages.length; }
-}
-async function exportPageImages(format = "png", indexes = selectedPageIndexes()) {
+}finally{__desktopDone?.();}}
+async function exportPageImages(format = "png", indexes = selectedPageIndexes()) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   let document;
   const mime = {png: "image/png", jpg: "image/jpeg", webp: "image/webp"}[format];
   if (!mime || !indexes.length) return;
@@ -674,22 +678,22 @@ async function exportPageImages(format = "png", indexes = selectedPageIndexes())
   announce("Exporting page images…");
   try {
     const bytes = await buildPdf(indexes.map((index) => state.pages[index])), base = state.fileName.replace(/\.pdf$/i, "");
-    document = await pdfjs.getDocument({ data: bytes.slice() }).promise;
+    document = await pdfjs.getDocument({isEvalSupported:false, data: bytes.slice() }).promise;
     const image = async number => renderPdfPageToBlob(await document.getPage(number), 2, mime);
-    if (document.numPages === 1) downloadBytes(await image(1), `${base}-page-${indexes[0] + 1}.${format}`, mime);
+    if (document.numPages === 1) { if (!await downloadBytes(await image(1),`${base}-page-${indexes[0] + 1}.${format}`,mime)) return; }
     else {
       const zip = new globalThis.JSZip();
       for (let number = 1; number <= document.numPages; number++) zip.file(`page-${indexes[number - 1] + 1}.${format}`, await image(number));
-      downloadBytes(await zip.generateAsync({ type: "blob", compression: "DEFLATE" }), `${base}-images.zip`, "application/zip");
+      { if (!await downloadBytes(await zip.generateAsync({ type: "blob", compression: "DEFLATE" }),`${base}-images.zip`,"application/zip")) return; }
     }
-    announce(`${indexes.length} page image(s) downloaded.`);
+    announce(`${indexes.length} page image(s) saved.`);
   } catch (error) { console.error(error); announce("Page image export failed."); }
   finally {
     await document?.destroy();
     els.saveAsSelect.disabled = els.exportImagesButton.disabled = !state.pages.length;
   }
-}
-async function removeBlankPages() {
+}finally{__desktopDone?.();}}
+async function removeBlankPages() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   announce("Checking pages for blank content…");
   const blank = [];
   for (let index = 0; index < state.pages.length; index++) {
@@ -707,7 +711,7 @@ async function removeBlankPages() {
   const before = snapshot(), ids = new Set(blank.map((index) => state.pages[index].id));
   state.pages = state.pages.filter((page) => !ids.has(page.id)); state.current = Math.min(state.current, state.pages.length - 1); selectOnlyPage(state.current); commit(before, "Remove blank pages");
   await renderAll(); announce(`${blank.length} blank page(s) removed. Undo is available.`);
-}
+}finally{__desktopDone?.();}}
 function duplicatePage() {
   const indexes = selectedPageIndexes(),
     insertAt = Math.max(...indexes) + 1;
@@ -1051,7 +1055,7 @@ function addHighlight() {
   renderAnnotations();
   announce("Highlight added. Drag and resize it over content.");
 }
-async function addImage(file, signature = false) {
+async function addImage(file, signature = false) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if (!file || !['image/png', 'image/jpeg'].includes(file.type)) {
     announce('Choose a PNG or JPEG image.'); return;
   }
@@ -1079,7 +1083,7 @@ async function addImage(file, signature = false) {
     if (url) URL.revokeObjectURL(url);
     console.error(error); announce('This image could not be opened. Try another PNG or JPEG.');
   } finally { els.imageInput.value = ''; els.signatureImageInput.value = ''; }
-}
+}finally{__desktopDone?.();}}
 function addTypedSignature(event) {
   event.preventDefault();
   const text = els.signatureText.value.trim();
@@ -1325,7 +1329,7 @@ function hexColor(hex) {
   const n = parseInt(hex.slice(1), 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
-async function buildPdf(items, {finishEditing=true} = {}) {
+async function buildPdf(items, {finishEditing=true} = {}) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if(finishEditing) finishInlineTextEditing();
   const output = await PDFDocument.create(),
     font = await output.embedFont(StandardFonts.Helvetica),
@@ -1458,8 +1462,12 @@ async function buildPdf(items, {finishEditing=true} = {}) {
       .drawPage(embedded,{x:-x,y:-y,width:croppedWidth,height:croppedHeight,rotate:degrees(angle)});
   }
   return transformed.save();
-}
-function downloadBytes(bytes, name, type = "application/pdf") {
+}finally{__desktopDone?.();}}
+async function downloadBytes(bytes, name, type = "application/pdf", details = {}) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
+  if (globalThis.SplatDesktop) {
+    try { const ok=await SplatDesktop.saveBlob(new Blob([bytes],{type}),name,details); if(!ok)announce("Save cancelled. Your work is still open.");return ok; }
+    catch(error){announce("Save failed: "+error.message);return false;}
+  }
   const url = URL.createObjectURL(new Blob([bytes], { type })),
     a = document.createElement("a");
   a.href = url;
@@ -1468,15 +1476,16 @@ function downloadBytes(bytes, name, type = "application/pdf") {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 30000);
-}
-async function exportPdf(items = state.pages, suffix = "-edited") {
+  return true;
+}finally{__desktopDone?.();}}
+async function exportPdf(items = state.pages, suffix = "-edited") {finishInlineTextEditing();const __desktopStamp=desktopDocumentState();const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   try {
     announce("Exporting PDF…");
     els.saveAsSelect.disabled = true;
     const bytes = await buildPdf(items),
       name = `${state.fileName.replace(/\.pdf$/i, "")}${suffix}.pdf`;
-    downloadBytes(bytes, name);
-    announce(`${name} downloaded.`);
+    { if (!await downloadBytes(bytes,name,"application/pdf",{tool:"pdfsplat",stamp:__desktopStamp,complete:items===state.pages&&suffix==="-edited"})) return; }
+    announce(`${name} saved.`);
     return bytes;
   } catch (error) {
     console.error(error);
@@ -1485,14 +1494,14 @@ async function exportPdf(items = state.pages, suffix = "-edited") {
   } finally {
     els.saveAsSelect.disabled = false;
   }
-}
+}finally{__desktopDone?.();}}
 
-async function sanitizePdf(event) {
+async function sanitizePdf(event) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   event.preventDefault();
   els.sanitizeForm.querySelector('[type="submit"]').disabled = true;
   try {
     announce("Flattening and sanitizing the edited PDF…");
-    const edited = await buildPdf(state.pages), source = await pdfjs.getDocument({ data: edited.slice() }).promise, output = await PDFDocument.create();
+    const edited = await buildPdf(state.pages), source = await pdfjs.getDocument({isEvalSupported:false, data: edited.slice() }).promise, output = await PDFDocument.create();
     for (let number = 1; number <= source.numPages; number++) {
       announce(`Sanitizing page ${number} of ${source.numPages}…`);
       const page = await source.getPage(number), viewport = page.getViewport({ scale: 1.5 }), blob = await renderPdfPageToBlob(page, 1.5), image = await output.embedPng(new Uint8Array(await blob.arrayBuffer()));
@@ -1500,10 +1509,10 @@ async function sanitizePdf(event) {
     }
     output.setTitle(""); output.setAuthor(""); output.setSubject(""); output.setKeywords([]); output.setProducer("PDFSplat sanitized copy"); output.setCreator("PDFSplat");
     const name = `${state.fileName.replace(/\.pdf$/i, "")}-sanitized.pdf`;
-    downloadBytes(await output.save(), name); await source.destroy(); els.sanitizeDialog.close(); announce(`${name} downloaded. Verify it before deleting the original.`);
+    { if (!await downloadBytes(await output.save(),name)) return; } await source.destroy(); els.sanitizeDialog.close(); announce(`${name} saved. Verify it before deleting the original.`);
   } catch (error) { console.error(error); announce("Sanitization failed; the source PDF is unchanged."); }
   finally { els.sanitizeForm.querySelector('[type="submit"]').disabled = false; }
-}
+}finally{__desktopDone?.();}}
 
 function contrastAgainstWhite(hex) {
   const channels = [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255).map((value) => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
@@ -1516,7 +1525,7 @@ function openAccessibilityDialog() {
   els.accessibilityResults.innerHTML = "<p>Run the check to inspect document structure, text, images, forms, metadata, and annotation contrast.</p>";
   els.accessibilityDialog.showModal();
 }
-async function runAccessibilityCheck(event) {
+async function runAccessibilityCheck(event) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   event.preventDefault();
   const title = els.documentTitle.value.trim(), language = els.documentLanguage.value.trim();
   if (!title || !/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language)) return announce("Enter a descriptive title and valid language tag such as en or en-US.");
@@ -1546,13 +1555,13 @@ async function runAccessibilityCheck(event) {
     announce(`Accessibility check complete: ${results.filter((result) => result.level === "error").length} error(s), ${results.filter((result) => result.level === "warning").length} warning(s).`);
   } catch (error) { console.error(error); announce("Accessibility check could not be completed."); }
   finally { els.accessibilityForm.querySelector('[type="submit"]').disabled = false; }
-}
+}finally{__desktopDone?.();}}
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
-async function exportAccessibleHtml() {
+async function exportAccessibleHtml() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const title = els.documentTitle.value.trim(), language = els.documentLanguage.value.trim();
   if (!title || !/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language)) return announce("Enter a descriptive title and valid language before exporting HTML.");
   state.documentTitle = title; state.documentLanguage = language; announce("Creating accessible HTML alternative…");
-  const edited = await buildPdf(state.pages), source = await pdfjs.getDocument({ data: edited.slice() }).promise, sections = [];
+  const edited = await buildPdf(state.pages), source = await pdfjs.getDocument({isEvalSupported:false, data: edited.slice() }).promise, sections = [];
   for (let number = 1; number <= source.numPages; number++) {
     const content = await (await source.getPage(number)).getTextContent(), lines = [], current = [];
     for (const item of content.items) { if (item.str) current.push(item.str); if (item.hasEOL && current.length) { lines.push(current.join(" ").replace(/\s+/g, " ").trim()); current.length = 0; } }
@@ -1562,17 +1571,17 @@ async function exportAccessibleHtml() {
   }
   await source.destroy();
   const html = `<!doctype html><html lang="${escapeHtml(language)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>body{font:1.1rem/1.6 system-ui,sans-serif;max-width:70ch;margin:auto;padding:1.5rem;color:#111;background:#fff}.skip{position:absolute;left:-9999px}.skip:focus{left:1rem;top:1rem;background:#fff;padding:.75rem}section{border-top:1px solid #bbb;margin-top:2rem}a{color:#0645ad}</style></head><body><a class="skip" href="#content">Skip to content</a><header><h1>${escapeHtml(title)}</h1><p>Accessible HTML alternative generated locally from ${escapeHtml(state.fileName)}.</p></header><main id="content">${sections.join("")}</main></body></html>`;
-  downloadBytes(new Blob([html], { type: "text/html;charset=utf-8" }), `${state.fileName.replace(/\.pdf$/i, "")}-accessible.html`, "text/html");
-  announce("Accessible HTML alternative downloaded. Review reading order and descriptions before publishing.");
-}
+  { if (!await downloadBytes(new Blob([html], { type: "text/html;charset=utf-8" }),`${state.fileName.replace(/\.pdf$/i, "")}-accessible.html`,"text/html")) return; }
+  announce("Accessible HTML alternative saved. Review reading order and descriptions before publishing.");
+}finally{__desktopDone?.();}}
 
 function currentTextDocument(title, language) {
   return collectTextDocument({ pages: state.pages, sources: state.sources, title, language, sourceName: state.fileName,
     onProgress: (page, total) => announce(`Reading page ${page} of ${total}…`) });
 }
-async function currentAppearanceDocument(title, language) {
+async function currentAppearanceDocument(title, language) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const bytes = await buildPdf(state.pages);
-  const source = await pdfjs.getDocument({ data: bytes }).promise;
+  const source = await pdfjs.getDocument({isEvalSupported:false, data: bytes }).promise;
   const pages = [];
   try {
     for (let number = 1; number <= source.numPages; number++) {
@@ -1585,7 +1594,7 @@ async function currentAppearanceDocument(title, language) {
     }
     return { title, language, layout: "appearance", pages };
   } finally { await source.destroy(); }
-}
+}finally{__desktopDone?.();}}
 let textSaveFormat = "markdown", textSaveBusy = false;
 function openTextSaveDialog(format) {
   textSaveFormat = format;
@@ -1600,7 +1609,7 @@ function openTextSaveDialog(format) {
 }
 els.textSaveClose.onclick = () => els.textSaveDialog.close();
 els.textSaveDialog.addEventListener("cancel", event => { if (textSaveBusy) event.preventDefault(); });
-els.textSaveForm.onsubmit = async event => {
+els.textSaveForm.onsubmit = async event => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   event.preventDefault();
   if (textSaveBusy) return;
   const title = els.textSaveTitle.value.trim(), language = els.textSaveLanguage.value.trim();
@@ -1616,9 +1625,9 @@ els.textSaveForm.onsubmit = async event => {
     const document = await (appearance ? currentAppearanceDocument : currentTextDocument)(title, language);
     const blob = await createTextFile(textSaveFormat, document);
     const name = `${title.replace(/[\\/:*?"<>|]+/g, "-") || "document"}.${formats[textSaveFormat].extension}`;
-    downloadBytes(blob, name, formats[textSaveFormat].mime);
+    { if (!await downloadBytes(blob,name,formats[textSaveFormat].mime)) return; }
     const emptyPages = appearance ? 0 : document.pages.filter(page => !page.text).length;
-    announce(`${name} downloaded.${emptyPages ? ` ${emptyPages} of ${document.pages.length} pages have no selectable text; scans require OCR.` : ""}`);
+    announce(`${name} saved.${emptyPages ? ` ${emptyPages} of ${document.pages.length} pages have no selectable text; scans require OCR.` : ""}`);
     els.textSaveDialog.close();
   } catch (error) {
     console.error(error);
@@ -1627,7 +1636,7 @@ els.textSaveForm.onsubmit = async event => {
     textSaveBusy = false;
     els.textSaveRun.disabled = els.textSaveClose.disabled = els.textSaveLayout.disabled = els.saveAsSelect.disabled = false;
   }
-};
+}finally{__desktopDone?.();}};
 
 function openEpubDialog() {
   els.epubLayout.value = "formatted";
@@ -1646,7 +1655,7 @@ function openEpubDialog() {
   els.epubTitle.select();
 }
 
-async function exportEpub(event) {
+async function exportEpub(event) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   event.preventDefault();
   const title = els.epubTitle.value.trim(), author = els.epubAuthor.value.trim(), language = els.epubLanguage.value.trim();
   if (!title || !/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language)) {
@@ -1665,10 +1674,10 @@ async function exportEpub(event) {
     const coverFile = els.epubCover.files[0] || null;
     const result = await createEpub({ textDocument, title, author, publisher: els.epubPublisher.value.trim(), description: els.epubDescription.value.trim(), rights: els.epubRights.value.trim(), language, pageChapters: els.epubPageChapters.checked, coverFile, coverAlt: els.epubCoverAlt.value.trim(), onProgress: (page, total) => announce(`Converting page ${page} of ${total} to EPUB…`) });
     const safeName = title.replace(/[\\/:*?"<>|]+/g, "-").trim() || "document";
-    downloadBytes(result.blob, `${safeName}.epub`, "application/epub+zip");
+    { if (!await downloadBytes(result.blob,`${safeName}.epub`,"application/epub+zip")) return; }
     els.epubPreflight.innerHTML = `<h3>EPUB preflight</h3><ul>${result.checks.map((check) => `<li class="${check.level}">${check.message}</li>`).join("")}</ul>`;
     els.epubPreflight.hidden = false;
-    announce(`${safeName}.epub downloaded. Preflight found ${result.checks.filter((check) => check.level === "warning").length} warning(s).${result.emptyPages ? ` ${result.emptyPages} page(s) have no selectable text; scans require OCR.` : ""}`);
+    announce(`${safeName}.epub saved. Preflight found ${result.checks.filter((check) => check.level === "warning").length} warning(s).${result.emptyPages ? ` ${result.emptyPages} page(s) have no selectable text; scans require OCR.` : ""}`);
     els.epubDialog.close();
   } catch (error) {
     console.error(error);
@@ -1677,7 +1686,7 @@ async function exportEpub(event) {
     els.epubRun.disabled = els.epubCancel.disabled = els.epubLayout.disabled = false;
     els.saveAsSelect.disabled = false;
   }
-}
+}finally{__desktopDone?.();}}
 function parseRanges(value) {
   const parts = value
     .split(",")
@@ -1693,15 +1702,15 @@ function parseRanges(value) {
     return state.pages.slice(start - 1, end);
   });
 }
-async function splitPdf(event) {
+async function splitPdf(event) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   event.preventDefault();
   try {
     const mode = new FormData(els.splitForm).get("splitMode"),
       groups = mode === "every" ? state.pages.map((page) => [page]) : parseRanges(els.splitRanges.value);
     els.splitDialog.close();
     if (groups.length === 1) {
-      downloadBytes(await buildPdf(groups[0]), `${state.fileName.replace(/\.pdf$/i, "")}-part-1.pdf`);
-      announce("Separated PDF downloaded.");
+      { if (!await downloadBytes(await buildPdf(groups[0]),`${state.fileName.replace(/\.pdf$/i, "")}-part-1.pdf`)) return; }
+      announce("Separated PDF saved.");
       return;
     }
     announce(`Creating ${groups.length} PDF files…`);
@@ -1711,12 +1720,12 @@ async function splitPdf(event) {
       type: "blob",
       compression: "DEFLATE",
     });
-    downloadBytes(blob, `${state.fileName.replace(/\.pdf$/i, "")}-parts.zip`, "application/zip");
+    { if (!await downloadBytes(blob,`${state.fileName.replace(/\.pdf$/i, "")}-parts.zip`,"application/zip")) return; }
     announce(`${groups.length} separated PDFs downloaded as a ZIP.`);
   } catch (error) {
     announce(error.message || "The PDF could not be separated.");
   }
-}
+}finally{__desktopDone?.();}}
 let pendingVaultFile = null;
 function openVaultDialog(mode = null, file = null) {
   pendingVaultFile = file;
@@ -1736,7 +1745,7 @@ function openVaultDialog(mode = null, file = null) {
   if (!els.vaultDialog.open) els.vaultDialog.showModal();
   if (mode) els.vaultPassword.focus();
 }
-async function runVault(event) {
+async function runVault(event) {finishInlineTextEditing();const __desktopStamp=desktopDocumentState();const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   event.preventDefault();
   const mode = els.vaultDialog.dataset.mode,
     password = els.vaultPassword.value;
@@ -1752,8 +1761,8 @@ async function runVault(event) {
       const pdfBytes = await buildPdf(state.pages),
         pdfName = `${state.fileName.replace(/\.pdf$/i, "")}-edited.pdf`,
         blob = await protectPdf(pdfBytes, pdfName, password, announce);
-      downloadBytes(blob, `${pdfName}.csplat`, "application/octet-stream");
-      announce("Protected CipherSplat PDF downloaded. Test unlocking it before deleting the original.");
+      { if (!await downloadBytes(blob,`${pdfName}.csplat`,"application/octet-stream",{tool:"pdfsplat",stamp:__desktopStamp,complete:true})) return; }
+      announce("Protected CipherSplat PDF saved. Test unlocking it before deleting the original.");
     } else {
       const pdfFile = await unlockPdf(pendingVaultFile, password, announce);
       els.vaultDialog.close();
@@ -1770,7 +1779,7 @@ async function runVault(event) {
     els.vaultRun.disabled = false;
     pendingVaultFile = null;
   }
-}
+}finally{__desktopDone?.();}}
 function undo() {
   finishInlineTextEditing();
   cancelInk?.();
@@ -1801,7 +1810,7 @@ els.pagesButton.onclick = () => {
 els.fileInput.onchange = (e) => { const files = [...e.target.files]; e.target.value = ""; void openFile(files); };
 els.mergeButton.onclick = () => els.mergeInput.click();
 els.mergeInput.onchange = (e) => mergeFile(e.target.files[0]);
-if (els.saveDriveButton) els.saveDriveButton.onclick = async () => {
+if (els.saveDriveButton) els.saveDriveButton.onclick = async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if (!state.pages.length) return;
   els.saveDriveButton.disabled = true;
   try {
@@ -1810,7 +1819,7 @@ if (els.saveDriveButton) els.saveDriveButton.onclick = async () => {
       buildFile: async () => new Blob([await buildPdf(state.pages)], { type: 'application/pdf' }) });
   } catch (error) { announce(error.message || 'Google Drive saving could not start.'); }
   finally { els.saveDriveButton.disabled = !state.pages.length; }
-};
+}finally{__desktopDone?.();}};
 els.saveAsSelect.onchange = () => {
   const format = els.saveAsSelect.value;
   els.saveAsSelect.value = "";
@@ -1879,7 +1888,7 @@ els.signatureButton.onclick = () => { setMode("select"); els.signatureText.value
 els.signatureForm.onsubmit = addTypedSignature;
 els.signatureCancel.onclick = () => els.signatureDialog.close();
 els.signatureUpload.onclick = () => els.signatureImageInput.click();
-els.signatureImageInput.onchange = async (e) => { const file = e.target.files[0]; if (file) { els.signatureDialog.close(); await addImage(file, true); } };
+els.signatureImageInput.onchange = async (e) => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{ const file = e.target.files[0]; if (file) { els.signatureDialog.close(); await addImage(file, true); } }finally{__desktopDone?.();}};
 els.cropButton.onclick = openCropDialog;
 els.cropForm.onsubmit = applyCrop;
 els.cropReset.onclick = (event) => applyCrop(event, true);
@@ -1944,6 +1953,7 @@ els.textValue.oninput = () => {
   const o = selectedObject();
   if (!o) return;
   o.text = els.textValue.value;
+  globalThis.SplatDesktop?.changed("pdfsplat");
   const node = els.annotationLayer.querySelector(`[data-id="${o.id}"]`);
   if (node) {
     const handles=[...(node.ocrHandles||[])];node.textContent=o.text;for(const handle of handles)node.append(handle);
@@ -2054,23 +2064,23 @@ window.addEventListener("beforeunload", () => {
   for (const asset of state.assets.values()) URL.revokeObjectURL(asset.url);
 });
 
-setupScanner({ addPdf: async file => {
+setupScanner({ addPdf: async file => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const added = await (state.pages.length ? mergeFile(file) : openFile(file));
   if (!added) throw new Error("The scan could not be added. Download the scanned PDF to keep a copy.");
-} });
+}finally{__desktopDone?.();}} });
 
-setupWebsitePdf({ addPdf: async file => {
+setupWebsitePdf({ addPdf: async file => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const added = await (state.pages.length ? mergeFile(file) : openFile(file));
   if (!added) throw new Error("Could not add captures. Download the PDF to keep a copy.");
-} });
+}finally{__desktopDone?.();}} });
 
 // Render the visible composition without final crop/fine-rotation transforms.
 // OCR uses normalized coordinates in the same page model as editable annotations.
-async function renderOcrPage(target, control) {
+async function renderOcrPage(target, control) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const item = target.model, limits=control.limits||OCR_LIMITS;
   const bytes = await buildPdf([{...item, crop:null, fineRotation:0}]);
   if (!control.active()) throw new DOMException('OCR stopped','AbortError');
-  const pdf = await pdfjs.getDocument({data:bytes}).promise;
+  const pdf = await pdfjs.getDocument({isEvalSupported:false,data:bytes}).promise;
   let canvas;
   try {
     const page = await pdf.getPage(1), base = page.getViewport({scale:1});
@@ -2097,7 +2107,7 @@ async function renderOcrPage(target, control) {
       dispose:()=>{canvas.width=canvas.height=0;void pdf.destroy();}
     };
   } catch(error) {if(canvas)canvas.width=canvas.height=0;await pdf.destroy();throw error;}
-}
+}finally{__desktopDone?.();}}
 ocr = setupOcr({
   button:els.ocrButton,announce,stamp:snapshot,
   targets:scope=>{
@@ -2107,7 +2117,7 @@ ocr = setupOcr({
     finishInlineTextEditing();return pages;
   },
   renderPage:renderOcrPage,
-  apply:async(chosen,active)=>{
+  apply:async(chosen,active)=>{const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     const document=await PDFDocument.create(),font=await document.embedFont(StandardFonts.Helvetica),prepared=[];
     for(const {result,line}of chosen){
       const item=state.pages.find(p=>p.id===result.target.id);
@@ -2125,10 +2135,14 @@ ocr = setupOcr({
     mutate('Apply OCR text',()=>prepared.forEach(({item,object})=>item.annotations.push(object)));
     state.selectedId=prepared.find(p=>p.item.id===currentPage()?.id)?.object.id||null;
     setMode('select');await renderAll();
-  }
+  }finally{__desktopDone?.();}}
 });
 
 setupToolbar();
 setupToolSearch();
 
 setupPresentation({ pdfjs, buildPdf: () => buildPdf(state.pages), state, announce });
+
+let desktopSavedState = "";
+function desktopDocumentState(){return JSON.stringify({sources:[...state.sources.keys()],pages:state.pages,title:state.documentTitle,language:state.documentLanguage});}
+globalThis.SplatDesktop?.registerWorkspace("pdfsplat",{isDirty:()=>state.pages.length>0&&desktopDocumentState()!==desktopSavedState,stamp:desktopDocumentState,markSaved:stamp=>{desktopSavedState=stamp;}});

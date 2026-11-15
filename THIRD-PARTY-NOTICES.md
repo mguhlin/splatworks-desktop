@@ -21,4 +21,8 @@ Go module versions and checksums are pinned in `go.mod` and `go.sum`. Dependency
 source is retrieved by Go during builds, and is available from the repositories
 identified by those module paths. `licenses/go-modules/` contains their license
 texts. Platform GTK/WebKit/WebView2 runtimes are system dependencies and are not
-included in the portable application archives.
+included in the portable application archives. The Windows setup executable
+includes Microsoft's separately licensed Evergreen WebView2 Runtime installer;
+its version, publisher and SHA-256 are recorded in the release's `-webview2.json`.
+Microsoft's installer manages the runtime and its own servicing independently of
+the application.

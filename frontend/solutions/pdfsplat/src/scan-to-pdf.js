@@ -47,7 +47,7 @@ export function setupScanner({ addPdf }) {
     $("scanControls").disabled = value;
     $("scanClose").disabled = value;
   };
-  async function run(task) {
+  async function run(task) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     if (busy) return;
     lock(true);
     try {
@@ -58,7 +58,7 @@ export function setupScanner({ addPdf }) {
     } finally {
       lock(false);
     }
-  }
+  }finally{__desktopDone?.();}}
   function renderList() {
     $("scanPages").replaceChildren();
     pages.forEach((p, index) => {
@@ -98,7 +98,7 @@ export function setupScanner({ addPdf }) {
       remove.textContent = "Remove";
       remove.setAttribute("aria-label", `Remove page ${index + 1}`);
       remove.onclick = () =>
-        run(async () => {
+        run(async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
           const active = pages[current];
           releasePage(p);
           pages.splice(index, 1);
@@ -115,7 +115,7 @@ export function setupScanner({ addPdf }) {
             $("scanResult").hidden = true;
           }
           renderList();
-        });
+        }finally{__desktopDone?.();}});
       li.append(remove);
       $("scanPages").append(li);
     });
@@ -144,7 +144,7 @@ export function setupScanner({ addPdf }) {
     renderList();
     drawCorners();
   }
-  async function selectPage(index) {
+  async function selectPage(index) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     const p = pages[index];
     source = await readPhoto(p.original);
     current = index;
@@ -158,8 +158,8 @@ export function setupScanner({ addPdf }) {
     message(
       `Editing page ${index + 1}. Move the four corners to the paper edges, then save the page.`,
     );
-  }
-  async function addPhotos(files) {
+  }finally{__desktopDone?.();}}
+  async function addPhotos(files) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     if (pages.length + files.length > 20)
       throw new Error(
         "Use up to 20 photos per scan. Create another PDF for additional pages.",
@@ -178,7 +178,7 @@ export function setupScanner({ addPdf }) {
       renderList();
     }
     if (pages.length > first) await selectPage(first);
-  }
+  }finally{__desktopDone?.();}}
   for (const id of ["scanFiles", "scanCapture"])
     $(id).onchange = () => {
       const files = [...$(id).files];
@@ -199,7 +199,7 @@ export function setupScanner({ addPdf }) {
         ? "Take a photo, then confirm it to return here. If no camera opens, expand Camera not opening? below."
         : "Choose document photos from your device.");
     };
-  $("scanCamera").onclick = async () => {
+  $("scanCamera").onclick = async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     const request = ++cameraRequest;
     $("scanCamera").disabled = true;
     message("Allow camera access in your browser.");
@@ -234,10 +234,10 @@ export function setupScanner({ addPdf }) {
           : "Live camera could not start. Tap Take a photo to use your phone's camera, or take a picture in the Camera app and tap Choose photos.");
       }
     }
-  };
+  }finally{__desktopDone?.();}};
   $("scanStopCamera").onclick = stopCamera;
   $("scanSnapshot").onclick = () =>
-    run(async () => {
+    run(async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
       const video = $("scanVideo");
       if (!video.videoWidth)
         throw new Error("Wait for the camera preview before capturing.");
@@ -246,7 +246,7 @@ export function setupScanner({ addPdf }) {
       canvas.height = video.videoHeight;
       canvas.getContext("2d").drawImage(video, 0, 0);
       await addPhotos([await jpeg(canvas)]);
-    });
+    }finally{__desktopDone?.();}});
   $("scanFilter").onchange = () => {
     pages[current].filter = $("scanFilter").value;
     dirty();
@@ -304,7 +304,7 @@ export function setupScanner({ addPdf }) {
     };
   });
   $("scanSave").onclick = () =>
-    run(async () => {
+    run(async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
       message("Correcting perspective…");
       await new Promise((resolve) => setTimeout(resolve, 0));
       const p = pages[current],
@@ -321,8 +321,8 @@ export function setupScanner({ addPdf }) {
       message(
         `Page ${current + 1} saved. Review the corrected image below; choose another page or create your PDF.`,
       );
-    });
-  async function makePdf() {
+    }finally{__desktopDone?.();}});
+  async function makePdf() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     if (!pages.length || pages.some((p) => !p.blob))
       throw new Error("Save every page before creating the PDF.");
     stopCamera();
@@ -350,9 +350,9 @@ export function setupScanner({ addPdf }) {
     return new File([await pdf.save()], "scanned-document.pdf", {
       type: "application/pdf",
     });
-  }
+  }finally{__desktopDone?.();}}
   $("scanDownload").onclick = () =>
-    run(async () => {
+    run(async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
       const file = await makePdf(),
         url = URL.createObjectURL(file),
         a = document.createElement("a");
@@ -363,13 +363,13 @@ export function setupScanner({ addPdf }) {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
       message("PDF downloaded. You can also add the scans to the editor.");
-    });
+    }finally{__desktopDone?.();}});
   $("scanAdd").onclick = () =>
-    run(async () => {
+    run(async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
       const file = await makePdf();
       await addPdf(file);
       dialog.close();
-    });
+    }finally{__desktopDone?.();}});
   $("scanClose").onclick = () => {
     stopCamera();
     dialog.close();

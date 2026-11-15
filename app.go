@@ -21,6 +21,9 @@ type App struct {
 	smokeDir    string
 	smokeFailed bool
 	smokeOnce   sync.Once
+	closeMu     sync.Mutex
+	ready       bool
+	allowQuit   bool
 }
 
 func NewApp(v string) *App                 { return &App{version: v, saves: transfer.New()} }
@@ -28,6 +31,30 @@ func (a *App) startup(ctx context.Context) { a.ctx = ctx }
 func (a *App) shutdown(context.Context)    { a.saves.Close() }
 func (a *App) Version() string             { return a.version }
 func (a *App) SmokeEnabled() bool          { return a.smokeDir != "" }
+
+// Closing is mediated by the live workspace. No document contents or passwords
+// are sent to Go to decide whether the user needs an unsaved-work warning.
+func (a *App) Ready() { a.closeMu.Lock(); a.ready = true; a.closeMu.Unlock() }
+func (a *App) beforeClose(ctx context.Context) bool {
+	a.closeMu.Lock()
+	allowed := a.allowQuit || !a.ready || a.smokeDir != ""
+	a.closeMu.Unlock()
+	if allowed {
+		return false
+	}
+	runtime.EventsEmit(ctx, "desktop:close-requested")
+	return true
+}
+func (a *App) QuitWhenSafe() error {
+	if a.saves.Active() != 0 {
+		return errors.New("wait for the current save to finish")
+	}
+	a.closeMu.Lock()
+	a.allowQuit = true
+	a.closeMu.Unlock()
+	runtime.Quit(a.ctx)
+	return nil
+}
 
 func (a *App) BeginSave(name string) (string, error) {
 	name = transfer.SafeName(name)

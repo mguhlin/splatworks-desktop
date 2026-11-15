@@ -12,7 +12,7 @@ const emptyText = 'No selectable text on this page. Scanned images require OCR.'
 
 // Extract from the current page model, rather than the flattened PDF: visual
 // replacements in that PDF still have the original text underneath them.
-export async function collectTextDocument({ pages, sources, title, language, sourceName, onProgress = () => {} }) {
+export async function collectTextDocument({ pages, sources, title, language, sourceName, onProgress = () => {} }) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const result = { schemaVersion: 1, title, language, sourceName, pages: [], warnings: [
     'Formatting is reconstructed from PDF font and position information. Review headings, paragraphs, columns, and tables. Image handling depends on the export format; Keep page appearance preserves the full visual layout. Text export does not run OCR automatically. Use Recognize text (OCR) first for text embedded in images.',
   ] };
@@ -55,7 +55,7 @@ export async function collectTextDocument({ pages, sources, title, language, sou
   const empty = result.pages.filter(page => !page.text).length;
   if (empty) result.warnings.push(`${empty} of ${pages.length} pages have no selectable text. Scanned images require OCR.`);
   return result;
-}
+}finally{__desktopDone?.();}}
 
 function markdownSpans(spans) {
   return spans.map(span => {
@@ -78,7 +78,7 @@ function markdownBlocks(blocks) {
   }).join('');
 }
 
-export async function createTextFile(format, document) {
+export async function createTextFile(format, document) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const info = formats[format];
   if (!info) throw new Error('Choose a supported file format.');
   if (format === 'json') {
@@ -90,4 +90,4 @@ export async function createTextFile(format, document) {
     return new Blob([text], { type: info.mime });
   }
   return createOfficeFile(format, document, info.mime);
-}
+}finally{__desktopDone?.();}}

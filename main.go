@@ -22,7 +22,7 @@ import (
 //go:embed all:frontend
 var bundled embed.FS
 
-var version = "0.1.0"
+var version = "1.0.0-rc.1"
 
 func main() {
 	serve := flag.Bool("serve", false, "serve the bundled tools in a browser on loopback (no native file APIs)")
@@ -59,9 +59,10 @@ func main() {
 		BackgroundColour: options.NewRGB(245, 247, 250),
 		AssetServer:      &assetserver.Options{Assets: assets, Middleware: security},
 		OnStartup:        app.startup, OnShutdown: app.shutdown,
-		Bind:  []interface{}{app},
-		Linux: &linux.Options{Icon: icon, ProgramName: "splatworks-desktop", WebviewGpuPolicy: linux.WebviewGpuPolicyOnDemand},
-		Mac:   &mac.Options{About: &mac.AboutInfo{Title: "SplatWorks Desktop", Message: "PDFsplat + CipherSplat\nLocal tools by Miguel Guhlin\nAGPL-3.0-or-later", Icon: icon}},
+		OnBeforeClose: app.beforeClose,
+		Bind:          []interface{}{app},
+		Linux:         &linux.Options{Icon: icon, ProgramName: "splatworks-desktop", WebviewGpuPolicy: linux.WebviewGpuPolicyOnDemand},
+		Mac:           &mac.Options{About: &mac.AboutInfo{Title: "SplatWorks Desktop", Message: "PDFsplat + CipherSplat\nLocal tools by Miguel Guhlin\nAGPL-3.0-or-later", Icon: icon}},
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -75,10 +76,11 @@ func security(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// All processing assets are bundled. Explicit external links go through the
 		// native shell; they never replace the privileged application document.
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), display-capture=(), geolocation=()")
 		next.ServeHTTP(w, r)
 	})
 }

@@ -24,6 +24,12 @@
   },true);
   window.open=(url)=>{if(url)void desktop.openLink(new URL(url,location.href).href);return null;};
   document.addEventListener('DOMContentLoaded',()=>{
+    const id=location.pathname.includes('/CipherSplat/')?'ciphersplat':'pdfsplat';
+    for(const type of ['input','change','click'])document.addEventListener(type,()=>queueMicrotask(()=>desktop.changed(id)));
+    // Keep unvalidated hardware workflows out of the desktop feature contract.
+    for(const key of ['websiteButton','websiteStartButton','scanCamera','scanCapture']){
+      const control=document.getElementById(key);if(control){control.hidden=true;control.disabled=true;control.title='Use the browser edition for live camera or screen capture.';}
+    }
     const drive=document.getElementById('saveDriveButton');if(drive)drive.hidden=true;
     const launcher=document.querySelector('[data-ds-app-launcher]');if(launcher)launcher.hidden=true;
     for(const a of document.querySelectorAll('.online-link')){a.classList.remove('online-link');a.href='https://splatworks.org/pages/tools';}

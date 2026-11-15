@@ -1,26 +1,36 @@
-PDFsplat and CipherSplat together in a standalone Go/Wails desktop application.
+SplatWorks Desktop release candidate: PDFsplat and CipherSplat for Linux, Windows,
+and Mac. This candidate completes the automated engineering and packaging work;
+developer signing credentials and physical-device release validation remain.
 
-- Local PDF editing, annotations, page tools, conversion, and bundled English/Spanish OCR.
-- CipherSplat file, folder, and text encryption with the existing CS4 package format and optional OpenPGP tools.
-- Native destination pickers and chunked saves; folder restoration creates a new destination folder.
-- Both workspaces remain open while switching tools.
-- No account, hosted backend, Python, Node.js, or Go installation required for desktop use.
+- Warn before closing unsaved work or replacing an edited PDF; block closing during processing and saving.
+- Wait for native writes before reporting success. Cancellation and failure preserve unsaved work, including newer edits made while an earlier save is pending.
+- Add a Windows per-user setup executable with shortcuts, uninstall registration, upgrade support, and Microsoft's included offline WebView2 runtime installer.
+- Preserve user-created files during Windows uninstall; restore encrypted folders into new directories.
+- Restrict restoration using Go's rooted filesystem API, keep bounded native write capabilities, and disable PDF.js JavaScript evaluation.
+- Exercise PDF editing/export, English/Spanish OCR, CS4 file encryption, Unicode text vaults, wrong-password/tamper rejection, and OpenPGP public/private-key round trips.
+- Prepare signing for Windows applications/installers/uninstallers and Mac hardened runtime, signing, notarization, and stapling. Stable releases fail without credentials and physical validation approval.
 
-Download the package for your platform and its matching `.sha256` file. Linux
-`.deb` packages declare GTK 3 and WebKitGTK 4.1 dependencies. Windows requires
-Microsoft Edge WebView2 Runtime; provision it before an offline deployment. Mac
-packages contain a universal application for Intel and Apple silicon.
+Download the package matching your platform and its `.sha256` file. Windows users
+can choose `-setup.exe` or the portable ZIP. Linux users can choose a `.deb` or
+portable archive. Mac users can choose a universal DMG or ZIP for Intel and Apple
+silicon.
 
-This is an **unsigned preview**, without Apple notarization. Platform publisher
-warnings are expected. Native automated smoke tests exercise PDF rendering/export,
-CS4 encryption/authentication, native file writes, folder restoration, and local
-OCR on the build runners. Physical-device camera, capture, screen-reader, and
-file-picker verification remains outstanding. Camera/screen capture depends on
-the embedded webview; use the browser edition for browser-tab capture.
+This candidate has **no verified Windows publisher signature or Apple Developer
+ID/notarization**. Publisher warnings remain expected. Mac candidates use ad hoc
+hardened-runtime signing for automated compatibility checks. Credentials must be
+configured and signed downloads validated before a full release.
 
-PDF visual covers are not secure redaction. Existing browser-tool memory and
-conversion limits still apply. This edition combines Go desktop integration with
-the existing JavaScript PDF and encryption engines.
+Automated checks cover all three build platforms, Windows install/upgrade/
+uninstall, Linux install/removal, Mac disk-image/archive integrity, and Linux
+editing/OCR/encryption without networking. Actual file pickers, screen readers,
+Gatekeeper/SmartScreen behavior, offline Windows installation without a preexisting
+runtime, and representative physical hardware remain human validation work.
 
-Notices and installation instructions are included in each archive. Corresponding
-source is available in this repository and the release's source archives.
+Live camera and screen capture are outside the desktop 1.0 feature contract; use
+the browser edition for those workflows. Existing-photo scanning is included.
+PDF visual covers are not secure redaction. Existing document memory and
+conversion limits still apply.
+
+See `docs/SIGNING.md`, `docs/VALIDATION.md`, and `SECURITY.md` in the source
+repository. Notices and installation instructions are included in the archives;
+corresponding source is available in the repository and source archives.

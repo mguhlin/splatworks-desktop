@@ -6,12 +6,18 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      sign_release:
+        description: Sign and notarize using configured developer credentials
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 env:
   PYTHONUTF8: '1'
+  SIGN_RELEASE: ${{ (inputs.sign_release || (startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-'))) && 'true' || 'false' }}
 
 jobs:
   checks:
@@ -27,6 +33,11 @@ jobs:
           cache: npm
       - run: python3 scripts/check-assets.py
       - run: go test -race ./internal/transfer
+      - name: Stable release validation gate
+        if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+        env:
+          VALIDATED: ${{ vars.PHYSICAL_VALIDATION_APPROVED }}
+        run: test "$VALIDATED" = "true" || { echo 'Complete physical-device validation and set PHYSICAL_VALIDATION_APPROVED before a stable release.'; exit 1; }
       - run: npm ci
       - run: npx playwright install --with-deps chromium webkit
       - run: npm test
@@ -37,6 +48,23 @@ jobs:
           path: test-results/
 
   build:
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      WINDOWS_SIGNING_PROVIDER: ${{ vars.WINDOWS_SIGNING_PROVIDER || 'azure' }}
+      AZURE_SIGNING_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+      AZURE_SIGNING_ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+      AZURE_SIGNING_PROFILE: ${{ vars.AZURE_SIGNING_PROFILE }}
+      WINDOWS_CERTIFICATE_PFX: ${{ secrets.WINDOWS_CERTIFICATE_PFX }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      WINDOWS_CERTIFICATE_THUMBPRINT: ${{ vars.WINDOWS_CERTIFICATE_THUMBPRINT }}
+      MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      MACOS_SIGNING_IDENTITY: ${{ vars.MACOS_SIGNING_IDENTITY }}
+      APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+      APPLE_API_KEY_ID: ${{ vars.APPLE_API_KEY_ID }}
+      APPLE_API_ISSUER_ID: ${{ vars.APPLE_API_ISSUER_ID }}
     strategy:
       fail-fast: false
       matrix:
@@ -61,6 +89,19 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config xvfb dbus-x11
       - name: Install pinned Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+      - name: Check reachable Go vulnerabilities
+        if: runner.os == 'Linux'
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 -tags webkit2_41 ./...
+      - name: Prepare Windows installer and verify Microsoft runtime publisher
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/prepare-windows.ps1
+      - uses: azure/login@v2
+        if: runner.os == 'Windows' && env.SIGN_RELEASE == 'true' && env.WINDOWS_SIGNING_PROVIDER == 'azure'
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - name: Verify bundled source
         run: python3 scripts/check-assets.py
         shell: bash
@@ -68,11 +109,23 @@ jobs:
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#v}"
-          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="0.1.0-preview"; fi
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="1.0.0-rc.1"; fi
           args=()
           if [[ "$RUNNER_OS" == "Linux" ]]; then args+=(-tags webkit2_41); fi
           wails build -platform '${{ matrix.target }}' "${args[@]}" -ldflags "-X main.version=$version"
           echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+      - name: Sign Windows application
+        if: runner.os == 'Windows' && env.SIGN_RELEASE == 'true'
+        shell: pwsh
+        run: ./scripts/sign-windows.ps1 -Path ./build/bin/SplatWorks-Desktop.exe
+      - name: Enable Mac hardened runtime
+        if: runner.os == 'macOS'
+        shell: bash
+        run: codesign --force --sign - --options runtime ./build/bin/*.app && codesign --verify --deep --strict ./build/bin/*.app
+      - name: Sign and notarize Mac application
+        if: runner.os == 'macOS' && env.SIGN_RELEASE == 'true'
+        shell: bash
+        run: python3 scripts/sign-macos.py ./build/bin/*.app
       - name: Linux native smoke test without networking
         if: runner.os == 'Linux'
         env:
@@ -107,11 +160,32 @@ jobs:
           result=json.loads(pathlib.Path('output/native/native-smoke.json').read_text())
           print(json.dumps(result,indent=2))
           assert result['passed'], result.get('error')
-          assert len(result['checks']) >= 13
+          assert len(result['checks']) >= 23
           PY
       - name: Package application and checksums
         shell: bash
         run: python3 scripts/package-release.py --platform '${{ matrix.platform }}' --version "$RELEASE_VERSION"
+      - name: Verify Windows install, upgrade, installed app, and uninstall
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/test-windows-install.ps1
+      - name: Verify Linux install, installed app, and removal
+        if: runner.os == 'Linux'
+        env:
+          WEBKIT_DISABLE_DMABUF_RENDERER: '1'
+        run: bash scripts/test-linux-install.sh
+      - name: Verify Mac distribution archive and disk image
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          hdiutil verify output/release/*.dmg
+          mkdir -p output/unpacked
+          ditto -x -k output/release/*.zip output/unpacked
+          codesign --verify --deep --strict output/unpacked/*/*.app
+          lipo -verify_arch x86_64 arm64 output/unpacked/*/*.app/Contents/MacOS/*
+      - name: Verify all package checksums
+        shell: bash
+        run: python3 scripts/verify-packages.py output/release
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}
@@ -137,7 +211,10 @@ jobs:
           pattern: desktop-*
           path: release
           merge-multiple: true
-      - name: Publish desktop preview
+      - name: Publish desktop release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" release/* --verify-tag --prerelease --title "SplatWorks Desktop $GITHUB_REF_NAME" --notes-file docs/RELEASE.md
+        run: |
+          args=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then args+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" release/* --verify-tag "${args[@]}" --title "SplatWorks Desktop $GITHUB_REF_NAME" --notes-file docs/RELEASE.md

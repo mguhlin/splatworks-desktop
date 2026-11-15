@@ -1,8 +1,13 @@
 /build/bin/
 /node_modules/
+**/node_modules/
+/build/windows/icon.ico
+/build/windows/info.json
+/build/windows/wails.exe.manifest
 /test-results/
 /playwright-report/
 /output/
 /wailsjs/
 *.log
 *.tmp
+__pycache__/

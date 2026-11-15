@@ -15,20 +15,20 @@ function pathFrom(base,target){
  let decoded;try{decoded=decodeURIComponent(target.split(/[?#]/)[0]);}catch{return null;}
  const parts=decoded.startsWith('/')?[]:base.split('/').slice(0,-1);for(const p of decoded.split('/')){if(p==='..'){if(!parts.length)return null;parts.pop();}else if(p&&p!=='.')parts.push(p);}return parts.join('/');
 }
-async function archive(file){
+async function archive(file){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
  let zip;try{zip=await globalThis.JSZip.loadAsync(await file.arrayBuffer());}catch{throw Error('This document could not be read. It may be damaged or encrypted.');}let total=0;
  const files=Object.values(zip.files);if(files.length>4000)throw Error('This document contains too many archive entries.');
  for(const entry of files){total+=entry._data?.uncompressedSize||0;if(total>ZIP_LIMIT)throw Error('This document is too large after decompression.');}
  return zip;
-}
-async function readXml(zip,path){const f=zip.file(path);if(!f)throw Error(`Missing document component: ${path}`);const text=await f.async('string');if(text.length>10*1024*1024)throw Error('A document component is too large.');return xml(text);}
-async function relationships(zip,part){
+}finally{__desktopDone?.();}}
+async function readXml(zip,path){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{const f=zip.file(path);if(!f)throw Error(`Missing document component: ${path}`);const text=await f.async('string');if(text.length>10*1024*1024)throw Error('A document component is too large.');return xml(text);}finally{__desktopDone?.();}}
+async function relationships(zip,part){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
  const pos=part.lastIndexOf('/'),rel=part.slice(0,pos+1)+'_rels/'+part.slice(pos+1)+'.rels',map=new Map();
  if(!zip.file(rel))return map;for(const r of all(await readXml(zip,rel),'Relationship'))if(r.getAttribute('TargetMode')!=='External'){const path=pathFrom(part,r.getAttribute('Target'));if(path)map.set(r.getAttribute('Id'),path);}return map;
-}
+}finally{__desktopDone?.();}}
 function fontFamily(name=''){return /courier|mono|consolas/i.test(name)?'Courier':/times|georgia|serif/i.test(name.replace(/sans-serif/gi,''))?'Times':'Helvetica';}
 function hex(value,fallback='#172033'){return /^[0-9a-f]{6}$/i.test(value||'')?'#'+value:fallback;}
-async function imageData(blob){
+async function imageData(blob){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
  if(blob.type==='image/svg+xml'){
   const d=xml(await blob.text());for(const n of [...all(d,'script'),...all(d,'foreignObject')])n.remove();
   for(const n of d.getElementsByTagName('*'))for(const a of [...n.attributes])if(/^on/i.test(a.name)||(/href|src/i.test(a.localName)&&!a.value.startsWith('#')&&!/^data:image\/(png|jpeg|webp);base64,/i.test(a.value))||(/url\(/i.test(a.value)&&!/url\(['"]?#/i.test(a.value)))n.removeAttributeNode(a);
@@ -37,8 +37,8 @@ async function imageData(blob){
  const url=URL.createObjectURL(blob),image=new Image();
  try{image.src=url;await image.decode();if(!image.width||!image.height)throw Error('Empty image');const scale=Math.min(1,4096/Math.max(image.width,image.height));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(image.width*scale));c.height=Math.max(1,Math.round(image.height*scale));c.getContext('2d').drawImage(image,0,0,c.width,c.height);return {bytes:await new Promise((resolve,reject)=>c.toBlob(b=>{if(!b)return reject(Error('Image could not be rendered.'));b.arrayBuffer().then(buffer=>resolve(new Uint8Array(buffer)),reject);},'image/png')),width:image.width,height:image.height};}
  catch{throw Error('This image format cannot be decoded by this browser. Try PNG, JPEG, WebP, GIF, BMP, SVG, or AVIF.');}finally{URL.revokeObjectURL(url);}
-}
-async function zipImage(zip,path){const entry=path&&zip.file(path);if(!entry)return null;return imageData(new Blob([await entry.async('uint8array')],{type:IMAGE_TYPES[path.split('.').pop().toLowerCase()]||'application/octet-stream'}));}
+}finally{__desktopDone?.();}}
+async function zipImage(zip,path){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{const entry=path&&zip.file(path);if(!entry)return null;return imageData(new Blob([await entry.async('uint8array')],{type:IMAGE_TYPES[path.split('.').pop().toLowerCase()]||'application/octet-stream'}));}finally{__desktopDone?.();}}
 function inlineMarkdown(text){
  const result=[],pattern=/(\*\*([^*]+)\*\*|__([^_]+)__|\*([^*]+)\*|`([^`]+)`|\[([^\]]+)\]\([^)]*\))/g;let at=0;
  for(const m of text.matchAll(pattern)){if(m.index>at)result.push({text:text.slice(at,m.index)});result.push({text:m[2]||m[3]||m[4]||m[5]||m[6],bold:!!(m[2]||m[3]),italic:!!m[4],pdfFontFamily:m[5]?'Courier':'Helvetica'});at=m.index+m[0].length;}if(at<text.length)result.push({text:text.slice(at)});return result;
@@ -58,7 +58,7 @@ function markdownBlocks(text,plain=false){
  }
  flush();return blocks;
 }
-async function docxBlocks(zip){
+async function docxBlocks(zip){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
  const part='word/document.xml',d=await readXml(zip,part),rels=await relationships(zip,part),blocks=[];
  for(const p of all(d,'p')){
   const style=attribute(first(first(p,'pPr')||p,'pStyle'),'val')||'',heading=style.match(/heading([1-6])/i),runs=[];
@@ -71,11 +71,11 @@ async function docxBlocks(zip){
   if(all(p,'br').some(b=>attribute(b,'type')==='page'))blocks.push({break:true});
  }
  return blocks;
-}
-async function epubBlocks(zip){
+}finally{__desktopDone?.();}}
+async function epubBlocks(zip){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
  const container=await readXml(zip,'META-INF/container.xml'),root=first(container,'rootfile')?.getAttribute('full-path');if(!root)throw Error('EPUB has no package document.');
  const opf=await readXml(zip,root),manifest=new Map(all(opf,'item').map(i=>[i.getAttribute('id'),pathFrom(root,i.getAttribute('href'))])),blocks=[];
- async function walk(node,part,runs,style={}){
+ async function walk(node,part,runs,style={}){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if(node.nodeType===3){runs.push({text:node.nodeValue.replace(/\s+/g,' '),...style});return;}
   if(node.nodeType!==1||['script','style','iframe','object','audio','video'].includes(node.localName))return;
   const tag=node.localName.toLowerCase();if(tag==='img'){if(runs.length)blocks.push({runs:runs.splice(0)});const data=await zipImage(zip,pathFrom(part,node.getAttribute('src')));if(data)blocks.push({image:data});return;}
@@ -84,16 +84,16 @@ async function epubBlocks(zip){
   const next={...style,bold:style.bold||!!heading||['b','strong'].includes(tag),italic:style.italic||['i','em'].includes(tag)};
   if(tag==='li')runs.push({text:'• '});for(const child of node.childNodes)await walk(child,part,runs,next);
   if(block&&runs.length)blocks.push({runs:runs.splice(0),size:heading?26-Number(heading[1])*2:12});
- }
+ }finally{__desktopDone?.();}}
  for(const ref of all(opf,'itemref')){const part=manifest.get(ref.getAttribute('idref'));if(!part||ref.getAttribute('linear')==='no')continue;const d=await readXml(zip,part),runs=[];await walk(first(d,'body')||d.documentElement,part,runs);if(runs.length)blocks.push({runs});blocks.push({break:true});}
  return blocks;
-}
-async function flowPdf(blocks){
+}finally{__desktopDone?.();}}
+async function flowPdf(blocks){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
  const {PDFDocument,StandardFonts,rgb}=globalThis.PDFLib,doc=await PDFDocument.create(),fonts=new Map();let page,y=790;
  const newPage=()=>{page=doc.addPage([595,842]);y=790;};newPage();
  const color=hex=>{const n=parseInt((hex||'#172033').slice(1),16);return rgb((n>>16&255)/255,(n>>8&255)/255,(n&255)/255);};
- async function fontFor(run){const name=StandardFonts[standardTextFont(run)];if(!fonts.has(name))fonts.set(name,await doc.embedFont(name));return fonts.get(name);}
- async function measure(text,run,size){const font=await fontFor(run);try{return {width:font.widthOfTextAtSize(text,size),font};}catch{const c=document.createElement('canvas'),ctx=c.getContext('2d');ctx.font=`${run.italic?'italic ':''}${run.bold?'bold ':''}${size*2}px ${run.pdfFontFamily==='Times'?'serif':run.pdfFontFamily==='Courier'?'monospace':'sans-serif'}`;return {width:ctx.measureText(text).width/2,ctx,canvas:c};}}
+ async function fontFor(run){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{const name=StandardFonts[standardTextFont(run)];if(!fonts.has(name))fonts.set(name,await doc.embedFont(name));return fonts.get(name);}finally{__desktopDone?.();}}
+ async function measure(text,run,size){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{const font=await fontFor(run);try{return {width:font.widthOfTextAtSize(text,size),font};}catch{const c=document.createElement('canvas'),ctx=c.getContext('2d');ctx.font=`${run.italic?'italic ':''}${run.bold?'bold ':''}${size*2}px ${run.pdfFontFamily==='Times'?'serif':run.pdfFontFamily==='Courier'?'monospace':'sans-serif'}`;return {width:ctx.measureText(text).width/2,ctx,canvas:c};}}finally{__desktopDone?.();}}
  for(const block of blocks){
   if(block.break){if(y<790)newPage();continue;}
   if(block.image){const image=await doc.embedPng(block.image.bytes),targetWidth=block.width||image.width,targetHeight=block.height||image.height*targetWidth/image.width,scale=Math.min(499/targetWidth,650/targetHeight,1),w=targetWidth*scale,h=targetHeight*scale;if(y-h<48)newPage();page.drawImage(image,{x:48,y:y-h,width:w,height:h});y-=h+12;continue;}
@@ -109,8 +109,8 @@ async function flowPdf(blocks){
  }
  // Avoid a trailing empty page after the last chapter/page break.
  if(doc.getPageCount()>1&&y===790)doc.removePage(doc.getPageCount()-1);return doc;
-}
-export async function convertToPdf(file){
+}finally{__desktopDone?.();}}
+export async function convertToPdf(file){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
  if(!file)throw Error('Choose a file to open.');const ext=file.name.split('.').pop().toLowerCase();
  if(ext==='pdf'||file.type==='application/pdf')return {file:ext==='pdf'?file:new File([file],file.name+'.pdf',{type:'application/pdf'}),converted:false};
  if(file.size>LIMIT)throw Error('Choose a file smaller than 50 MB.');
@@ -120,11 +120,11 @@ export async function convertToPdf(file){
  else if((['docx','odt','epub','pptx'].includes(ext)||file.type==='application/vnd.oasis.opendocument.text')){const zip=await archive(file);doc=ext==='pptx'?await pptxPdf(zip,{readXml,relationships,zipImage,attribute}):await flowPdf(await(ext==='docx'?docxBlocks(zip):(ext==='odt'||file.type==='application/vnd.oasis.opendocument.text')?odtBlocks(zip,{readXml,zipImage,pathFrom,fontFamily}):epubBlocks(zip)));notice=ext==='pptx'?'Slides become page images. Complex layouts, themes, charts, and animations may differ.':'Document text and embedded images are reflowed. Complex layouts and styling may differ.';}
  else throw Error('Unsupported format. Choose PDF, DOCX, ODT, PPTX, EPUB, Markdown, TXT, or an image. Older DOC/PPT and encrypted ebooks are not supported.');
  return {file:new File([await doc.save()],file.name.replace(/\.[^.]+$/, '')+'.pdf',{type:'application/pdf'}),converted:true,notice};
-}
-export async function prepareFiles(files,onProgress=()=>{}){
+}finally{__desktopDone?.();}}
+export async function prepareFiles(files,onProgress=()=>{}){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
  const list=[...files];if(!list.length)return null;if(list.length>20)throw Error('Choose up to 20 files at once.');if(list.length>1&&list.reduce((sum,f)=>sum+f.size,0)>ZIP_LIMIT)throw Error('Choose files totaling less than 100 MB.');const results=[];
  for(const file of list){onProgress(file.name);results.push(await convertToPdf(file));}
  if(results.length===1)return {...results[0],originalName:list[0].name};
  const doc=await globalThis.PDFLib.PDFDocument.create();for(const result of results){const part=await globalThis.PDFLib.PDFDocument.load(await result.file.arrayBuffer());for(const page of await doc.copyPages(part,part.getPageIndices()))doc.addPage(page);}
  return {file:new File([await doc.save()],'combined.pdf',{type:'application/pdf'}),originalName:'combined.pdf',converted:results.some(r=>r.converted),notice:[...new Set(results.map(r=>r.notice).filter(Boolean))].join('\n')};
-}
+}finally{__desktopDone?.();}}

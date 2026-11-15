@@ -31,6 +31,8 @@ type Store struct {
 
 func New() *Store { return &Store{items: make(map[string]*pending)} }
 
+func (s *Store) Active() int { s.mu.Lock(); defer s.mu.Unlock(); return len(s.items) }
+
 func token() (string, error) {
 	b := make([]byte, 24)
 	if _, err := rand.Read(b); err != nil {
@@ -52,7 +54,14 @@ func SafeName(name string) string {
 		return "document"
 	}
 	if len(name) > 200 {
-		return "document" + filepath.Ext(name)
+		ext := filepath.Ext(name)
+		if len(ext) > 20 {
+			ext = ""
+		}
+		return "document" + ext
+	}
+	if !SafeRelative(name) {
+		return "document"
 	}
 	return name
 }
@@ -143,22 +152,33 @@ func (s *Store) Append(id, name, encoded string, first bool) error {
 	if !SafeRelative(name) {
 		return errors.New("unsafe or unsupported restoration path")
 	}
-	dest := filepath.Join(p.temp, filepath.FromSlash(name))
-	if err = os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
+	// os.Root keeps restoration inside the private staging tree even if a local
+	// process introduces a symlink while files are being restored.
+	root, err := os.OpenRoot(p.temp)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+	dest := filepath.FromSlash(name)
+	if err = root.MkdirAll(filepath.Dir(dest), 0700); err != nil {
 		return err
 	}
 	flags := os.O_WRONLY | os.O_APPEND
 	if first {
 		flags = os.O_WRONLY | os.O_CREATE | os.O_EXCL
 	}
-	f, err := os.OpenFile(dest, flags, 0600)
+	f, err := root.OpenFile(dest, flags, 0600)
 	if err != nil {
 		return errors.New("could not restore file; duplicate or conflicting paths are not allowed")
 	}
 	_, writeErr := f.Write(data)
+	syncErr := f.Sync()
 	closeErr := f.Close()
 	if writeErr != nil {
 		return writeErr
+	}
+	if syncErr != nil {
+		return syncErr
 	}
 	return closeErr
 }

@@ -49,7 +49,7 @@ export function setupWebsitePdf({ addPdf }) {
   });
   window.addEventListener('pagehide', stop);
   $('websiteStop').onclick = () => { stop(); message('Sharing stopped. Your captured pages are still available.'); };
-  $('websiteShare').onclick = async () => {
+  $('websiteShare').onclick = async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     const ticket = ++request;
     $('websiteShare').disabled = true;
     try {
@@ -67,8 +67,8 @@ export function setupWebsitePdf({ addPdf }) {
       stop();
       message(error.name === 'NotAllowedError' ? 'Sharing was canceled or denied. Choose tab or window to try again.' : 'Could not share this screen. Try a desktop browser that supports screen sharing.');
     } finally { if (ticket === request) update(); }
-  };
-  $('websiteCapture').onclick = async () => {
+  }finally{__desktopDone?.();}};
+  $('websiteCapture').onclick = async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     if (busy || !stream || pages.length >= 20) return;
     if (!video.videoWidth || video.readyState < 2) { message('Wait for the shared page preview, then capture again.'); return; }
     const ticket = request;
@@ -86,8 +86,8 @@ export function setupWebsitePdf({ addPdf }) {
       message(`${pages.length} page(s) captured. ${pages.length === 20 ? 'Limit reached: download or add these pages.' : 'Scroll the source page to capture another section.'}`);
     } catch (error) { message(error.message); }
     finally { busy = false; render(); }
-  };
-  async function output(add) {
+  }finally{__desktopDone?.();}};
+  async function output(add) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     if (busy || !pages.length) return;
     busy = true; render();
     try {
@@ -107,7 +107,7 @@ export function setupWebsitePdf({ addPdf }) {
       }
     } catch (error) { message(`Could not create PDF: ${error.message}`); }
     finally { busy = false; render(); }
-  }
+  }finally{__desktopDone?.();}}
   $('websiteDownload').onclick = () => output(false);
   $('websiteAdd').onclick = () => output(true);
 }

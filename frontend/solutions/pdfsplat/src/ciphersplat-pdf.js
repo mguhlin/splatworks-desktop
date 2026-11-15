@@ -44,7 +44,7 @@ function validateHeader(header) {
   }
 }
 
-async function argon2Bytes(password, salt, header) {
+async function argon2Bytes(password, salt, header) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   validateHeader(header);
   const passwordBytes = encoder.encode(password);
   const saltBytes = salt.slice();
@@ -67,13 +67,13 @@ async function argon2Bytes(password, salt, header) {
   }
   if (!globalThis.hashwasm?.argon2id) throw Error('The local Argon2id engine is unavailable.');
   return globalThis.hashwasm.argon2id({ password:encoder.encode(password), salt:salt.slice(), memorySize:header.memory, iterations:header.passes, parallelism:header.parallelism, hashLength:header.keyLength, outputType:'binary' });
-}
+}finally{__desktopDone?.();}}
 
-async function deriveKey(password, salt, header) {
+async function deriveKey(password, salt, header) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const bytes = await argon2Bytes(password, salt, header);
   try { return await crypto.subtle.importKey('raw', bytes, { name:'AES-GCM' }, false, ['encrypt','decrypt']); }
   finally { bytes.fill(0); }
-}
+}finally{__desktopDone?.();}}
 
 function ivFor(prefix, counter) {
   const iv = new Uint8Array(12);
@@ -86,12 +86,12 @@ function aad(header, counter) {
   return concat(MAGIC, u32(header.length), header, u32(counter));
 }
 
-async function sealRecord(key, prefix, counter, plain, header) {
+async function sealRecord(key, prefix, counter, plain, header) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const cipher = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv:ivFor(prefix,counter), additionalData:aad(header,counter), tagLength:128 }, key, plain));
   return new Blob([u32(plain.length), u32(cipher.length), cipher]);
-}
+}finally{__desktopDone?.();}}
 
-async function openRecord(file, offset, key, prefix, counter, maximum, header) {
+async function openRecord(file, offset, key, prefix, counter, maximum, header) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if (offset + 8 > file.size) throw Error('The encrypted package ended unexpectedly.');
   const lengths = new Uint8Array(await file.slice(offset, offset + 8).arrayBuffer());
   const view = new DataView(lengths.buffer);
@@ -102,9 +102,9 @@ async function openRecord(file, offset, key, prefix, counter, maximum, header) {
     const plain = await crypto.subtle.decrypt({ name:'AES-GCM', iv:ivFor(prefix,counter), additionalData:aad(header,counter), tagLength:128 }, key, await file.slice(offset + 8, offset + 8 + cipherLength).arrayBuffer());
     return { bytes:new Uint8Array(plain), next:offset + 8 + cipherLength };
   } catch { throw Error('Unlock failed. The password is wrong or the package was altered.'); }
-}
+}finally{__desktopDone?.();}}
 
-export async function protectPdf(bytes, filename, password, onProgress = () => {}) {
+export async function protectPdf(bytes, filename, password, onProgress = () => {}) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if (!crypto.subtle) throw Error('Web Crypto requires HTTPS or localhost.');
   if (password.length < 12) throw Error('Use a password of at least 12 characters.');
   const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -122,9 +122,9 @@ export async function protectPdf(bytes, filename, password, onProgress = () => {
     parts.push(await sealRecord(key, prefix, counter++, new Uint8Array(await file.slice(offset, offset + CHUNK_SIZE).arrayBuffer()), header));
   }
   return new Blob(parts, { type:'application/octet-stream' });
-}
+}finally{__desktopDone?.();}}
 
-export async function unlockPdf(file, password, onProgress = () => {}) {
+export async function unlockPdf(file, password, onProgress = () => {}) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if (file.size < 29) throw Error('This package is too short to be valid.');
   const prefixBytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
   if (!MAGIC.every((byte, index) => prefixBytes[index] === byte)) throw Error('This is not a current CipherSplat CS4 package.');
@@ -158,4 +158,4 @@ export async function unlockPdf(file, password, onProgress = () => {}) {
   }
   if (offset !== file.size || restored !== entry.size) throw Error('Authenticated PDF size does not match package metadata.');
   return new File(parts, entry.path, { type:'application/pdf' });
-}
+}finally{__desktopDone?.();}}

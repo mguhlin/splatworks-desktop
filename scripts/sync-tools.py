@@ -63,12 +63,9 @@ boot = dest / 'solutions/pdfsplat/src/boot.js'
 text = boot.read_text(encoding='utf-8').replace("void load('../../assets/js/tool-launcher.js?v=2', true).catch(console.error);", '/* Desktop shell supplies the installed tool switcher. */')
 boot.write_text(text, encoding='utf-8')
 
-cipher = dest / 'solutions/CipherSplat/app.js'
-text = cipher.read_text(encoding='utf-8')
-old = 'async function downloadResult(){if(resultFiles.length){'
-assert text.count(old) == 1, 'Upstream folder download changed; review the adapter.'
-text = text.replace(old, 'async function downloadResult(){if(resultFiles.length&&window.SplatDesktop?.native){try{await window.SplatDesktop.saveFolder(resultFiles)}catch(error){els.error.textContent=error.message}return}if(resultFiles.length){')
-cipher.write_text(text, encoding='utf-8')
+subprocess.run(['node', str(ROOT/'scripts/adapt-tools.mjs')], check=True)
+subprocess.run(['npm', 'ci', '--prefix',str(dest/'solutions/pdfsplat')], check=True)
+subprocess.run(['node',str(dest/'scripts/build-pdfsplat.mjs')],check=True)
 
 # Export docs are kept as source material. The shell supplies a short offline
 # help page instead of navigating away from an open document.
@@ -76,7 +73,7 @@ cipher.write_text(text, encoding='utf-8')
 revision = subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()
 files = {}
 for file in sorted(dest.rglob('*')):
-    if file.is_file() and file.relative_to(dest).parts[0] not in ['desktop'] and file.name not in ['index.html', 'source-manifest.json']:
+    if file.is_file() and 'node_modules' not in file.parts and file.relative_to(dest).parts[0] not in ['desktop'] and file.name not in ['index.html', 'source-manifest.json']:
         files[file.relative_to(dest).as_posix()] = hashlib.sha256(file.read_bytes()).hexdigest()
 # Include adapted tool entry pages too, excluding only the shell entry page.
 for tool in registry:
@@ -86,3 +83,4 @@ manifest = {'repository':'https://github.com/mguhlin/drawsplat', 'revision':revi
 (dest/'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 shutil.copy2(source/'solutions/pdfsplat/pdfsplat.png', ROOT/'build/appicon.png')
 print(f'Imported {len(registry)} tools from DrawSplat {revision[:12]} ({len(files)} bundled files).')
+shutil.rmtree(dest/'solutions/pdfsplat/node_modules')

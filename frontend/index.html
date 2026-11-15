@@ -17,13 +17,18 @@
   </header>
   <main id="workspaces" aria-label="Tool workspace"></main>
   <footer class="desktop-footer"><span id="desktopStatus" role="status" aria-live="polite">Starting local tools…</span><span id="desktopVersion"></span></footer>
+  <dialog id="leaveDialog" aria-labelledby="leaveTitle" aria-describedby="leaveMessage">
+    <h1 id="leaveTitle">Unsaved work</h1>
+    <p id="leaveMessage"></p>
+    <div class="dialog-actions"><button id="keepWorking" autofocus>Keep working</button><button id="discardWork">Discard and close</button></div>
+  </dialog>
   <dialog id="helpDialog" aria-labelledby="helpTitle">
     <h1 id="helpTitle">SplatWorks Desktop</h1>
     <p>PDFsplat and CipherSplat run locally. The editor, PDF libraries, OCR engines, English and Spanish models, and encryption tools are included.</p>
-    <h2>Your files</h2><p>Use Open file or drag files into a tool. Saving opens a native destination picker. Switching tools keeps each workspace open. Closing the application discards unsaved work.</p>
+    <h2>Your files</h2><p>Use Open file or drag files into a tool. Saving opens a native destination picker. Switching tools keeps each workspace open. The app warns before discarding unsaved work and waits for active operations before closing. It does not create automatic recovery copies.</p>
     <p>CipherSplat restores folders inside a new folder at your chosen destination. Existing folders are never overlaid. Passwords cannot be recovered; test an encrypted copy before deleting an original.</p>
     <h2>Features to review</h2><p>PDF text replacement and visual covers preserve underlying content. They are not secure redaction. OCR requires review and does not create a tagged, accessible PDF.</p>
-    <p>Camera capture depends on platform permissions. Tab and window capture is available only when the embedded webview supports screen sharing. Use the browser edition for workflows that need browser tab capture. WebDeck exports open in your browser for presentation and printing.</p>
+    <p>Live camera and screen capture are available in the browser edition. In this desktop edition, import existing photos for scanning. WebDeck exports open in your browser for presentation and printing.</p>
     <h2>About this edition</h2><p>This is a Go desktop shell using Wails and the existing local web tools. Native saves are streamed in chunks. The tools retain their existing PDF and browser memory limits.</p>
     <p>AGPL-3.0-or-later. Bundled dependencies retain their licenses. <a href="https://github.com/mguhlin/splatworks-desktop">Source, licenses, and downloads</a> · <a href="https://splatworks.org">SplatWorks website</a>. Website links open in your browser and require an internet connection.</p>
     <form method="dialog"><button autofocus>Close help</button></form>

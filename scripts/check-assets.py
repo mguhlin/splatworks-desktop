@@ -30,6 +30,11 @@ for rel in ['index.html','solutions/pdfsplat/index.html','solutions/CipherSplat/
     parser=Assets(web/rel);parser.feed((web/rel).read_text(encoding='utf-8'))
 for rel in ['vendor/pdf.worker.min.js','solutions/pdfsplat/vendor/ocr/eng.traineddata','solutions/pdfsplat/vendor/ocr/spa.traineddata','desktop/native-smoke.js']:
     if not (web/rel).is_file(): errors.append('Missing engine: '+rel)
+for file in (web/'solutions/pdfsplat/src').glob('*.js'):
+    text=file.read_text(encoding='utf-8')
+    if file.name=='webdeck-runtime.js':continue
+    for match in re.finditer(r'\.getDocument\(\{',text):
+        if not text[match.end():].startswith('isEvalSupported:false,'):errors.append('PDF.js evaluation mitigation missing: '+str(file.relative_to(web)))
 # Maintenance labels must not return through desktop templates or packaging.
 pattern=re.compile(r'\b(?:last updated|last modified|generated on|checked on|reviewed on)\s*:?',re.I)
 for folder in ['desktop']:

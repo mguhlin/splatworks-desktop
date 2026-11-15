@@ -86,7 +86,7 @@ export function setupOcr({button,targets,stamp,renderPage,apply,announce}){
     }
     controls();
   }
-  async function run(){
+  async function run(){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     stop({clear:true});const token=generation;
     const limits=$('ocrLowMemory').checked?OCR_LIMITS.lowMemory:OCR_LIMITS,language=$('ocrLanguage').value;
     let pages;
@@ -130,8 +130,8 @@ export function setupOcr({button,targets,stamp,renderPage,apply,announce}){
       if(token===generation){const reviewFocus=document.activeElement===$('ocrStop');busy=false;$('ocrProgress').hidden=true;controls();if(reviewFocus){const field=$('ocrResults').querySelector('textarea');if(field)field.focus();else $('ocrRun').focus();}}else controls();
       if(retryFocus){const focus=document.activeElement;if(dialog.open&&!$('ocrRun').disabled&&(focus===$('ocrStop')||focus===document.body||focus===$('ocrRun')))$('ocrRun').focus();retryFocus=false;}
     }
-  }
-  async function commit(){
+  }finally{__desktopDone?.();}}
+  async function commit(){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
     if(busy)return;const chosen=allLines().filter(({line})=>line.selected&&line.text.trim());if(!chosen.length)return;
     if(capture!==stamp()){message('The document changed. Recognize text again before applying this preview.');return;}
     busy=true;controls();
@@ -141,7 +141,7 @@ export function setupOcr({button,targets,stamp,renderPage,apply,announce}){
       const count=chosen.length;stop({clear:true,close:true});announce(`${count} OCR text box${count===1?'':'es'} added. Edit the text on the page or in Selected text. One Undo restores this batch.`);
     }catch(error){message(error.message||'OCR text could not be applied. No document changes were made.');}
     finally{busy=false;controls();}
-  }
+  }finally{__desktopDone?.();}}
   button.onclick=()=>{
     stop({clear:true});dialog.showModal();
     message(location.protocol==='file:'?'OCR needs a local HTTP launcher or HTTPS site. Use START-HERE.html and the included launcher; direct-file PDF editing remains available.':'Choose pages and recognize text. The document stays unchanged until Apply.');controls();

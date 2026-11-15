@@ -114,7 +114,7 @@ export function rectify(source, corners, filter = "color", rotation = 0) {
   t.drawImage(canvas, -width / 2, -height / 2);
   return turned;
 }
-export async function readPhoto(blob) {
+export async function readPhoto(blob) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if (blob.size > 40 * 1024 * 1024)
     throw new Error("Choose a photo smaller than 40 MB.");
   let image;
@@ -136,7 +136,7 @@ export async function readPhoto(blob) {
   } finally {
     image.close();
   }
-}
+}finally{__desktopDone?.();}}
 export const jpeg = (canvas) =>
   new Promise((resolve, reject) =>
     canvas.toBlob(

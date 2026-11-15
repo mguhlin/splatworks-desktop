@@ -26,8 +26,8 @@ export function imagePlacements(list, ops) {
   return placements;
 }
 
-export async function collectEpubImages({ pdfjs, pdfBytes, textDocument, onProgress = () => {} }) {
-  const pdf = await pdfjs.getDocument({ data: pdfBytes.slice() }).promise;
+export async function collectEpubImages({ pdfjs, pdfBytes, textDocument, onProgress = () => {} }) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
+  const pdf = await pdfjs.getDocument({isEvalSupported:false, data: pdfBytes.slice() }).promise;
   try {
     for (let number = 1; number <= pdf.numPages; number++) {
       onProgress(number, pdf.numPages);
@@ -67,4 +67,4 @@ export async function collectEpubImages({ pdfjs, pdfBytes, textDocument, onProgr
     }
     return textDocument;
   } finally { await pdf.destroy(); }
-}
+}finally{__desktopDone?.();}}

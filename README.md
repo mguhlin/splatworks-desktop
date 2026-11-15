@@ -12,20 +12,23 @@ existing SplatWorks web tools provide PDF rendering, editing, OCR, and encryptio
 
 ## Install
 
-This initial preview is unsigned. Windows and macOS may show an application
-publisher warning. Downloads are accompanied by SHA-256 checksums. Physical
-device testing, code signing, and notarization remain release-readiness work.
+The release candidate has no verified publisher signature or Apple notarization.
+Windows and macOS may show a publisher warning. Downloads include SHA-256
+checksums. Signing credentials and physical-device validation are the remaining
+release gates; see [Signing](docs/SIGNING.md) and [Validation](docs/VALIDATION.md).
 
 - **Linux x86-64:** use the `.deb` on Debian/Ubuntu, or extract the `.tar.gz` and
   run `SplatWorks-Desktop`. Requires GTK 3 and WebKitGTK 4.1. The Debian package
   declares these dependencies so the package manager can install them.
-- **Windows x86-64:** extract the Windows ZIP and run `SplatWorks-Desktop.exe`.
-  Requires Microsoft Edge WebView2 Runtime. It is normally present on Windows 11.
-  If missing, install it using Microsoft's official [WebView2 Runtime installer](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
-  For an offline deployment, provision the runtime before disconnecting.
+- **Windows 11 x86-64:** run the `-setup.exe` installer. It installs for the current
+  user, creates shortcuts and an uninstall entry, and includes Microsoft's full
+  WebView2 runtime installer for machines that need it, including offline setup.
+  The runtime publisher is verified before packaging. A portable ZIP is also
+  available; that edition requires an existing WebView2 runtime.
 - **Mac, Intel or Apple silicon:** open the DMG and copy `SplatWorks Desktop.app`
   to Applications, or extract the ZIP. The universal application contains both
-  architectures. Uses the system WebKit runtime.
+  architectures. Uses the system WebKit runtime. The target support baseline is
+  macOS 14 or newer; both architectures still need physical-device qualification.
 
 Go, Node.js, and Python are not required to use the desktop application. The local
 tools work without internet access once the platform runtimes are installed.
@@ -36,10 +39,13 @@ download.
 
 Choose **PDFsplat** or **CipherSplat** in the application bar. Switching tools
 keeps both workspaces open. Open a file with the tool's picker or drop it into the
-workspace. Saves use native destination dialogs. CipherSplat restores folder
+workspace. Saves use native destination dialogs and report success after the write
+completes. Tool tabs indicate unsaved work. The app warns before discarding it or
+replacing an edited PDF and blocks closing during operations. CipherSplat restores folder
 packages inside a newly created directory, preserving nested paths and empty
 files without overlaying an existing folder. Close the application to discard
-unsaved work and in-memory keys. Ctrl/Cmd+1 and Ctrl/Cmd+2 switch tools.
+unsaved work and in-memory keys after confirmation. No automatic recovery copies
+are written. Ctrl/Cmd+1 and Ctrl/Cmd+2 switch tools.
 
 The complete PDF/OCR engines, English and Spanish OCR models, Argon2id engine,
 OpenPGP engine, icons, and interface translations are bundled. CipherSplat retains
@@ -47,9 +53,9 @@ the existing CS4 `.csplat` format, including compatibility with PDFsplat.
 
 PDF text replacement and covers are visual edits, not secure redaction. OCR
 requires review and does not create tagged accessible PDFs. Browser-engine memory
-limits and existing import/export limitations still apply. Camera and screen
-capture support depends on the embedded webview and operating-system permissions;
-browser tab capture is best done in the browser edition. WebDeck exports open in
+limits and existing import/export limitations still apply. Live camera and screen
+capture are disabled in the desktop feature contract; import existing photos for
+scanning or use the browser edition for capture. WebDeck exports open in
 a browser for presentation and printing. Google Drive integration is omitted from
 the desktop interface.
 
@@ -95,9 +101,12 @@ The explicit smoke-test option uses synthetic files and bypasses destination
 dialogs. It runs the real desktop renderer, editing/export, chunked native saves,
 CS4 authentication, folder restoration, and bundled OCR. `native-smoke.json`
 contains the result. On Linux it can run under Xvfb with networking disabled.
-The release workflow runs native smoke checks on each build platform and uploads
-the reports. These automated checks do not establish physical-device camera,
-screen-reader, touch, or file-picker behavior.
+The release workflow runs 23 native checks on each build platform, Go save/security
+tests, and browser tests for lifecycle, save failure/cancellation and compatibility.
+It also installs, upgrades and uninstalls the Windows setup package, installs and
+removes the Linux package, and checks the Mac archive/DMG and both architectures.
+These automated checks do not establish physical-device screen-reader, touch,
+or actual file-picker behavior. See [Desktop security boundaries](SECURITY.md).
 
 To import a reviewed browser-tools revision:
 
@@ -106,11 +115,11 @@ python3 scripts/sync-tools.py ../drawsplat_github
 python3 scripts/check-assets.py
 ```
 
-Make browser tool changes upstream first. `sync-tools.py` applies the small,
-explicit desktop adaptations and fails if an expected integration point changes.
-It does not rebuild the browser bundle; run the upstream PDF build before syncing
-when browser source changes. The copied source and build script remain available
-for rebuilding the bundle independently.
+Make browser tool changes upstream first. Run `npm ci` here before syncing.
+`sync-tools.py` imports the reviewed snapshot, applies the desktop-only lifecycle
+and save integration through `scripts/adapt-tools.mjs`, and rebuilds the bundled
+editor with the pinned upstream builder. Integration checks fail if expected
+source hooks change. The browser repository remains unchanged by desktop imports.
 
 ## Licensing
 

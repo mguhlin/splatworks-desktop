@@ -7,10 +7,10 @@ const xhtml = (title, body, language) => `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${esc(language)}" lang="${esc(language)}"><head><meta charset="utf-8"/><title>${esc(title)}</title><link rel="stylesheet" type="text/css" href="styles.css"/></head><body>${body}</body></html>`;
 
-export async function createEpub({ pdfjs, pdfBytes, title, author, publisher = "", description = "", rights = "", language = "en", pageChapters = true, coverFile = null, coverAlt = "", textDocument = null, onProgress = () => {} }) {
+export async function createEpub({ pdfjs, pdfBytes, title, author, publisher = "", description = "", rights = "", language = "en", pageChapters = true, coverFile = null, coverAlt = "", textDocument = null, onProgress = () => {} }) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const appearance = textDocument?.layout === "appearance";
   if (appearance) pageChapters = true;
-  const document = textDocument ? null : await pdfjs.getDocument({ data: pdfBytes.slice() }).promise;
+  const document = textDocument ? null : await pdfjs.getDocument({isEvalSupported:false, data: pdfBytes.slice() }).promise;
   const pages = [];
   let emptyPages = 0;
   const embeddedImages = [];
@@ -96,4 +96,4 @@ export async function createEpub({ pdfjs, pdfBytes, title, author, publisher = "
     { level: "warning", message: "Automated preflight cannot certify EPUB Accessibility 1.1 or preserve every complex PDF layout; validate a publication copy with EPUBCheck and an accessibility checker before distribution." },
   ];
   return { blob: await zip.generateAsync({ type: "blob", mimeType: "application/epub+zip", compression: "DEFLATE", compressionOptions: { level: 6 } }), emptyPages, imageCount: embeddedImages.length, pageCount: pages.length, checks };
-}
+}finally{__desktopDone?.();}}

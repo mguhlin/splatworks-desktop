@@ -6,7 +6,7 @@ const color = value => /^#[0-9a-f]{6}$/i.test(value || '') ? value.slice(1) : ''
 const fallback = text => ({ type: 'paragraph', spans: [{ text, size: 12 }] });
 const pageBlocks = page => blocksFor(page).length ? blocksFor(page) : [fallback(EMPTY)];
 
-export async function createOfficeFile(format, document, mime) {
+export async function createOfficeFile(format, document, mime) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const zip = new globalThis.JSZip();
   const appearance = document.layout === 'appearance';
   if (format === 'docx') {
@@ -108,4 +108,4 @@ export async function createOfficeFile(format, document, mime) {
     zip.file('META-INF/manifest.xml', `<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.3"><manifest:file-entry manifest:full-path="/" manifest:version="1.3" manifest:media-type="${mime}"/>${entries.join('')}</manifest:manifest>`);
   }
   return zip.generateAsync({ type: 'blob', mimeType: mime, compression: 'DEFLATE' });
-}
+}finally{__desktopDone?.();}}

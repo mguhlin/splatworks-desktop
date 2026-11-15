@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Package an already-built platform application with notices and checksums."""
 import argparse
+import os
+import re
 import hashlib
 from pathlib import Path
 import shutil
@@ -13,6 +15,7 @@ p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--platform',choices=['linux','windows','macos'],required=True)
 p.add_argument('--version',required=True)
 a=p.parse_args()
+if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[A-Za-z0-9.]+)?',a.version):p.error('Expected a semantic release version')
 out=root/'output/release';out.mkdir(parents=True,exist_ok=True)
 name=f'SplatWorks-Desktop-{a.version}-{a.platform}-'+('universal' if a.platform=='macos' else 'amd64')
 stage=root/'output/package'/name
@@ -28,11 +31,20 @@ if a.platform=='macos':
     # The DMG preserves the native bundle's symlinks and executable permissions.
     (stage/'Applications').symlink_to('/Applications')
     subprocess.run(['hdiutil','create','-volname','SplatWorks Desktop','-srcfolder',str(stage),'-ov','-format','UDZO',str(out/(name+'.dmg'))],check=True)
+    if os.environ.get('SIGN_RELEASE')=='true':subprocess.run(['python3',str(root/'scripts/sign-macos.py'),str(out/(name+'.dmg'))],check=True)
 elif a.platform=='windows':
     shutil.copy2(root/'build/bin/SplatWorks-Desktop.exe',stage/'SplatWorks-Desktop.exe')
     with zipfile.ZipFile(out/(name+'.zip'),'w',zipfile.ZIP_DEFLATED) as z:
         for file in stage.rglob('*'):
             if file.is_file(): z.write(file,file.relative_to(stage.parent))
+    runtime=root/'output/toolchain/WebView2RuntimeInstallerX64.exe'
+    if not runtime.is_file():raise SystemExit('Run scripts/prepare-windows.ps1 before packaging Windows')
+    installer=out/(name+'-setup.exe')
+    command=['makensis',f'/DVERSION={a.version}',f'/DNUMERIC_VERSION={a.version.split("-")[0]}.0',f'/DOUTPUT={installer}',f'/DSTAGE={stage}',f'/DRUNTIME={runtime}']
+    if os.environ.get('SIGN_RELEASE')=='true':command.append(f'/DSIGN_SCRIPT={root/"scripts/sign-windows.ps1"}')
+    subprocess.run(command+[str(root/'build/windows/setup.nsi')],check=True)
+    if os.environ.get('SIGN_RELEASE')=='true':subprocess.run(['powershell','-NoProfile','-File',str(root/'scripts/sign-windows.ps1'),'-Path',str(installer)],check=True)
+    shutil.copy2(runtime.parent/'runtime.json',out/(name+'-webview2.json'))
 else:
     executable=stage/'SplatWorks-Desktop';shutil.copy2(root/'build/bin/SplatWorks-Desktop',executable);executable.chmod(0o755)
     with tarfile.open(out/(name+'.tar.gz'),'w:gz') as tar: tar.add(stage,arcname=name)

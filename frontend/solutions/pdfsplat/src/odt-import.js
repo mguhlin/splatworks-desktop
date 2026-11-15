@@ -4,8 +4,8 @@ const attr=(node,space,key)=>node?.getAttributeNS(NS[space],key)||'';
 const nodes=(node,space,key)=>[...(node?.getElementsByTagNameNS(NS[space],key)||[])];
 const child=(node,space,key)=>[...(node?.children||[])].find(n=>n.namespaceURI===NS[space]&&n.localName===key);
 function points(raw){const m=/^([\d.]+)(pt|in|cm|mm|pc|px)$/.exec(raw||'');const value=m?Number(m[1])*({pt:1,in:72,cm:72/2.54,mm:72/25.4,pc:12,px:.75}[m[2]]):NaN;return Number.isFinite(value)&&value>=0?value:undefined;}
-export async function odtBlocks(zip,{readXml,zipImage,pathFrom,fontFamily}){
- const parse=async path=>{const entry=zip.file(path);if(!entry)throw Error('Missing OpenDocument component: '+path);const text=await entry.async('string');if(text.length>10*1024*1024)throw Error('An OpenDocument component is too large.');if(/<!DOCTYPE|<!ENTITY/i.test(text))throw Error('OpenDocument imports do not accept XML document types or entities.');return readXml(zip,path);};
+export async function odtBlocks(zip,{readXml,zipImage,pathFrom,fontFamily}){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
+ const parse=async path=>{const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{const entry=zip.file(path);if(!entry)throw Error('Missing OpenDocument component: '+path);const text=await entry.async('string');if(text.length>10*1024*1024)throw Error('An OpenDocument component is too large.');if(/<!DOCTYPE|<!ENTITY/i.test(text))throw Error('OpenDocument imports do not accept XML document types or entities.');return readXml(zip,path);}finally{__desktopDone?.();}};
  if(zip.file('mimetype')&&(await zip.file('mimetype').async('string')).trim()!=='application/vnd.oasis.opendocument.text')throw Error('This file is not an OpenDocument Text (.odt) document.');
  if(zip.file('META-INF/manifest.xml')&&nodes(await parse('META-INF/manifest.xml'),'manifest','encryption-data').length)throw Error('Encrypted ODT files are not supported. Save an unencrypted copy first.');
  const content=await parse('content.xml'),named=zip.file('styles.xml')?await parse('styles.xml'):null;
@@ -32,11 +32,11 @@ export async function odtBlocks(zip,{readXml,zipImage,pathFrom,fontFamily}){
  }
  const base={...properties(defaults.get('text')),...properties(defaults.get('paragraph'))};
  function add(block){if(blocks.length>=10000)throw Error('This ODT has too many paragraphs or images. Split it into smaller documents.');blocks.push(block);}
- async function paragraph(p,{indent=0,prefix=''}={}){
+ async function paragraph(p,{indent=0,prefix=''}={}){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const heading=p.localName==='h',level=Math.max(1,Math.min(6,Number(attr(p,'text','outline-level'))||1));
   const style={...base,...(heading?{bold:true,size:26-level*2}:{}),...resolve('paragraph',attr(p,'text','style-name'))};let runs=prefix?[{text:prefix,...style}]:[];
   const flush=()=>{if(runs.length)add({runs:runs.splice(0),size:style.size||12,align:style.align,indent:Math.min(240,indent+(style.indent||0))});};
-  async function inline(n,current){
+  async function inline(n,current){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
    if(n.nodeType===3){if(n.nodeValue)runs.push({text:n.nodeValue.replace(/[\t\r\n ]+/g,' '),...current});return;}if(n.nodeType!==1)return;
    if(n.namespaceURI===NS.text){
     if(n.localName==='s'){runs.push({text:' '.repeat(Math.max(1,Math.min(1000,Number(attr(n,'text','c'))||1))),...current});return;}
@@ -49,10 +49,10 @@ export async function odtBlocks(zip,{readXml,zipImage,pathFrom,fontFamily}){
    if(n.namespaceURI===NS.draw&&n.localName!=='frame')return;
    if(n.namespaceURI!==NS.text&&n.namespaceURI!==NS.draw)return;
    const next={...current,...resolve('text',attr(n,'text','style-name'))};for(const c of n.childNodes)await inline(c,next);
-  }
+  }finally{__desktopDone?.();}}
   if(style.breakBefore)add({break:true});for(const n of p.childNodes)await inline(n,style);flush();if(style.breakAfter)add({break:true});
- }
- async function walk(n,context={}){
+ }finally{__desktopDone?.();}}
+ async function walk(n,context={}){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if(n.namespaceURI===NS.text&&['p','h'].includes(n.localName)){await paragraph(n,context);return;}
   if(n.namespaceURI===NS.text&&n.localName==='list'){
    const level=(context.level||0)+1,id=attr(n,'text','style-name')||context.list||'',definition=[...(lists.get(id)?.children||[])].find(s=>Number(attr(s,'text','level'))===level),ordered=definition?.localName==='list-level-style-number';let number=Number(attr(definition,'text','start-value'))||1;
@@ -61,6 +61,6 @@ export async function odtBlocks(zip,{readXml,zipImage,pathFrom,fontFamily}){
   if(n.namespaceURI===NS.text&&['tracked-changes','deletion','note'].includes(n.localName))return;
   if(n.namespaceURI===NS.draw)return;
   for(const c of n.children||[])await walk(c,context);
- }
+ }finally{__desktopDone?.();}}
  for(const n of body.children)await walk(n);return blocks;
-}
+}finally{__desktopDone?.();}}
