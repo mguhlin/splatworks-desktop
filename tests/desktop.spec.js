@@ -2,9 +2,11 @@ const {test,expect}=require('@playwright/test');
 const {PDFDocument,StandardFonts}=require('../frontend/solutions/pdfsplat/vendor/pdf-lib.min.js');
 
 async function sourcePDF(){const pdf=await PDFDocument.create(),font=await pdf.embedFont(StandardFonts.Helvetica);pdf.addPage([400,500]).drawText('Original classroom handout',{x:30,y:440,font,size:18});pdf.addPage([400,500]);return Buffer.from(await pdf.save());}
+async function editorReady(pdf){await expect.poll(()=>pdf.locator('#fileInput').evaluate(input=>typeof input.onchange==='function')).toBe(true);}
 test('two offline workspaces retain open PDFs and export a valid edited copy',async({page})=>{
   const external=[],errors=[];page.on('request',req=>{if(!req.url().startsWith('http://127.0.0.1:4194')&&!/^(blob:|data:)/.test(req.url()))external.push(req.url());});page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');const pdf=page.frameLocator('#tool-pdfsplat');
+  await editorReady(pdf);
   await pdf.locator('#fileInput').setInputFiles({name:'lesson.pdf',mimeType:'application/pdf',buffer:await sourcePDF()});
   await expect(pdf.locator('#status')).toContainText('2 pages');
   await pdf.locator('#addTextButton').click();await pdf.locator('#annotationLayer').press('Enter');
@@ -27,6 +29,7 @@ test('CipherSplat packages open in PDFsplat and reject modified bytes',async({pa
   const download=page.waitForEvent('download');await cipher.locator('#downloadResult').click();const file=await download;
   const bytes=await require('fs/promises').readFile(await file.path());expect(bytes.subarray(0,8).toString()).toBe('CSPCS4!!');
   await page.getByRole('button',{name:'PDFsplat',exact:true}).click();const pdf=page.frameLocator('#tool-pdfsplat');
+  await editorReady(pdf);
   await pdf.locator('#vaultInput').setInputFiles({name:'handout.pdf.csplat',mimeType:'application/octet-stream',buffer:bytes});
   await pdf.locator('#vaultPassword').fill('desktop compatibility test password');await pdf.locator('#vaultRun').click();
   await expect(pdf.locator('#status')).toContainText('authenticated, decrypted, and opened');
