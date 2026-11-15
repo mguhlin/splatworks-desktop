@@ -20,9 +20,10 @@ out=root/'output/release';out.mkdir(parents=True,exist_ok=True)
 name=f'SplatWorks-Desktop-{a.version}-{a.platform}-'+('universal' if a.platform=='macos' else 'amd64')
 stage=root/'output/package'/name
 shutil.rmtree(stage,ignore_errors=True);stage.mkdir(parents=True)
-for file in ['README.md','LICENSE','COPYING','NOTICE.md','THIRD-PARTY-NOTICES.md']:
+for file in ['README.md','LICENSE','COPYING','NOTICE.md','THIRD-PARTY-NOTICES.md','SECURITY.md']:
     shutil.copy2(root/file,stage/file)
 shutil.copytree(root/'licenses',stage/'licenses')
+shutil.copytree(root/'docs',stage/'docs')
 if a.platform=='macos':
     source=root/'build/bin/SplatWorks-Desktop.app'
     if not source.exists(): source=root/'build/bin/splatworks-desktop.app'
@@ -40,7 +41,15 @@ elif a.platform=='windows':
     runtime=root/'output/toolchain/WebView2RuntimeInstallerX64.exe'
     if not runtime.is_file():raise SystemExit('Run scripts/prepare-windows.ps1 before packaging Windows')
     installer=out/(name+'-setup.exe')
-    command=['makensis',f'/DVERSION={a.version}',f'/DNUMERIC_VERSION={a.version.split("-")[0]}.0',f'/DOUTPUT={installer}',f'/DSTAGE={stage}',f'/DRUNTIME={runtime}']
+    cleanup=root/'output/package/uninstall-files.nsh'
+    # Remove only files shipped by this installer, preserving additional user
+    # files even inside subdirectories of the application installation.
+    lines=[]
+    for file in stage.rglob('*'):
+        if file.is_file():lines.append('Delete "$INSTDIR\\'+str(file.relative_to(stage)).replace('/','\\').replace('$','$$')+'"')
+    for directory in sorted((p for p in stage.rglob('*') if p.is_dir()),key=lambda p:len(p.parts),reverse=True):lines.append('RMDir "$INSTDIR\\'+str(directory.relative_to(stage)).replace('/','\\').replace('$','$$')+'"')
+    cleanup.write_text('\n'.join(lines)+'\n',encoding='utf-8')
+    command=['makensis',f'/DVERSION={a.version}',f'/DNUMERIC_VERSION={a.version.split("-")[0]}.0',f'/DOUTPUT={installer}',f'/DSTAGE={stage}',f'/DRUNTIME={runtime}',f'/DUNINSTALL_FILES={cleanup}']
     if os.environ.get('SIGN_RELEASE')=='true':command.append(f'/DSIGN_SCRIPT={root/"scripts/sign-windows.ps1"}')
     subprocess.run(command+[str(root/'build/windows/setup.nsi')],check=True)
     if os.environ.get('SIGN_RELEASE')=='true':subprocess.run(['powershell','-NoProfile','-File',str(root/'scripts/sign-windows.ps1'),'-Path',str(installer)],check=True)

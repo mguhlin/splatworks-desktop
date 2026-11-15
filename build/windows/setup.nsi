@@ -75,14 +75,8 @@ SectionEnd
 Section "Uninstall"
   SetShellVarContext current
   SetRegView 64
-  Delete "$INSTDIR\SplatWorks-Desktop.exe"
   Delete "$INSTDIR\Uninstall.exe"
-  Delete "$INSTDIR\README.md"
-  Delete "$INSTDIR\LICENSE"
-  Delete "$INSTDIR\COPYING"
-  Delete "$INSTDIR\NOTICE.md"
-  Delete "$INSTDIR\THIRD-PARTY-NOTICES.md"
-  RMDir /r "$INSTDIR\licenses"
+  !include "${UNINSTALL_FILES}"
   RMDir "$INSTDIR"
   Delete "$SMPROGRAMS\SplatWorks Desktop.lnk"
   Delete "$DESKTOP\SplatWorks Desktop.lnk"
