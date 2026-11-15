@@ -42,13 +42,17 @@ await writeFile(file,track(source));
 file=resolve(web,'solutions/qrsplat/app.js');source=await readFile(file,'utf8');
 source='let desktopRevision=0,desktopSavedRevision=0,desktopUserEdited=false;\n'+source;
 source=once(source,'function render(){',"function render(){desktopRevision++;queueMicrotask(()=>SplatDesktop.changed('qrsplat'));");
-source=replaceFunctions(source,{download:`async function download(blob,name,details={}){return desktopSave(blob,name,details);}`});
+source=replaceFunctions(source,{
+ download:`async function download(blob,name,details={}){return desktopSave(blob,name,details);}`,
+ loadCenterImage:`async function loadCenterImage(){const file=$('centerImage').files[0];if(!file)return removeCenterImage();if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>2*1024*1024){$('centerImage').value='';$('centerImageHelp').textContent='Choose a PNG, JPEG, or WebP image no larger than 2 MB.';return;}try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});state.originalLogoData=state.logoData=data;$('cartoonEffect').checked=false;$('errorLevel').value='H';$('centerImageControls').hidden=false;$('centerImageHelp').textContent=file.name+' added locally. Test the finished QR before sharing.';render();}catch{$('centerImageHelp').textContent='That image could not be read. Try another file.';}}`
+});
 source+=`\n${saveHelper('qrsplat',"$('scanMessage').textContent")}
 for(const type of ['input','change'])document.addEventListener(type,()=>{desktopUserEdited=true;desktopRevision++;SplatDesktop.changed('qrsplat');});
 SplatDesktop.registerWorkspace('qrsplat',{isDirty:()=>desktopUserEdited&&desktopRevision!==desktopSavedRevision,markSaved:stamp=>desktopSavedRevision=stamp});
 const offlineMode=document.querySelector('[data-mode="editable"]');if(offlineMode){offlineMode.hidden=true;offlineMode.disabled=true;}
 for(const id of ['backendSetup']){const button=$(id);if(button){button.hidden=true;button.disabled=true;}}
 const reset=resetDesign;$('newDesign').onclick=async()=>{if(await SplatDesktop.confirmReplace('qrsplat'))reset();};
+$('savedDesigns').onchange=async()=>{if(await SplatDesktop.confirmReplace('qrsplat'))loadDesign($('savedDesigns').value);};
 `;
 // Attach exports after the browser controls so each captures the rendered design
 // revision before asynchronous canvas conversion starts.
@@ -58,8 +62,12 @@ await writeFile(file,track(source));
 
 file=resolve(web,'solutions/imagesplat/desktop-entry-1.js');source=await readFile(file,'utf8');
 source=source.replace('(function(){','(function(){\nlet desktopSaved="";');
+if(source.split('JSON.stringify(state.objects.map(o=>serialize(o)))').length!==4)throw Error('Review image undo snapshots');
+source=source.replaceAll('JSON.stringify(state.objects.map(o=>serialize(o)))','desktopSnapshot()');
 source=once(source,'function render(skipLayers=false){',"function render(skipLayers=false){queueMicrotask(()=>SplatDesktop.changed('imagesplat'));");
 source=replaceFunctions(source,{
+ restore:`function restore(value){const saved=JSON.parse(value);canvas.width=saved.width;canvas.height=saved.height;state.objects=saved.objects.map(deserialize);state.selected.clear();state.crop=null;state.imageCrop=null;render();}`,
+ applyCrop:`async function applyCrop(){if(!state.crop||state.crop.w<5||state.crop.h<5)return;const c=state.crop,out=document.createElement('canvas');out.width=c.w;out.height=c.h;out.getContext('2d').drawImage(renderFullCanvas(),c.x,c.y,c.w,c.h,0,0,c.w,c.h);const src=out.toDataURL(),img=await loadImg(src);snapshot();canvas.width=c.w;canvas.height=c.h;state.objects=[{id:uid(),type:'image',name:'Cropped canvas',x:0,y:0,w:c.w,h:c.h,img,src}];state.selected.clear();state.crop=null;setTool('select');setStatus('status.crop');render();}`,
  downloadBlob:`async function downloadBlob(blob,name,details={}){return desktopSave(blob,name,details);}`,
  downloadCanvas:`async function downloadCanvas(canvas,name,details={}){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('The image could not be prepared.');return await downloadBlob(blob,name,details);}`,
  exportCanvas:`async function exportCanvas(){const stamp=desktopStamp();if(await downloadCanvas(renderArtwork(),'ImageSplat.png',{tool:'imagesplat',stamp,complete:true}))setStatus('status.exported');}`,
@@ -69,6 +77,7 @@ source=once(source,"async function openBackgroundRemoval(mode='photo'){","async 
 source=once(source,"if(action==='new'||action==='clear'){snapshot();","if(action==='new'||action==='clear'){if(!await SplatDesktop.confirmReplace('imagesplat'))return;snapshot();");
 source=once(source,"$('statusLine').textContent='Background removal downloaded. Original layers are unchanged until Apply.'","$('statusLine').textContent='Background removal downloaded. Original layers are unchanged until Apply.';return true");
 source=injectIIFE(source,`
+function desktopSnapshot(){return JSON.stringify({width:canvas.width,height:canvas.height,objects:state.objects.map(serialize)});}
 function desktopStamp(){return JSON.stringify({width:canvas.width,height:canvas.height,objects:state.objects.map(serialize)});}
 ${saveHelper('imagesplat',"$('statusLine').textContent")}
 SplatDesktop.registerWorkspace('imagesplat',{isDirty:()=>state.objects.length>0&&desktopStamp()!==desktopSaved,markSaved:stamp=>desktopSaved=stamp});

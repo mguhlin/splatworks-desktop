@@ -36,6 +36,11 @@ for tool in tools:
     text=text.replace('</head>','<link rel="stylesheet" href="/desktop/frame.css"><script src="/desktop/frame.js"></script></head>')
     page.write_text(text,encoding='utf-8')
 subprocess.run(['node',str(root/'scripts/adapt-small-tools.mjs')],check=True)
+for tool in tools:
+    readme=web/tool['source']/'README.md'
+    if readme.is_file():readme.write_text('# '+tool['name']+' Desktop\n\n'+tool['description']+'\n\nThis is the adapted offline desktop snapshot. Desktop features, limitations, native packaging, signing and validation are documented in `docs/STANDALONE.md` in the repository root. Browser sources and their original documentation live at https://github.com/mguhlin/drawsplat .\n')
+
+for name in added:(web/name).chmod(0o644)
 manifest={'repository':'https://github.com/mguhlin/drawsplat','revision':subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip(),'files':{name:hashlib.sha256((web/name).read_bytes()).hexdigest() for name in sorted(added)}}
 (web/'standalone-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 print('Imported offline small tools:',', '.join(t['name'] for t in tools))

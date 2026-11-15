@@ -65,3 +65,13 @@ fail if approval or signing credentials are absent. Prerelease tags such as
 GitHub releases remain the manual update channel. A subsequent release replaces
 the application through its installer; an automatic updater is outside the 1.0
 scope.
+
+## Standalone tool releases
+
+The **Standalone tools** workflow reuses these signing providers and credential
+names for GIFsplat, CipherSplat, QRSplat and ImageSplat. Dispatch that workflow
+with `sign_release=true` to produce signed candidates. Each app has a separate
+bundle identifier and installer registration. Complete the per-app checks in
+[STANDALONE.md](STANDALONE.md), then set
+`STANDALONE_PHYSICAL_VALIDATION_APPROVED=true` before a stable `tools-v…` tag.
+The core suite's approval variable does not approve standalone tools.

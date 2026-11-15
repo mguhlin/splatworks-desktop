@@ -34,6 +34,7 @@ test('standalone QR exports decode to the requested content and excludes Wi-Fi p
  await frame.locator('#contentType').selectOption('wifi');await frame.locator('#wifiName').fill('Library;Guest');await frame.locator('#wifiPassword').fill('read:more');await frame.locator('#saveDesign').click();
  expect(await frame.locator('body').evaluate(()=>localStorage.getItem('qrsplat.designs.v1'))).not.toContain('read:more');
  await frame.locator('#designName').fill('WiFi QR');await frame.locator('#downloadPng').click();const wifi=PNG.sync.read(await output(page,'wifi-qr.png'));expect(jsQR(new Uint8ClampedArray(wifi.data),wifi.width,wifi.height).data).toBe('WIFI:T:WPA;S:Library\\;Guest;P:read\\:more;H:false;');
+ await frame.locator('#wifiPassword').fill('keep this edit');const design=await frame.locator('#savedDesigns option').last().getAttribute('value');await frame.locator('#savedDesigns').selectOption(design);await expect(page.locator('#leaveDialog')).toBeVisible();await page.locator('#keepWorking').click();await expect(frame.locator('#wifiPassword')).toHaveValue('keep this edit');
  await expect(frame.locator('#backendSetup')).toBeHidden();await expect(frame.locator('[data-mode="editable"]')).toBeHidden();expect(errors).toEqual([]);expect(external).toEqual([]);
 });
 
@@ -48,4 +49,13 @@ test('standalone ImageSplat exports exact artwork and performs background remova
 
 test('standalone CipherSplat keeps its CS4 file format and uses the shared native save',async({page})=>{
  const{frame,errors,external}=await start(page,'ciphersplat');await frame.locator('#password').fill('standalone format test');await frame.locator('#fileInput').setInputFiles({name:'sample.txt',mimeType:'text/plain',buffer:Buffer.from('Unicode español 日本語')});await frame.locator('#runButton').click();await expect(frame.locator('#resultTitle')).toContainText('Encryption complete');await frame.locator('#downloadResult').click();const data=await output(page,'sample.txt.csplat');expect(data.subarray(0,8).toString()).toBe('CSPCS4!!');expect(errors).toEqual([]);expect(external).toEqual([]);
+});
+
+test('ImageSplat crop undo restores canvas dimensions and image layers',async({page})=>{
+ const{frame,errors}=await start(page,'imagesplat');await frame.locator('#imageInput').setInputFiles({name:'crop.png',mimeType:'image/png',buffer:await png(page)});await expect(frame.locator('#layerList .layer')).toHaveCount(1);
+ const original=await frame.locator('#stage').evaluate(c=>[c.width,c.height]);await frame.locator('[data-tool="crop"]').first().evaluate(b=>b.click());
+ await frame.locator('#stage').evaluate(c=>{const r=c.getBoundingClientRect(),scale=r.width/c.width;for(const[type,x,y]of [['pointerdown',40,40],['pointermove',120,100],['pointerup',120,100]])c.dispatchEvent(new PointerEvent(type,{bubbles:true,clientX:r.left+x*scale,clientY:r.top+y*scale,pointerId:1}));});
+ await frame.locator('[data-action="applyCrop"]').first().evaluate(b=>b.click());await expect.poll(()=>frame.locator('#stage').evaluate(c=>[c.width,c.height])).toEqual([80,60]);
+ await frame.locator('[data-action="undo"]').first().evaluate(b=>b.click());await expect.poll(()=>frame.locator('#stage').evaluate(c=>[c.width,c.height])).toEqual(original);await expect(frame.locator('#layerList .layer')).toHaveCount(1);
+ await frame.locator('[data-action="redo"]').first().evaluate(b=>b.click());await expect.poll(()=>frame.locator('#stage').evaluate(c=>[c.width,c.height])).toEqual([80,60]);expect(errors).toEqual([]);
 });
