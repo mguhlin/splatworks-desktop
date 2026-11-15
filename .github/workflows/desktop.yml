@@ -177,12 +177,7 @@ jobs:
       - name: Verify Mac distribution archive and disk image
         if: runner.os == 'macOS'
         shell: bash
-        run: |
-          hdiutil verify output/release/*.dmg
-          mkdir -p output/unpacked
-          ditto -x -k output/release/*.zip output/unpacked
-          codesign --verify --deep --strict output/unpacked/*/*.app
-          lipo -verify_arch x86_64 arm64 output/unpacked/*/*.app/Contents/MacOS/*
+        run: python3 scripts/test-macos-package.py
       - name: Verify all package checksums
         shell: bash
         run: python3 scripts/verify-packages.py output/release
