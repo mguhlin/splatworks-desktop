@@ -99,7 +99,7 @@ jobs:
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#tools-v}"
-          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="0.1.0-preview"; fi
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="0.1.0-preview.1"; fi
           python3 scripts/release-profiles.py --platform '${{ matrix.platform }}' --version "$version"
       - uses: actions/upload-artifact@v4
         with:

@@ -29,11 +29,11 @@ test('standalone GIF preserves frame timing, save cancellation, and newer edits'
 test('standalone QR exports decode to the requested content and excludes Wi-Fi passwords from saved designs',async({page})=>{
  const{frame,errors,external}=await start(page,'qrsplat');await expect(frame.locator('#qrPreview svg')).toBeVisible();await expect.poll(()=>page.evaluate(()=>SplatDesktop.busy)).toBe(false);
  await frame.locator('#qrContent').fill('https://example.org/standalone');await frame.locator('#designName').fill('QR test');await frame.locator('#downloadPng').click();
- const image=PNG.sync.read(await output(page,'qr-test.png'));expect(jsQR(new Uint8ClampedArray(image.data),image.width,image.height).data).toBe('https://example.org/standalone');
+ const qrBytes=await output(page,'qr-test.png');await test.info().attach('standard-qr.png',{body:qrBytes,contentType:'image/png'});const image=PNG.sync.read(qrBytes);expect(jsQR(new Uint8ClampedArray(image.data),image.width,image.height).data).toBe('https://example.org/standalone');
  await frame.locator('#downloadSvg').click();expect((await output(page,'qr-test.svg')).toString()).toContain('<svg');
  await frame.locator('#contentType').selectOption('wifi');await frame.locator('#wifiName').fill('Library;Guest');await frame.locator('#wifiPassword').fill('read:more');await frame.locator('#saveDesign').click();
  expect(await frame.locator('body').evaluate(()=>localStorage.getItem('qrsplat.designs.v1'))).not.toContain('read:more');
- await frame.locator('#designName').fill('WiFi QR');await frame.locator('#downloadPng').click();const wifi=PNG.sync.read(await output(page,'wifi-qr.png'));expect(jsQR(new Uint8ClampedArray(wifi.data),wifi.width,wifi.height).data).toBe('WIFI:T:WPA;S:Library\\;Guest;P:read\\:more;H:false;');
+ await frame.locator('#designName').fill('WiFi QR');await frame.locator('#downloadPng').click();const wifiBytes=await output(page,'wifi-qr.png');await test.info().attach('wifi-qr.png',{body:wifiBytes,contentType:'image/png'});const wifi=PNG.sync.read(wifiBytes);expect(jsQR(new Uint8ClampedArray(wifi.data),wifi.width,wifi.height).data).toBe('WIFI:T:WPA;S:Library\\;Guest;P:read\\:more;H:false;');
  await frame.locator('#wifiPassword').fill('keep this edit');const design=await frame.locator('#savedDesigns option').last().getAttribute('value');await frame.locator('#savedDesigns').selectOption(design);await expect(page.locator('#leaveDialog')).toBeVisible();await page.locator('#keepWorking').click();await expect(frame.locator('#wifiPassword')).toHaveValue('keep this edit');
  await expect(frame.locator('#backendSetup')).toBeHidden();await expect(frame.locator('[data-mode="editable"]')).toBeHidden();expect(errors).toEqual([]);expect(external).toEqual([]);
 });

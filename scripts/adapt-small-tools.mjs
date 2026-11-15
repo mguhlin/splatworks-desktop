@@ -42,8 +42,17 @@ await writeFile(file,track(source));
 file=resolve(web,'solutions/qrsplat/app.js');source=await readFile(file,'utf8');
 source='let desktopRevision=0,desktopSavedRevision=0,desktopUserEdited=false;\n'+source;
 source=once(source,'function render(){',"function render(){desktopRevision++;queueMicrotask(()=>SplatDesktop.changed('qrsplat'));");
+source=once(source,'<svg xmlns="http://www.w3.org/2000/svg" viewBox=', '<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" viewBox=');
 source=replaceFunctions(source,{
  download:`async function download(blob,name,details={}){return desktopSave(blob,name,details);}`,
+ canvasBlob:`async function canvasBlob(){
+  const size=Number($('qrSize').value),quiet=Number($('quietZone').value),dark=$('darkColor').value,light=$('lightColor').value,logo=state.logoData||($('template').value==='drawsplat'?state.templateLogoData:''),fraction=Number($('centerImageSize').value)/100;
+  const qr=qrcode(0,$('errorLevel').value);qr.addData(state.payload);qr.make();const count=qr.getModuleCount(),total=count+quiet*2,canvas=document.createElement('canvas');canvas.width=canvas.height=size;
+  const ctx=canvas.getContext('2d');ctx.fillStyle=light;ctx.fillRect(0,0,size,size);ctx.fillStyle=dark;
+  for(let row=0;row<count;row++)for(let col=0;col<count;col++)if(qr.isDark(row,col)){const left=Math.round((col+quiet)*size/total),top=Math.round((row+quiet)*size/total),right=Math.round((col+quiet+1)*size/total),bottom=Math.round((row+quiet+1)*size/total);ctx.fillRect(left,top,right-left,bottom-top);}
+  if(logo){const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('The center image could not be prepared.'));image.src=logo;});const width=size*fraction,pad=Math.max(.8*size/total,width*.08),start=(size-width)/2;ctx.fillStyle=light;ctx.fillRect(start-pad,start-pad,width+pad*2,width+pad*2);const scale=Math.min(width/image.naturalWidth,width/image.naturalHeight),w=image.naturalWidth*scale,h=image.naturalHeight*scale;ctx.drawImage(image,(size-w)/2,(size-h)/2,w,h);}
+  return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('The QR image could not be encoded.')),'image/png'));
+ }`,
  loadCenterImage:`async function loadCenterImage(){const file=$('centerImage').files[0];if(!file)return removeCenterImage();if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>2*1024*1024){$('centerImage').value='';$('centerImageHelp').textContent='Choose a PNG, JPEG, or WebP image no larger than 2 MB.';return;}try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});state.originalLogoData=state.logoData=data;$('cartoonEffect').checked=false;$('errorLevel').value='H';$('centerImageControls').hidden=false;$('centerImageHelp').textContent=file.name+' added locally. Test the finished QR before sharing.';render();}catch{$('centerImageHelp').textContent='That image could not be read. Try another file.';}}`
 });
 source+=`\n${saveHelper('qrsplat',"$('scanMessage').textContent")}
@@ -56,7 +65,7 @@ $('savedDesigns').onchange=async()=>{if(await SplatDesktop.confirmReplace('qrspl
 `;
 // Attach exports after the browser controls so each captures the rendered design
 // revision before asynchronous canvas conversion starts.
-source+=`\n$('downloadPng').onclick=async()=>{if(!state.svg)return;const stamp=desktopRevision;await download(await canvasBlob(),fileName('png'),{tool:'qrsplat',stamp,complete:true});};
+source+=`\n$('downloadPng').onclick=async()=>{if(!state.svg)return;const stamp=desktopRevision;try{await download(await canvasBlob(),fileName('png'),{tool:'qrsplat',stamp,complete:true});}catch(error){$('scanMessage').textContent='Export failed: '+error.message;}};
 $('downloadSvg').onclick=async()=>{if(!state.svg)return;const stamp=desktopRevision;await download(new Blob([state.svg],{type:'image/svg+xml'}),fileName('svg'),{tool:'qrsplat',stamp,complete:true});};\n`;
 await writeFile(file,track(source));
 

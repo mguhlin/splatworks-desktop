@@ -3,7 +3,7 @@
 import argparse,json,pathlib,shutil,subprocess,sys
 root=pathlib.Path(__file__).resolve().parents[1]
 profiles=json.loads((root/'profiles.json').read_text())
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('--profile',choices=profiles,required=True);p.add_argument('--version',default='0.1.0-preview');p.add_argument('--platform');p.add_argument('--prepare-only',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--profile',choices=profiles,required=True);p.add_argument('--version',default='0.1.0-preview.1');p.add_argument('--platform');p.add_argument('--prepare-only',action='store_true');a=p.parse_args()
 info=profiles[a.profile];stage=root/'output/profiles'/a.profile
 shutil.rmtree(stage,ignore_errors=True);stage.mkdir(parents=True)
 ignore=shutil.ignore_patterns('bin','node_modules','__pycache__','test-results','tests')
