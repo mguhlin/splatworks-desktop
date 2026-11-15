@@ -22,4 +22,5 @@ PDF visual covers are not secure redaction. Existing browser-tool memory and
 conversion limits still apply. This edition combines Go desktop integration with
 the existing JavaScript PDF and encryption engines.
 
-Source, notices, and installation instructions are included in each archive.
+Notices and installation instructions are included in each archive. Corresponding
+source is available in this repository and the release's source archives.
