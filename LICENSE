@@ -1,0 +1,50 @@
+SplatWorks ecosystem license summary
+Copyright (c) 2026 DrawSplat Developer(s) <drawsplat@gmail.com>
+
+DrawSplatTM whiteboard code, tools, widgets, Apps Script backend, MySQL backend,
+compliance features, and other non-office-app parts of this repository are
+free/open source under the GNU Affero General Public License, version 3.0 or
+later (AGPL-3.0-or-later).
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+Office app license exception
+----------------------
+
+The five office apps within the SplatWorksTM ecosystem is released under the GNU General Public License,
+version 3.0 only (GPL-3.0-only). This includes WriteSplat, GridSplat, ListSplat, ShowSplat, and LayoutSplat
+in their respective `splatworks/` directories. See
+`splatworks/gridsplat/LICENSE.md` and `splatworks/gridsplat/COPYING` for the
+GPL-3.0-only license text currently bundled with the SplatWorksTM apps.
+
+This license split lets the office apps ship with GPL-3.0-only dependencies
+while DrawSplatTM whiteboard and the existing tools/widgets continue under the
+current AGPL-3.0-or-later licensing.
+
+In plain language:
+
+- Individual educators, students, and community users may use the open
+  versions for free.
+- You may study, copy, modify, and share the open versions under the license
+  terms that apply to each subproject.
+- If you modify DrawSplatTM and offer it as a hosted network service, AGPL
+  requires you to make the corresponding source code available to users.
+- Paid school, district, hosted, closed-source, embedded, or site-license
+  deployments of AGPL-covered DrawSplatTM components may use a separate
+  commercial license.
+
+The full AGPL v3.0 license text is available at:
+
+https://www.gnu.org/licenses/agpl-3.0.html
+
+For commercial licensing, see COMMERCIAL-LICENSE.md.
+
+Brand and User Content
+----------------------
+
+The DrawSplatTM name, logo, and visual identity are not licensed for use in
+a way that suggests endorsement by DrawSplat Developer(s) <drawsplat@gmail.com> or the DrawSplatTM project.
+
+User-created boards, drawings, student work, uploads, exports, and class
+content belong to their respective authors and are not covered by this
+project license.

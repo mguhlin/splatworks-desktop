@@ -1,0 +1,11 @@
+{
+  "$schema":"https://wails.io/schemas/config.v2.json",
+  "name":"splatworks-desktop",
+  "outputfilename":"SplatWorks-Desktop",
+  "frontend:dir":".",
+  "frontend:install":"",
+  "frontend:build":"",
+  "frontend:dev:watcher":"",
+  "author":{"name":"Miguel Guhlin","email":"drawsplat@gmail.com"},
+  "info":{"companyName":"SplatWorks","productName":"SplatWorks Desktop","productVersion":"0.1.0","copyright":"DrawSplat Developer(s)","comments":"PDFsplat and CipherSplat. Local processing; AGPL-3.0-or-later."}
+}

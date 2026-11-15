@@ -1,0 +1,140 @@
+name: Desktop builds
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.4'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: python3 scripts/check-assets.py
+      - run: go test -race ./internal/transfer
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-details
+          path: test-results/
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+            target: linux/amd64
+          - os: windows-latest
+            platform: windows
+            target: windows/amd64
+          - os: macos-14
+            platform: macos
+            target: darwin/universal
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.4'
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config xvfb dbus-x11
+      - name: Install pinned Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+      - name: Verify bundled source
+        run: python3 scripts/check-assets.py
+        shell: bash
+      - name: Build native application
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="0.1.0-preview"; fi
+          args=()
+          if [[ "$RUNNER_OS" == "Linux" ]]; then args+=(-tags webkit2_41); fi
+          wails build -platform '${{ matrix.target }}' "${args[@]}" -ldflags "-X main.version=$version"
+          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+      - name: Linux native smoke test without networking
+        if: runner.os == 'Linux'
+        env:
+          WEBKIT_DISABLE_DMABUF_RENDERER: '1'
+        run: |
+          mkdir -p output/native
+          sudo -E unshare --net -- bash -c 'ip link set lo up; xvfb-run -a dbus-run-session -- timeout 240 ./build/bin/SplatWorks-Desktop --smoke-test "$PWD/output/native"'
+          sudo chown -R "$(id -u):$(id -g)" output
+      - name: Windows native smoke test
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force output/native | Out-Null
+          $app = Start-Process -FilePath './build/bin/SplatWorks-Desktop.exe' -ArgumentList '--smoke-test', "$pwd/output/native" -PassThru
+          if (-not $app.WaitForExit(240000)) { $app.Kill(); throw 'Native smoke test timed out' }
+          if ($app.ExitCode -ne 0) { throw "Native smoke test failed ($($app.ExitCode))" }
+      - name: Mac native smoke test
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir -p output/native
+          python3 - <<'PY'
+          import pathlib,subprocess
+          binary=next(pathlib.Path('build/bin').glob('*.app/Contents/MacOS/*'))
+          subprocess.run([str(binary),'--smoke-test',str(pathlib.Path('output/native').resolve())],check=True,timeout=240)
+          PY
+      - name: Verify native report
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,pathlib
+          result=json.loads(pathlib.Path('output/native/native-smoke.json').read_text())
+          print(json.dumps(result,indent=2))
+          assert result['passed'], result.get('error')
+          assert len(result['checks']) >= 13
+          PY
+      - name: Package application and checksums
+        shell: bash
+        run: python3 scripts/package-release.py --platform '${{ matrix.platform }}' --version "$RELEASE_VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: output/release/*
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-check-${{ matrix.platform }}
+          path: output/native/*.json
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [checks, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          path: release
+          merge-multiple: true
+      - name: Publish desktop preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/* --verify-tag --prerelease --title "SplatWorks Desktop $GITHUB_REF_NAME" --notes-file docs/RELEASE.md

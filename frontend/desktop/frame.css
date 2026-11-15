@@ -1,0 +1,2 @@
+/* Desktop navigation and file saving are provided by the parent shell. */
+[data-ds-app-launcher],#saveDriveButton,.offline-download,.splat-privacy-link{display:none!important}

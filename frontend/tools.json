@@ -1,0 +1,16 @@
+[
+  {
+    "id": "pdfsplat",
+    "name": "PDFsplat",
+    "path": "/solutions/pdfsplat/",
+    "description": "Organize, annotate, recognize text, and export PDFs.",
+    "source": "solutions/pdfsplat"
+  },
+  {
+    "id": "ciphersplat",
+    "name": "CipherSplat",
+    "path": "/solutions/CipherSplat/",
+    "description": "Encrypt and unlock files, folders, and text locally.",
+    "source": "solutions/CipherSplat"
+  }
+]

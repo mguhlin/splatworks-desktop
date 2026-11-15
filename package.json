@@ -1,0 +1,6 @@
+{
+  "name":"splatworks-desktop-checks",
+  "private":true,
+  "scripts":{"test":"playwright test","check:assets":"python3 scripts/check-assets.py"},
+  "devDependencies":{"@playwright/test":"1.60.0"}
+}
