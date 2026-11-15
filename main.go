@@ -22,7 +22,7 @@ import (
 //go:embed all:frontend
 var bundled embed.FS
 
-var version = "1.0.0-rc.1"
+var version = "1.0.0-rc.2"
 
 func main() {
 	serve := flag.Bool("serve", false, "serve the bundled tools in a browser on loopback (no native file APIs)")
