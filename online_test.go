@@ -81,7 +81,7 @@ func TestRemoteRequestsRejectUnsafeSchemesPortsAndPrivateAddresses(t *testing.T)
 			t.Fatal("unsafe URL was accepted")
 		}
 	}
-	for _, address := range []string{"127.0.0.1:443", "[::1]:443", "169.254.169.254:443", "192.168.1.1:443"} {
+	for _, address := range []string{"127.0.0.1:443", "[::1]:443", "169.254.169.254:443", "192.168.1.1:443", "100.100.100.200:443", "198.18.0.1:443", "0.2.2.2:443", "[2001:db8::1]:443"} {
 		if c, err := publicDial(context.Background(), "tcp", address); err == nil {
 			c.Close()
 			t.Fatal("private destination was accepted")

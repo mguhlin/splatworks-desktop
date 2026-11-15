@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -36,6 +37,24 @@ func newOnlineGate() *onlineGate {
 		return validateRemoteURL(req.URL)
 	}}}
 }
+
+var nonPublicRanges = []netip.Prefix{netip.MustParsePrefix("0.0.0.0/8"), netip.MustParsePrefix("100.64.0.0/10"), netip.MustParsePrefix("192.0.0.0/24"), netip.MustParsePrefix("192.0.2.0/24"), netip.MustParsePrefix("198.18.0.0/15"), netip.MustParsePrefix("198.51.100.0/24"), netip.MustParsePrefix("203.0.113.0/24"), netip.MustParsePrefix("240.0.0.0/4"), netip.MustParsePrefix("2001:db8::/32")}
+
+func publicAddress(ip net.IP) bool {
+	if !ip.IsGlobalUnicast() || ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() {
+		return false
+	}
+	addr, ok := netip.AddrFromSlice(ip)
+	if !ok {
+		return false
+	}
+	for _, prefix := range nonPublicRanges {
+		if prefix.Contains(addr.Unmap()) {
+			return false
+		}
+	}
+	return true
+}
 func publicDial(ctx context.Context, network, address string) (net.Conn, error) {
 	host, port, err := net.SplitHostPort(address)
 	if err != nil {
@@ -46,7 +65,7 @@ func publicDial(ctx context.Context, network, address string) (net.Conn, error) 
 		return nil, err
 	}
 	for _, ip := range ips {
-		if !ip.IP.IsGlobalUnicast() || ip.IP.IsPrivate() || ip.IP.IsLoopback() || ip.IP.IsLinkLocalUnicast() {
+		if !publicAddress(ip.IP) {
 			return nil, errors.New("private network destinations are not permitted")
 		}
 	}
