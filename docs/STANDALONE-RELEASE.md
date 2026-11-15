@@ -11,7 +11,7 @@ Each executable includes its selected tool and processing engines. GIF, QR and i
 
 PNG QR exports draw the encoded modules directly into pixels to avoid platform SVG rasterization differences.
 
-This is a preview with automated browser, native application, export-file, installer and checksum checks. Developer publisher signing, Apple notarization and physical-device qualification remain pending. Automated native tests use synthetic data and bypass destination dialogs; they do not approve real dialogs or physical hardware.
+Browser, native application, export-file, installer and checksum checks run automatically. Stable releases additionally require developer publisher signing, Apple notarization and physical-device approval. Unsigned previews can show publisher warnings. Automated native tests use synthetic data and bypass destination dialogs; they do not approve real dialogs or physical hardware.
 
 GIFsplat focuses on GIF creation; importing an animated source image supplies one frame. Video export is excluded. QRSplat excludes the network-based editable redirect service. ImageSplat excludes large photo-subject AI models, camera/screen capture, online background URLs, and the separate FontSplat service. White/color removal is bundled and offline. Scan QR codes with a real device before printing.
 

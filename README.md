@@ -12,10 +12,10 @@ existing SplatWorks web tools provide PDF rendering, editing, OCR, and encryptio
 
 ## Install
 
-The release candidate has no verified publisher signature or Apple notarization.
+Unsigned candidates have no verified publisher signature or Apple notarization.
 Windows and macOS may show a publisher warning. Downloads include SHA-256
-checksums. Signing credentials and physical-device validation are the remaining
-release gates; see [Signing](docs/SIGNING.md) and [Validation](docs/VALIDATION.md).
+checksums. Stable releases require developer signing and physical-device
+validation approval; see [Signing](docs/SIGNING.md) and [Validation](docs/VALIDATION.md).
 
 - **Linux x86-64 (Debian 13 / Ubuntu 24.04 or newer):** use the `.deb`, or extract the `.tar.gz` and
   run `SplatWorks-Desktop`. Requires GTK 3 and WebKitGTK 4.1. The Debian package

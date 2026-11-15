@@ -1,6 +1,6 @@
-SplatWorks Desktop release candidate: PDFsplat and CipherSplat for Linux, Windows,
-and Mac. This candidate completes the automated engineering and packaging work;
-developer signing credentials and physical-device release validation remain.
+SplatWorks Desktop: PDFsplat and CipherSplat for Linux, Windows, and Mac.
+Automated engineering and packaging checks cover the supported build platforms.
+Stable release tags require developer signing and physical-device approval.
 
 - Warn before closing unsaved work or replacing an edited PDF; block closing during processing and saving.
 - Wait for native writes before reporting success. Cancellation and failure preserve unsaved work, including newer edits made while an earlier save is pending.
@@ -15,16 +15,19 @@ can choose `-setup.exe` or the portable ZIP. Linux users can choose a `.deb` or
 portable archive. Mac users can choose a universal DMG or ZIP for Intel and Apple
 silicon.
 
-This candidate has **no verified Windows publisher signature or Apple Developer
-ID/notarization**. Publisher warnings remain expected. Mac candidates use ad hoc
-hardened-runtime signing for automated compatibility checks. Credentials must be
-configured and signed downloads validated before a full release.
+Unsigned candidates have **no verified Windows publisher signature or Apple
+Developer ID/notarization** and can show publisher warnings. Mac unsigned
+candidates use ad hoc hardened-runtime signing for automated compatibility
+checks. Signed candidate workflows use configured developer identities; stable
+workflows require signing and human validation approval. Verify the downloaded
+file signature and use the release tag to identify the intended build.
 
 Automated checks cover all three build platforms, Windows install/upgrade/
 uninstall, Linux install/removal, Mac disk-image/archive integrity, and Linux
 editing/OCR/encryption without networking. Actual file pickers, screen readers,
 Gatekeeper/SmartScreen behavior, offline Windows installation without a preexisting
-runtime, and representative physical hardware remain human validation work.
+runtime, and representative physical hardware require human validation before
+stable approval.
 
 Live camera and screen capture are outside the desktop 1.0 feature contract; use
 the browser edition for those workflows. Existing-photo scanning is included.
