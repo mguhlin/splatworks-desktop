@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# A release embeds this snapshot verbatim. Windows checkout must not rewrite
+# vendored scripts or invalidate the reviewed SHA-256 asset manifest.
+/frontend/** -text
