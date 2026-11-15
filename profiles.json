@@ -25,8 +25,8 @@
     "description": "Turn local images into animated GIFs, reorder frames, adjust timing, and save locally.",
     "smoke": "native-smoke-tools.js",
     "help": [
-      "Import image files as frames, arrange them, choose timing and quality, generate the animation, then save it.",
-      "Each imported file supplies one frame. This edition focuses on GIF creation. Very large image sets remain limited by device memory."
+      "Import frames, arrange them and choose timing and quality. Save a .gifsplat project to retain editable frames and settings, then generate/export the animation.",
+      "Each imported image supplies one frame. Video export is available when the system webview supports recording. Ctrl/Cmd+S saves a project; Ctrl/Cmd+O opens one."
     ]
   },
   "qrsplat": {
@@ -40,8 +40,8 @@
     "description": "Generate standard QR codes for text, websites, email, phone, and Wi-Fi without a network service.",
     "smoke": "native-smoke-tools.js",
     "help": [
-      "Download PNG or SVG and test the code with a real scanner before printing. A QR code exposes its encoded content to anyone who scans it.",
-      "Editable redirect services are available in the browser edition. Explicitly saved designs use local preferences; Wi-Fi passwords are excluded."
+      "Export PNG or SVG and scan the result on a real device before printing. Save a .qrsplat project for portable styling, content and logos. QR codes expose their content to anyone who scans them.",
+      "Project files and explicitly saved presets exclude Wi-Fi passwords. Configured editable QR services require optional online connections in Settings. Service keys are not stored."
     ]
   },
   "imagesplat": {
@@ -55,8 +55,8 @@
     "description": "Edit images with layers, text, shapes, crop, photo adjustments, blur, and local PNG/GIF exports.",
     "smoke": "native-smoke-tools.js",
     "help": [
-      "Import existing images or paste an image when your operating system supports it. Export PNG preserves transparent areas around your artwork.",
-      "White and color background removal run locally. AI photo-subject models, live cameras, online background URLs, and the separate FontSplat service are outside this small offline edition."
+      "Save an .imagesplat project to preserve layers, text and canvas settings. PNG/GIF exports produce shareable artwork. Ctrl/Cmd+S saves a project; Ctrl/Cmd+O opens one.",
+      "Fast photo background removal, white/color removal and embedded FontSplat lettering are bundled for offline use. Best-model downloads and online backgrounds require optional connections in Settings. Live capture depends on webview and device support."
     ]
   }
 }

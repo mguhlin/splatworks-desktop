@@ -14,7 +14,7 @@ let desktopSaved="",desktopGenerated="";
     const el=$('statusLine'); el.textContent=msg||''; el.className='status '+(cls||'');
   }
 
-  function renderList(){queueMicrotask(()=>SplatDesktop.changed('gifsplat'));
+  function renderList(){clearGenerated();queueMicrotask(()=>SplatWorkspace.changed('gifsplat'));
     const wrap=$('frameList');
     if(!state.frames.length){
       wrap.innerHTML='<p class="empty-hint">'+t('frames.empty')+'</p>';
@@ -44,40 +44,14 @@ let desktopSaved="",desktopGenerated="";
   }
   function remove(idx){ state.frames.splice(idx,1); renderList(); }
 
-  function loadFile(file){
-    return new Promise((res,rej)=>{
-      const fr=new FileReader();
-      fr.onload=()=>{
-        const img=new Image();
-        img.onload=()=>res({ id:nextId++, name:file.name, w:img.naturalWidth, h:img.naturalHeight, image:img });
-        img.onerror=()=>rej(new Error(file.name));
-        img.src=fr.result;
-      };
-      fr.onerror=()=>rej(new Error(file.name));
-      fr.readAsDataURL(file);
-    });
-  }
+  async function loadFile(file){const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{const image=await DesktopProjects.importImage(file);return {id:nextId++,name:file.name,w:image.naturalWidth,h:image.naturalHeight,image};}finally{__desktopDone?.();}}
 
-  $('frameInput').addEventListener('change', async ev=>{const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
-    const files=Array.from(ev.target.files||[]); if(!files.length) return;
-    setStatus(t('status.loading',{n:files.length}),'info');
-    try{
-      for(const f of files){
-        const frame=await loadFile(f);
-        state.frames.push(frame);
-      }
-      renderList();
-      setStatus(t('status.loaded',{n:files.length}),'success');
-    }catch(err){
-      setStatus(t('status.loadFail',{name:err.message}),'danger');
-    }
-    ev.target.value='';
-  }finally{__desktopDone?.();}});
+  $('frameInput').addEventListener('change', async ev=>{const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{const files=[...ev.target.files||[]];let count=0,failed=0;for(const file of files){try{if(state.frames.length>=200)throw Error('Frame limit');const frame=await loadFile(file);if(state.frames.reduce((n,f)=>n+f.w*f.h,0)+frame.w*frame.h>64000000)throw Error('Pixel limit');state.frames.push(frame);count++;}catch{failed++;}}renderList();setStatus('Imported '+count+' frame(s).'+(failed?' '+failed+' file(s) could not be imported. Use images up to 32 MB / 24 megapixels; at most 200 frames and 64 megapixels total.':''),failed?'danger':'success');ev.target.value='';}finally{__desktopDone?.();}});
 
-  $('clearFramesBtn').addEventListener('click', async()=>{const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{if(!await SplatDesktop.confirmReplace('gifsplat'))return;
+  $('clearFramesBtn').addEventListener('click', async()=>{const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{if(!await SplatWorkspace.confirmReplace('gifsplat'))return;
     state.frames=[]; renderList(); setStatus(t('status.cleared'),'info');
   }finally{__desktopDone?.();}});
-  $('resetBtn').addEventListener('click', async()=>{const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{if(!await SplatDesktop.confirmReplace('gifsplat'))return;state.lastBlob=null;
+  $('resetBtn').addEventListener('click', async()=>{const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{if(!await SplatWorkspace.confirmReplace('gifsplat'))return;state.lastBlob=null;
     state.frames=[]; renderList();
     $('previewWrap').innerHTML='<p class="placeholder">'+t('preview.placeholder')+'</p>';
     $('downloadBtn').disabled=true;
@@ -96,6 +70,7 @@ let desktopSaved="",desktopGenerated="";
       targetW=Math.round(first.w*scale);
       targetH=Math.round(first.h*scale);
     }
+    if(targetW*targetH*state.frames.length>64000000)throw Error('This animation exceeds 64 megapixels. Reduce maximum width or frame count.');
     return state.frames.map(f=>{
       const c=document.createElement('canvas'); c.width=targetW; c.height=targetH;
       const ctx=c.getContext('2d');
@@ -112,7 +87,7 @@ let desktopSaved="",desktopGenerated="";
 
   $('generateBtn').addEventListener('click', ()=>{
     if(!state.frames.length){ setStatus(t('status.needFrames'),'danger'); return; }
-    const desktopEnd=SplatDesktop.beginOperation(),desktopStart=desktopStamp();const btn=$('generateBtn'); btn.disabled=true; setStatus(t('status.encoding'),'info');
+    if(SplatWorkspace.busy){setStatus('Finish the current operation before generating.','info');return;}const desktopEnd=SplatWorkspace.beginOperation(),desktopStart=desktopStamp(),desktopInert=document.body.inert;document.body.inert=true;const btn=$('generateBtn'); btn.disabled=true; setStatus(t('status.encoding'),'info');
     setTimeout(()=>{
       try{
         const delayMs=parseInt($('delayInput').value,10)||450;
@@ -133,18 +108,18 @@ let desktopSaved="",desktopGenerated="";
       }catch(err){
         setStatus(t('status.encodeFail',{msg:err.message||err}),'danger');
       }finally{
-        btn.disabled=false;desktopEnd();
+        btn.disabled=false;document.body.inert=desktopInert;desktopEnd();
       }
     }, 16);
   });
 
-  $('downloadBtn').addEventListener('click', async()=>{const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{if(!state.lastBlob)return;await desktopSave(state.lastBlob,'GIFsplat-animation.gif',{tool:'gifsplat',stamp:desktopGenerated,complete:true});}finally{__desktopDone?.();}});
+  $('downloadBtn').addEventListener('click', async()=>{const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{if(!state.lastBlob)return;await desktopSave(state.lastBlob,'GIFsplat-animation.gif',{tool:'gifsplat',stamp:desktopGenerated,complete:true});}finally{__desktopDone?.();}});
 
   // Hide the video button entirely if the browser can't record.
   if (window.DrawSplatGifEncoder && !window.DrawSplatGifEncoder.videoSupported()) {
     const vb = $('recordVideoBtn'); if (vb) vb.style.display = 'none';
   }
-  $('recordVideoBtn')?.addEventListener('click', async ()=>{const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
+  $('recordVideoBtn')?.addEventListener('click', async ()=>{const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{
     if(!state.frames.length){ setStatus(t('status.needFrames'),'danger'); return; }
     const btn=$('recordVideoBtn'); btn.disabled=true;
     const delayMs=parseInt($('delayInput').value,10)||450;
@@ -158,10 +133,7 @@ let desktopSaved="",desktopGenerated="";
       const canvases=framesToCanvases();
       const blob=await window.DrawSplatGifEncoder.encodeVideo(canvases, {delayMs, loopCount:loop});
       const ext = blob.type.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download='drawsplat-animation.'+ext;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url), 4000);
+      if(!await desktopSave(blob,'GIFsplat-animation.'+ext))return;
       const kb=Math.round(blob.size/1024);
       setStatus(t('status.videoReady',{kb:kb, ext:ext.toUpperCase()}),'success');
     } catch(err){
@@ -175,9 +147,18 @@ let desktopSaved="",desktopGenerated="";
   document.addEventListener('widget-i18n:changed', renderList);
   renderList();
 
+function clearGenerated(){if(state.lastBlobUrl){URL.revokeObjectURL(state.lastBlobUrl);state.lastBlobUrl=null;}state.lastBlob=null;$('downloadBtn').disabled=true;$('previewWrap').innerHTML='<p class="placeholder">'+t('preview.placeholder')+'</p>';desktopGenerated='';}
+for(const id of ['delayInput','loopInput','maxWidthInput','qualityInput','paletteSizeInput','ditherInput'])$(id).addEventListener('input',clearGenerated);
 function desktopStamp(){return JSON.stringify({frames:state.frames.map(f=>f.id),settings:['delayInput','loopInput','maxWidthInput','qualityInput','paletteSizeInput','ditherInput'].map(id=>[$(id)?.value,$(id)?.checked])});}
-async function desktopSave(blob,name,details={}){const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{try{const ok=await SplatDesktop.saveBlob(blob,name,details);$('statusLine').textContent=ok?'Saved '+name:'Save cancelled. Your work is still open.';return ok;}catch(error){$('statusLine').textContent='Save failed: '+error.message;return false;}}finally{__desktopDone?.();}}
-SplatDesktop.registerWorkspace('gifsplat',{isDirty:()=>state.frames.length>0&&desktopStamp()!==desktopSaved,markSaved:stamp=>desktopSaved=stamp});
-const videoButton=$('recordVideoBtn');if(videoButton){videoButton.hidden=true;videoButton.disabled=true;}
+async function desktopSave(blob,name,details={}){const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{try{const ok=await SplatWorkspace.saveBlob(blob,name,details);$('statusLine').textContent=ok?(SplatWorkspace.native?'Saved ':'Download requested for ')+name:'Save cancelled. Your work is still open.';return ok;}catch(error){$('statusLine').textContent='Save failed: '+error.message;return false;}}finally{__desktopDone?.();}}
+const desktopPristine=desktopStamp();
+SplatWorkspace.registerWorkspace('gifsplat',{isDirty:()=>desktopStamp()!==(desktopSaved||desktopPristine),markSaved:stamp=>desktopSaved=stamp});
+
+const project=DesktopProjects;
+project.install({id:'gifsplat',extension:'gifsplat',status:message=>setStatus(message,'info'),stamp:desktopStamp,clean:stamp=>desktopSaved=stamp,
+ serialize:()=>({frames:state.frames.map(f=>({name:f.name,src:f.image.src})),settings:{delay:Number($('delayInput').value),loop:Number($('loopInput').value),width:Number($('maxWidthInput').value),quality:$('qualityInput').value,palette:Number($('paletteSizeInput').value),dither:$('ditherInput').checked}}),
+ prepare:async data=>{const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{project.require(Array.isArray(data?.frames)&&data.frames.length<=200,'A GIF project supports up to 200 frames.');const s=data.settings;project.require(s&&typeof s.dither==='boolean','Invalid GIF settings.');const settings={delay:project.number(s.delay,20,10000),loop:project.number(s.loop,0,65535),width:project.number(s.width,0,8192),quality:project.choice(s.quality,['best','fast']),palette:project.choice(s.palette,[32,64,128,256]),dither:s.dither};const frames=[];let pixels=0;for(const frame of data.frames){const name=project.text(frame.name),image=await project.image(frame.src);pixels+=image.naturalWidth*image.naturalHeight;project.require(pixels<=64000000,'A GIF project exceeds the 64-megapixel frame limit.');frames.push({name,image,w:image.naturalWidth,h:image.naturalHeight});}return{settings,frames};}finally{__desktopDone?.();}},
+ commit:({settings:s,frames})=>{state.frames=frames.map(f=>({...f,id:nextId++}));for(const[id,value]of [['delayInput',s.delay],['loopInput',s.loop],['maxWidthInput',s.width],['qualityInput',s.quality],['paletteSizeInput',s.palette]])$(id).value=value;$('ditherInput').checked=s.dither;clearGenerated();renderList();}
+});
 
 })();

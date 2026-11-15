@@ -20,6 +20,7 @@
         <string>iconfile</string>
         <key>LSMinimumSystemVersion</key>
         <string>14.0</string>
+        <key>NSCameraUsageDescription</key><string>Use your camera when you explicitly start a SplatWorks capture tool.</string><key>NSMicrophoneUsageDescription</key><string>Use your microphone when you explicitly start a recording tool.</string>
         <key>NSHighResolutionCapable</key>
         <string>true</string>
         <key>NSHumanReadableCopyright</key>

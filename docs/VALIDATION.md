@@ -24,9 +24,12 @@ closing with unsaved work, closing during a save, read-only destinations, and lo
 disk space. Disconnect networking and repeat the ordinary editing/OCR/encryption
 workflow. The result must remain usable without a development toolchain.
 
-Live camera and screen capture are intentionally outside the desktop 1.0 feature
-contract. Importing existing photos is supported. Physical validation must not
-turn an untested capture capability into a support claim.
+Exercise shared camera, screen-capture and video workflows where the system
+webview exposes the required APIs. Confirm permission prompts and clear recovery
+when a device/API is unavailable. Importing existing photos remains supported.
+Check first-launch Fast photo removal without networking, optional model downloads,
+turning connections off during a download, FontSplat insertion, and project
+interchange with the browser tools. Do not treat automated builds as device approval.
 
 Record the tested release tag, OS version, architecture, result, and any issues
 without maintenance timestamps. Approve `PHYSICAL_VALIDATION_APPROVED` only when

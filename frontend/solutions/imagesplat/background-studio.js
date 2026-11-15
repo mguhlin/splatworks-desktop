@@ -4,7 +4,7 @@ import { validateDimensions, MAX_FILES, exportName, uniqueName } from '../backdr
 import { BACKGROUNDS, drawBackground } from '../backdropsplat/backgrounds.mjs';
 import { decodeImage, fetchBackground, onlineImageURL } from '../backdropsplat/background-source.mjs';
 
-export function openBackgroundStudio({ sources, mode = 'white', apply, download }) {
+export function openBackgroundStudio({ sources, mode = 'photo', apply, download }) {
   if (!sources.length || sources.length > MAX_FILES) throw new Error('Select between 1 and 20 image layers.');
   for (const source of sources) validateDimensions(source.canvas.width, source.canvas.height);
   if (document.querySelector('#backgroundStudio')) return;
@@ -20,7 +20,7 @@ export function openBackgroundStudio({ sources, mode = 'white', apply, download 
       <p class="bs-intro">Preview your selected image layers before applying. Every attempt starts from the original; one Undo restores all layers.</p>
       <div class="bs-workspace"><section class="bs-settings" aria-label="Background settings">
         <label for="bs-layer">Preview layer</label><select id="bs-layer"></select>
-        <label for="bs-mode">Remove background</label><select id="bs-mode"><option value="photo" disabled hidden>Photo models are available in the browser edition</option><option value="white">White background</option><option value="color">Colored background</option></select>
+        <label for="bs-mode">Remove background</label><select id="bs-mode"><option value="photo">Photo subject</option><option value="white">White background</option><option value="color">Colored background</option></select>
         <div id="bs-photo"><label for="bs-model">Photo quality</label><select id="bs-model"><option value="fast">Fast · 44 MB model</option><option value="best">Best · 219 MB · WebGPU</option></select><p>Photo processing stays on this device. First use downloads a model from Hugging Face plus a 22 MB local engine. Unsupported Best falls back to Fast with a notice.</p></div>
         <div id="bs-key"><div id="bs-color-field"><label for="bs-color">Color to remove</label><input id="bs-color" type="color" value="#ffffff"><p>Click the original image to sample a color.</p></div>
           <label for="bs-scope">Remove matching pixels</label><select id="bs-scope"><option value="edges">Connected to image edges</option><option value="all">Every matching pixel</option></select>
@@ -43,7 +43,7 @@ export function openBackgroundStudio({ sources, mode = 'white', apply, download 
           <div class="bs-background-head"><h3 id="bs-replacement-title">Choose a new background</h3><button type="button" id="bs-bg-upload">Upload background</button><input id="bs-bg-file" type="file" accept="image/*" hidden></div>
           <p class="bs-help">Your cutout stays in front. One backdrop is used for all selected layers.</p>
           <div id="bs-bg-gallery" class="bs-bg-gallery" role="group" aria-label="Built-in backgrounds"></div>
-          <form id="bs-bg-form" hidden><label for="bs-bg-url">Online image URL</label><div class="bs-bg-url-row"><input id="bs-bg-url" type="url" placeholder="https://example.org/background.jpg" autocomplete="off" spellcheck="false" aria-describedby="bs-bg-url-help" required><button type="submit" id="bs-bg-load">Load image URL</button></div><p id="bs-bg-url-help" class="bs-help">Use a direct HTTPS image link. Some hosts block browser access; download the image and upload it instead. The image host receives the download request, without your subject image.</p></form>
+          <form id="bs-bg-form"><label for="bs-bg-url">Online image URL</label><div class="bs-bg-url-row"><input id="bs-bg-url" type="url" placeholder="https://example.org/background.jpg" autocomplete="off" spellcheck="false" aria-describedby="bs-bg-url-help" required><button type="submit" id="bs-bg-load">Load image URL</button></div><p id="bs-bg-url-help" class="bs-help">Use a direct HTTPS image link. Some hosts block browser access; download the image and upload it instead. The image host receives the download request, without your subject image.</p></form>
           <p id="bs-bg-status" class="bs-bg-status" role="status" aria-live="polite">Choose a scene, upload an image, or load an image URL.</p>
           <div class="bs-bg-actions"><button type="button" id="bs-bg-stop" hidden>Cancel background load</button><button type="button" id="bs-bg-remove" disabled>Remove image background</button><a id="bs-bg-view" href="#bs-result" hidden>View result</a></div>
           <div id="bs-bg-fit-controls" hidden><label for="bs-bg-fit">Background placement</label><select id="bs-bg-fit"><option value="cover">Fill frame · crop edges as needed</option><option value="contain">Fit entire image · white margins</option></select><p class="bs-help">The background is centered at each layer's original image dimensions. Subjects keep their size and position. Changing backgrounds never reruns removal.</p></div>
@@ -56,6 +56,7 @@ export function openBackgroundStudio({ sources, mode = 'white', apply, download 
   const $ = id => dialog.querySelector('#bs-' + id);
   const processor = createBackgroundProcessor(), results = sources.map(() => null);
   let busy = false, processing = false, applying = false, generation = 0, closed = false, replacement, backgroundTask;
+  if(globalThis.SplatWorkspace?.profile?.bundledModels)$('photo').querySelector('p').textContent='Fast photo removal uses the bundled model and works offline. Best quality is an optional download and needs compatible WebGPU; enable optional connections in Settings to use it.';
   const networkAllowed = () => window.SplatPrivacy?.getState().optionalConnections !== false;
   sources.forEach((source, i) => { const option = document.createElement('option'); option.value = i; option.textContent = source.name; $('layer').append(option); });
   $('mode').value = mode;
@@ -116,7 +117,7 @@ export function openBackgroundStudio({ sources, mode = 'white', apply, download 
   function invalidate() {
     results.fill(null); status('Settings changed. Process again before applying or downloading.'); update();
   }
-  async function processAll() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
+  async function processAll() {const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{
     if (busy || backgroundTask || closed) return;
     busy = processing = true; const run = ++generation; update();
     try {
@@ -149,7 +150,7 @@ export function openBackgroundStudio({ sources, mode = 'white', apply, download 
     $('color').value = '#' + [...pixel].slice(0, 3).map(v => v.toString(16).padStart(2, '0')).join(''); invalidate();
   });
   const toBlob = (canvas, jpeg) => new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Image encoding failed.')), jpeg ? 'image/jpeg' : 'image/png', .94));
-  async function save(all) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
+  async function save(all) {const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{
     if (busy || backgroundTask || closed) return;
     busy = true; update();
     try {
@@ -176,7 +177,7 @@ export function openBackgroundStudio({ sources, mode = 'white', apply, download 
     finally { busy = false; if (!closed) update(); }
   }finally{__desktopDone?.();}}
   $('download').onclick = () => save(false); $('zip').onclick = () => save(true);
-  $('apply').onclick = async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
+  $('apply').onclick = async () => {const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{
     if (busy || backgroundTask || closed || !results.every(Boolean)) return;
     busy = applying = true; update();
     try { await apply(results.map(r => composite(r.canvas))); applying = false; close(); }
@@ -192,7 +193,7 @@ export function openBackgroundStudio({ sources, mode = 'white', apply, download 
     backgroundTask = null; clearTimeout(task.timeout); task.controller.abort();
     if (!closed) { backgroundStatus(message); update(); }
   }
-  async function loadReplacement(source) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
+  async function loadReplacement(source) {const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{
     if (busy || backgroundTask || closed) return;
     if (source.kind === 'url') {
       try { source.url = onlineImageURL(source.url).href; }
@@ -235,7 +236,7 @@ export function openBackgroundStudio({ sources, mode = 'white', apply, download 
     button.onclick = () => loadReplacement({ kind: 'builtin', ...scene }); $('bg-gallery').append(button);
   }
   $('bg-upload').onclick = () => $('bg-file').click();
-  $('bg-file').onchange = async () => {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{ const file = $('bg-file').files[0]; if (file) await loadReplacement({ kind: 'file', file, name: file.name || 'Uploaded background' }); if (!closed) $('bg-file').value = ''; }finally{__desktopDone?.();}};
+  $('bg-file').onchange = async () => {const __desktopDone=globalThis.SplatWorkspace?.beginOperation();try{ const file = $('bg-file').files[0]; if (file) await loadReplacement({ kind: 'file', file, name: file.name || 'Uploaded background' }); if (!closed) $('bg-file').value = ''; }finally{__desktopDone?.();}};
   $('bg-form').onsubmit = event => {
     event.preventDefault(); const url = $('bg-url').value.trim(); let name = 'Online image';
     try { name += ' · ' + new URL(url).hostname; } catch { /* Validation gives the useful error. */ }

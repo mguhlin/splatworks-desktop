@@ -22,7 +22,7 @@ import (
 //go:embed all:frontend
 var bundled embed.FS
 
-var version = "1.0.0-rc.5"
+var version = "1.0.0-rc.6"
 
 func main() {
 	serve := flag.Bool("serve", false, "serve the bundled tools in a browser on loopback (no native file APIs)")
@@ -57,11 +57,12 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	app.loadOnlinePreference(info.Slug)
 	icon, _ := fs.ReadFile(assets, info.Icon)
 	err = wails.Run(&options.App{
 		Title: info.Name, Width: 1360, Height: 900, MinWidth: 800, MinHeight: 600,
 		BackgroundColour: options.NewRGB(245, 247, 250),
-		AssetServer:      &assetserver.Options{Assets: assets, Middleware: security},
+		AssetServer:      &assetserver.Options{Assets: assets, Middleware: func(next http.Handler) http.Handler { return security(app.online.middleware(next)) }},
 		OnStartup:        app.startup, OnShutdown: app.shutdown,
 		OnBeforeClose: app.beforeClose,
 		Bind:          []interface{}{app},
@@ -80,11 +81,11 @@ func security(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// All processing assets are bundled. Explicit external links go through the
 		// native shell; they never replace the privileged application document.
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' data: blob:; worker-src 'self' blob:; frame-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Cache-Control", "no-store")
-		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), display-capture=(), geolocation=()")
+		w.Header().Set("Permissions-Policy", "camera=(self), microphone=(self), display-capture=(self), geolocation=()")
 		next.ServeHTTP(w, r)
 	})
 }

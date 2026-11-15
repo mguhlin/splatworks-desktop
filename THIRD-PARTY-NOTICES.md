@@ -28,3 +28,15 @@ includes Microsoft's separately licensed Evergreen WebView2 Runtime installer;
 its version, publisher and SHA-256 are recorded in the release's `-webview2.json`.
 Microsoft's installer manages the runtime and its own servicing independently of
 the application.
+
+ImageSplat additionally includes Transformers.js 3.8.1 (Apache-2.0), ONNX Runtime
+Web 1.22.0-dev.20250409-89f8206ba4 (MIT), and the ORMBG q8 model at revision
+`034e2d884afbab897e10e78fc5bb566b29533fd6` (Apache-2.0). Runtime hashes and
+notices are in `ai-runtime/vendor/`; model hashes are in `ai-runtime/model.json`.
+ImageSplat archives include these terms under `licenses/AI/`. Original model
+source: https://huggingface.co/onnx-community/ormbg-ONNX .
+
+Embedded FontSplat uses the bundled Liberation, DejaVu, Comic Neue and Noto
+typefaces. Their original font licenses are included under `licenses/fonts/`
+in ImageSplat distributions and beside the font sources. No FFmpeg core is
+required by the embedded still-image lettering workflow.

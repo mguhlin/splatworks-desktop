@@ -41,5 +41,8 @@ pattern=re.compile(r'\b(?:last updated|last modified|generated on|checked on|rev
 for folder in ['desktop']:
     for file in (web/folder).rglob('*'):
         if file.suffix in ['.html','.js','.css'] and pattern.search(file.read_text(encoding='utf-8')): errors.append('Maintenance timestamp label: '+str(file.relative_to(root)))
+ai=root/'ai-runtime/vendor'
+for name,record in json.loads((ai/'checksums.json').read_text()).items():
+    if not (ai/name).is_file() or hashlib.sha256((ai/name).read_bytes()).hexdigest()!=record['sha256']:errors.append('AI runtime mismatch: '+name)
 if errors: raise SystemExit('\n'.join(errors))
 print(f'Verified {sum(len(m["files"]) for m in manifests)} snapshot hashes and all HTML runtime assets.')

@@ -53,15 +53,15 @@ the existing CS4 `.csplat` format, including compatibility with PDFsplat.
 
 PDF text replacement and covers are visual edits, not secure redaction. OCR
 requires review and does not create tagged accessible PDFs. Browser-engine memory
-limits and existing import/export limitations still apply. Live camera and screen
-capture are disabled in the desktop feature contract; import existing photos for
-scanning or use the browser edition for capture. WebDeck exports open in
+limits and existing import/export limitations still apply. Capture and recording share the browser implementations; availability depends on
+webview APIs, codecs, device permissions and hardware. Importing existing photos
+works independently of those capture capabilities. WebDeck exports open in
 a browser for presentation and printing. Google Drive integration is omitted from
 the desktop interface.
 
 ## Smaller standalone apps
 
-[Download GIFsplat, CipherSplat, QRSplat and ImageSplat](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v0.1.0-preview.1). Each has its own executable, installer and icon, with native saves and unsaved-work protection. The GIF, QR and image editions omit PDF/OCR engines. These are previews pending developer signing and physical validation. See [standalone scope and build instructions](docs/STANDALONE.md).
+[Download GIFsplat, CipherSplat, QRSplat and ImageSplat](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v0.2.0-preview.1). Each has its own executable, installer and icon, with native saves and unsaved-work protection. The GIF, QR and image editions omit PDF/OCR engines. These are previews pending developer signing and physical validation. See [standalone scope and build instructions](docs/STANDALONE.md).
 
 ## Repository boundaries
 

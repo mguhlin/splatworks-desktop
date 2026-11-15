@@ -4,7 +4,7 @@
  const wait=async(fn,label)=>{const start=Date.now();while(!fn()){if(Date.now()-start>120000)throw Error('Timed out: '+label);await new Promise(r=>setTimeout(r,75));}};
  const check=(value,label)=>{if(!value)throw Error(label);checks.push(label);};
  const originalSave=desktop.saveBlob;
- desktop.saveBlob=async(blob,name,details)=>{if(id==='imagesplat'&&saved.length)name='ImageSplat-cutout.png';const ok=await originalSave(blob,name,details);saved.push({blob,name,ok});return ok;};
+ desktop.saveBlob=async(blob,name,details)=>{if(id==='imagesplat'&&name==='ImageSplat.png'&&saved.some(s=>s.name==='ImageSplat.png'))name='ImageSplat-cutout.png';const ok=await originalSave(blob,name,details);saved.push({blob,name,ok});return ok;};
  const report=async(passed,error)=>app.CompleteSmoke(JSON.stringify({passed,profile:id,checks,errors,error:error?String(error.message||error)+'\n'+String(error.stack||''):null,userAgent:navigator.userAgent},null,2));
  const deadline=setTimeout(()=>void report(false,Error('Native smoke deadline exceeded')),210000);
  try{
@@ -35,13 +35,13 @@
    importFiles('frameInput',[await png('red','red.png'),await png('blue','blue.png')]);await wait(()=>doc.querySelectorAll('.frame-row').length===2,'import GIF frames');check(true,'two local image frames imported');await warning();
    set('delayInput','200');$('generateBtn').click();await wait(()=>!$('downloadBtn').disabled&&!desktop.busy,'GIF encoding');check(!!doc.querySelector('#previewWrap img'),'generated animation preview');$('downloadBtn').click();await wait(()=>saved.length===1,'GIF save');
    check(saved[0].ok&&await saved[0].blob.slice(0,6).text()==='GIF89a','GIF89a saved through native writer');check(!desktop.dirty.length,'saved animation clears matching unsaved state');set('delayInput','350');check(desktop.dirty.includes('GIFsplat'),'timing change remains unsaved');
-   check($('recordVideoBtn').hidden&&$('recordVideoBtn').disabled,'unvalidated video capture excluded');
+   check(typeof win.DrawSplatGifEncoder.videoSupported==='function','shared video capability detection available');
   }else if(id==='qrsplat'){
    await wait(()=>doc.querySelector('#qrPreview svg')&&!desktop.busy,'QR startup');set('qrContent','https://example.org/standalone');set('designName','Native QR');check($('payloadPreview').textContent==='https://example.org/standalone','local URL QR generation');await warning();
    $('downloadSvg').click();await wait(()=>saved.length===1,'SVG save');check(saved[0].ok&&/svg/.test(await saved[0].blob.text()),'SVG saved through native writer');
    $('downloadPng').click();await wait(()=>saved.length===2,'PNG save');check(saved[1].ok&&saved[1].blob.type==='image/png','PNG saved through native writer');check(!desktop.dirty.length,'QR export clears matching unsaved state');
    set('contentType','wifi');set('wifiName','Library;Guest');set('wifiPassword','synthetic:password');$('saveDesign').click();check(!win.localStorage.getItem('qrsplat.designs.v1').includes('synthetic:password'),'saved Wi-Fi designs exclude passwords');
-   check($('payloadPreview').textContent.includes('Library\\;Guest'),'Wi-Fi separators escaped');check($('backendSetup').hidden&&doc.querySelector('[data-mode="editable"]').hidden,'network redirect service excluded');
+   check($('payloadPreview').textContent.includes('Library\\;Guest'),'Wi-Fi separators escaped');check(!$('backendSetup').hidden&&desktop.onlineEnabled===false,'optional services available with connections off by default');
   }else if(id==='imagesplat'){
    importFiles('imageInput',[await png('red','red.png')]);await wait(()=>doc.querySelectorAll('#layerList .layer').length===1,'image import');check(true,'local image imported as layer');await warning();
    doc.querySelector('[data-action="exportPng"]').click();await wait(()=>saved.length===1,'image export');check(saved[0].ok&&saved[0].blob.type==='image/png','artwork PNG saved natively');check(!desktop.dirty.length,'full artwork export clears matching unsaved state');
@@ -49,8 +49,13 @@
    doc.querySelector('[data-action="undo"]').click();check(doc.querySelectorAll('#layerList .layer').length===1,'layer undo restores original artwork');
    doc.querySelector('#layerList .layer').click();doc.querySelector('[data-action="removeBg"]').click();await wait(()=>$('bs-process'),'background studio');check($('bs-mode').value==='white','offline white background mode');$('bs-process').click();await wait(()=>!$('bs-apply').disabled,'white background worker');check(true,'background worker runs offline');$('bs-apply').click();await wait(()=>!$('bs-process'),'apply cutout');
    doc.querySelector('[data-action="exportPng"]').click();await wait(()=>saved.length===2,'cutout export');check(saved[1].ok,'transparent cutout exported');
-   for(const action of ['captureScreen','greenScreen','fontsplat','smartRemoveBg'])check([...doc.querySelectorAll('[data-action="'+action+'"]')].every(b=>b.hidden&&b.disabled),'offline feature scope: '+action);
+   check(desktop.profile.bundledModels&&desktop.onlineEnabled===false,'default AI model bundled with optional network off');
+   doc.querySelector('[data-action="smartRemoveBg"]').click();await wait(()=>$('bs-process'),'AI studio');check($('bs-mode').value==='photo','photo removal feature matches browser');$('bs-process').click();await wait(()=>!$('bs-apply').disabled,'bundled AI inference');check($('bs-status').textContent.includes('ready'),'real bundled model completes without networking');$('bs-cancel').click();const fontMessages=[];win.addEventListener('message',event=>{if(event.data?.source==='FontSplat')fontMessages.push({origin:event.origin,type:event.data.type});});doc.querySelector('[data-action="fontsplat"]').click();await wait(()=>doc.querySelector('#fontsplatEditorDialog iframe')?.contentDocument?.getElementById('insert'),'embedded lettering editor');const lettering=doc.querySelector('#fontsplatEditorDialog iframe').contentDocument;await wait(()=>typeof lettering.getElementById('insert').onclick==='function'&&!lettering.getElementById('insert').disabled,'lettering ready');lettering.getElementById('insert').click();await wait(()=>!doc.getElementById('fontsplatEditorDialog'),'lettering inserted');check(doc.querySelectorAll('#layerList .layer').length===2,'bundled lettering inserts a native image layer');
+
   }else throw Error('Unknown profile '+id);
+  if(id!=='ciphersplat'){
+   await wait(()=>!desktop.busy,'ready for project save');$('desktopSaveProject').click();await wait(()=>saved.some(s=>s.name===id+'.'+id)&&!desktop.busy,'project native save');const project=saved.find(s=>s.name===id+'.'+id);check(project.ok,'editable project saved through Go');const data=JSON.parse(await project.blob.text());check(data.format==='SplatWorks-project'&&data.tool===id,'portable project schema');importFiles('desktopProjectInput',[new win.File([await project.blob.arrayBuffer()],'native-project.'+id,{type:'application/json'})]);await wait(()=>document.getElementById('leaveDialog').open||$('statusLine')?.textContent.includes('Opened editable project')||$('scanMessage')?.textContent.includes('Opened editable project'),'project open or discard prompt');if(document.getElementById('leaveDialog').open)document.getElementById('discardWork').click();await wait(()=>!desktop.busy,'project restored');check(!desktop.dirty.length,'project opens with its saved editable state');
+  }
   await wait(()=>!desktop.busy,'operations complete');check(errors.length===0,'no JavaScript errors');clearTimeout(deadline);await report(true);
  }catch(error){clearTimeout(deadline);await report(false,error);}
 })();

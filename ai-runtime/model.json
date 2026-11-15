@@ -1,0 +1,22 @@
+{
+  "repository": "onnx-community/ormbg-ONNX",
+  "revision": "034e2d884afbab897e10e78fc5bb566b29533fd6",
+  "license": "Apache-2.0",
+  "files": [
+    {
+      "path": "config.json",
+      "size": 27,
+      "sha256": "d0b94ab052ace79177085c66a00a3f014a973edb09999cb0108bb01e65ded060"
+    },
+    {
+      "path": "preprocessor_config.json",
+      "size": 283,
+      "sha256": "ed502c6ea29c5fb8aafdafdc5bcf1657dfca09888ff753e5c358672ebcfd448d"
+    },
+    {
+      "path": "onnx/model_quantized.onnx",
+      "size": 44315205,
+      "sha256": "ffbcae62a7b675d616e64cb392ee028786c4cf74f83596590fba13733ef00171"
+    }
+  ]
+}

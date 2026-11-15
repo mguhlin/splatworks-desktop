@@ -3,9 +3,9 @@
   'use strict';
   const status = document.getElementById('desktopStatus');
   const help = document.getElementById('helpDialog');
-  let backend, tools = [], active = '', saving = Promise.resolve(),info;
+  let backend, tools = [], active = '', saving = Promise.resolve(),info,online=false;
   const frames = new Map();
-  const workspaces=new Map();
+  const workspaces=new Map(),commands=new Map();
   const leave=document.getElementById('leaveDialog'),leaveMessage=document.getElementById('leaveMessage'),discard=document.getElementById('discardWork');
   let operations=0, pendingDecision=null,approvedQuit=false;
   const say = message => { status.textContent = message; };
@@ -107,13 +107,15 @@
       await openLink('https://splatworks.org'+url.pathname+url.search+url.hash);
     }
   }
-  const bridge={saveBlob,saveFolder,selectTool,selectIndex:index=>{if(tools[index])selectTool(tools[index].id);},openLink,beginOperation,confirmReplace,requestClose,changed,
+  const bridge={get onlineEnabled(){return online;},registerCommands:(id,actions)=>commands.set(id,actions),command:(id,name)=>{const action=commands.get(id)?.[name];if(!action)return false;void action();return true;},saveBlob,saveFolder,selectTool,selectIndex:index=>{if(tools[index])selectTool(tools[index].id);},openLink,beginOperation,confirmReplace,requestClose,changed,
     toolId:path=>tools.find(tool=>path.startsWith(tool.path))?.id,
     get profile(){return info;},
     registerWorkspace:(id,workspace)=>{workspaces.set(id,workspace);changed(id);},
     get dirty(){return dirtyTools();},get busy(){return operations>0;},
     help:()=>help.showModal(),status:say,fullscreen:()=>backend?.ToggleFullscreen(),get native(){return !!backend},get active(){return active},get frames(){return frames}};
   window.SplatDesktop=bridge;
+  document.getElementById('settingsButton').onclick=()=>document.getElementById('settingsDialog').showModal();
+  document.getElementById('optionalOnline').onchange=async event=>{const input=event.target;input.disabled=true;try{await backend.SetOnlineEnabled(input.checked);online=input.checked;document.getElementById('onlineStatus').textContent=online?'Optional online connections enabled.':'Optional online connections off.';}catch(error){online=!!await backend?.OnlineEnabled?.();input.checked=online;document.getElementById('onlineStatus').textContent=error.message;}finally{input.disabled=!backend;}};
   document.getElementById('helpButton').onclick=()=>help.showModal();
   document.addEventListener('click',event=>{
     const a=event.target.closest('a[href]');if(!a)return;
@@ -121,12 +123,13 @@
     if(a.protocol==='https:'){event.preventDefault();void openLink(a.href);}
   });
   document.addEventListener('keydown',event=>{
+    if((event.ctrlKey||event.metaKey)&&!event.altKey&&!event.shiftKey&&['s','o'].includes(event.key.toLowerCase())&&!document.querySelector('dialog[open]')){if(bridge.command(active,event.key.toLowerCase()==='s'?'save':'open'))event.preventDefault();}
     if(event.key==='F1'){event.preventDefault();help.showModal();}
     if((event.ctrlKey||event.metaKey)&&event.key==='1'){event.preventDefault();bridge.selectIndex(0);}
     if((event.ctrlKey||event.metaKey)&&event.key==='2'){event.preventDefault();bridge.selectIndex(1);}
   });
   (async()=>{
-    backend=window.go?.main?.App;
+    backend=window.go?.main?.App;online=!!await backend?.OnlineEnabled?.();document.getElementById('optionalOnline').checked=online;document.getElementById('optionalOnline').disabled=!backend;
     info=await (await fetch('/app.json')).json();
     document.title=info.name;document.querySelector('.desktop-brand').textContent=info.name;document.querySelector('.desktop-brand').setAttribute('aria-label',info.name+' home');
     document.querySelector('link[rel="icon"]').href='/'+info.icon;

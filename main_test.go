@@ -22,7 +22,7 @@ func TestBundledOriginPolicy(t *testing.T) {
 	if response.Header().Get("Cache-Control") != "no-store" {
 		t.Fatal("document responses may be cached")
 	}
-	if !strings.Contains(response.Header().Get("Permissions-Policy"), "microphone=()") {
-		t.Fatal("unneeded microphone permission allowed")
+	if !strings.Contains(response.Header().Get("Permissions-Policy"), "camera=(self)") {
+		t.Fatal("camera capability not limited to the application origin")
 	}
 }

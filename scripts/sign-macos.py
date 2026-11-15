@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix='splatworks-sign-') as directory:
         run('security','import',str(p12),'-k',str(chain),'-P',os.environ['MACOS_CERTIFICATE_PASSWORD'],'-T','/usr/bin/codesign')
         run('security','set-key-partition-list','-S','apple-tool:,apple:,codesign:','-s','-k',password,str(chain))
         args=['codesign','--force','--timestamp','--keychain',str(chain),'--sign',os.environ['MACOS_SIGNING_IDENTITY']]
-        if a.path.suffix=='.app':args+=['--options','runtime']
+        if a.path.suffix=='.app':args+=['--options','runtime','--entitlements',str(pathlib.Path(__file__).resolve().parents[1]/'build/darwin/entitlements.plist')]
         run(*args,str(a.path));run('codesign','--verify','--deep','--strict',str(a.path))
         submission=a.path
         if a.path.suffix=='.app':

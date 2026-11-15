@@ -20,7 +20,7 @@ for id,info in profiles.items():
         shutil.copytree(root/'output/toolchain',stage/'output/toolchain',dirs_exist_ok=True)
     else:
         bundle=next((stage/'build/bin').glob('*.app'))
-        run(['codesign','--force','--sign','-','--options','runtime',bundle],stage)
+        run(['codesign','--force','--sign','-','--options','runtime','--entitlements',stage/'build/darwin/entitlements.plist',bundle],stage)
         if os.environ.get('SIGN_RELEASE')=='true':run([sys.executable,stage/'scripts/sign-macos.py',bundle],stage)
         binary=next((bundle/'Contents/MacOS').iterdir());run([binary,'--smoke-test',native],stage)
     run([sys.executable,stage/'scripts/verify-native.py',native],stage)

@@ -15,6 +15,7 @@ import (
 )
 
 type App struct {
+	online      *onlineGate
 	ctx         context.Context
 	version     string
 	saves       *transfer.Store
@@ -26,9 +27,9 @@ type App struct {
 	allowQuit   bool
 }
 
-func NewApp(v string) *App                 { return &App{version: v, saves: transfer.New()} }
+func NewApp(v string) *App                 { return &App{version: v, saves: transfer.New(), online: newOnlineGate()} }
 func (a *App) startup(ctx context.Context) { a.ctx = ctx }
-func (a *App) shutdown(context.Context)    { a.saves.Close() }
+func (a *App) shutdown(context.Context)    { a.saves.Close(); a.online.set(false) }
 func (a *App) Version() string             { return a.version }
 func (a *App) SmokeEnabled() bool          { return a.smokeDir != "" }
 

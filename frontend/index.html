@@ -13,7 +13,7 @@
     <a class="desktop-brand" href="#pdfsplat" aria-label="SplatWorks Desktop home">SplatWorks <span>Desktop</span></a>
     <nav id="tools" aria-label="Installed tools"></nav>
     <span class="local-label">Files stay on this device</span>
-    <button id="helpButton" type="button">Help</button>
+    <button id="settingsButton" type="button">Settings</button><button id="helpButton" type="button">Help</button>
   </header>
   <main id="workspaces" aria-label="Tool workspace"></main>
   <footer class="desktop-footer"><span id="desktopStatus" role="status" aria-live="polite">Starting local tools…</span><span id="desktopVersion"></span></footer>
@@ -33,5 +33,5 @@
     <p>AGPL-3.0-or-later. Bundled dependencies retain their licenses. <a href="https://github.com/mguhlin/splatworks-desktop">Source, licenses, and downloads</a> · <a href="https://splatworks.org">SplatWorks website</a>. Website links open in your browser and require an internet connection.</p>
     <form method="dialog"><button autofocus>Close help</button></form>
   </dialog>
-</body>
+<dialog id="settingsDialog" aria-labelledby="settingsTitle"><h1 id="settingsTitle">Online features</h1><label><input id="optionalOnline" type="checkbox">Allow optional online connections</label><p>Off by default. Bundled features work offline. Turn this on to use optional model downloads, configured QR services or online image backgrounds where available in this app. Photo processing stays on this device.</p><p>Turning this off stops active external requests. Service credentials are kept in memory. Application updates are downloaded and installed manually.</p><p id="onlineStatus" role="status"></p><p><a href="https://github.com/mguhlin/splatworks-desktop/releases">Open application downloads</a></p><form method="dialog"><button>Close settings</button></form></dialog></body>
 </html>

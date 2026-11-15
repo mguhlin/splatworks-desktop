@@ -17,6 +17,7 @@ permissions:
 
 env:
   PYTHONUTF8: '1'
+  SPLAT_BROWSER_SOURCE: ${{ github.workspace }}/output/browser-source
   SIGN_RELEASE: ${{ inputs.sign_release && 'true' || 'false' }}
 
 jobs:
@@ -74,6 +75,17 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config xvfb dbus-x11
       - name: Install pinned Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+      - name: Read paired browser revision
+        if: runner.os == 'Linux'
+        id: browser
+        shell: bash
+        run: python3 -c 'import json;print("revision="+json.load(open("frontend/standalone-manifest.json"))["revision"])' >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: runner.os == 'Linux'
+        with:
+          repository: mguhlin/drawsplat
+          ref: ${{ steps.browser.outputs.revision }}
+          path: output/browser-source
       - run: npm ci
       - run: python3 scripts/check-assets.py
       - name: Browser checks and Go vulnerability scan
@@ -99,7 +111,7 @@ jobs:
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#tools-v}"
-          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="0.1.0-preview.1"; fi
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="0.2.0-preview.1"; fi
           python3 scripts/release-profiles.py --platform '${{ matrix.platform }}' --version "$version"
       - uses: actions/upload-artifact@v4
         with:

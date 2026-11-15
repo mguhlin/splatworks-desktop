@@ -1,18 +1,14 @@
-Four independently installable offline tools share the SplatWorks Go desktop shell:
+GIFsplat, CipherSplat, QRSplat and ImageSplat for Linux, Windows and Mac.
 
-- **GIFsplat:** import image frames, arrange them, adjust timing and palette, generate and save animated GIFs.
-- **CipherSplat:** password and OpenPGP encryption for files, folders and text, compatible with existing `.csplat` packages.
-- **QRSplat:** standard QR codes for links, text, email, phone and Wi-Fi; PNG/SVG exports and explicit local design presets.
-- **ImageSplat:** layers, text, shapes, crop, adjustments, blur, PNG/GIF export, and local white/color background removal.
+- Share editing and project code with the browser tools, with automated source and project-interchange checks.
+- Save/open portable GIF, image and QR projects. Preserve frames, layers, text and styling; exclude Wi-Fi passwords.
+- Keep valid imports when another image is corrupt, invalidate stale GIF previews, retain undo history for style gestures, and wait for blur saves to complete.
+- Bundle the default photo background-removal model and inference runtime in ImageSplat. Fast photo removal works offline on first launch. Restore local FontSplat lettering and typefaces.
+- Add a default-off Settings switch for optional connections and model downloads. Turning it off cancels external requests. Updates are installed manually.
+- Preserve CipherSplat CS4 compatibility and add native result-save keyboard access. Ctrl/Cmd+S and Ctrl/Cmd+O operate on editable projects in the other apps.
 
-Choose the filename beginning with your tool's name. Linux has a `.deb` and portable `.tar.gz`; Windows has a per-user `-setup.exe` and portable ZIP; Mac has a universal DMG and ZIP. SHA-256 files accompany every artifact. Windows setup includes Microsoft's publisher-verified offline WebView2 installer. The portable Windows ZIP requires an existing runtime. Linux needs GTK3/WebKitGTK4.1; macOS support begins at 14.
+Choose the filename beginning with your app's name: Linux `.deb` or `.tar.gz`, Windows `-setup.exe` or portable ZIP, Mac universal DMG or ZIP. Windows setup includes Microsoft's verified WebView2 installer; portable Windows requires an existing runtime. Linux needs GTK3/WebKitGTK4.1; macOS support begins at 14. ImageSplat downloads are larger because the model, runtime and fonts are included.
 
-Each executable includes its selected tool and processing engines. GIF, QR and image packages exclude the PDF/OCR engines. All work runs locally, saves use native destination dialogs, and closing unsaved work requires confirmation. No Go, Node.js or Python installation is needed to use the apps.
+Publisher signing, notarization and physical-device qualification remain stable-release gates. Camera, screen and video workflows depend on webview APIs, codecs, device permissions and hardware. Automated checks do not approve physical devices. Scan QR output with a real phone before printing, and test decryption before deleting originals.
 
-PNG QR exports draw the encoded modules directly into pixels to avoid platform SVG rasterization differences.
-
-Browser, native application, export-file, installer and checksum checks run automatically. Stable releases additionally require developer publisher signing, Apple notarization and physical-device approval. Unsigned previews can show publisher warnings. Automated native tests use synthetic data and bypass destination dialogs; they do not approve real dialogs or physical hardware.
-
-GIFsplat focuses on GIF creation; importing an animated source image supplies one frame. Video export is excluded. QRSplat excludes the network-based editable redirect service. ImageSplat excludes large photo-subject AI models, camera/screen capture, online background URLs, and the separate FontSplat service. White/color removal is bundled and offline. Scan QR codes with a real device before printing.
-
-Source, licenses, build instructions, signing setup and physical validation: https://github.com/mguhlin/splatworks-desktop
+Source, licenses, feature scope and signing instructions: https://github.com/mguhlin/splatworks-desktop

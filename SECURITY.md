@@ -1,7 +1,7 @@
 # Desktop security boundaries
 
 Documents, passwords, private keys, and recovery content are not persisted to
-preferences or sent to a server. CipherSplat save bookkeeping uses change counters
+native preferences or automatically sent to a server. CipherSplat save bookkeeping uses change counters
 instead of copies of plaintext, so clearing the workspace leaves no saved-state
 copy of its text. Explicit saves use destinations chosen by native dialogs. The
 application does not overwrite an original until staged output has
@@ -18,7 +18,7 @@ saving; the app does not claim secure deletion or protection against a compromis
 device or another process running as the user.
 
 The desktop origin blocks cross-origin connections, inline JavaScript, JavaScript
-evaluation, embedded objects, and unneeded hardware permissions. Bundled
+evaluation and embedded objects. Camera/screen/microphone APIs are limited to the application origin and still require platform support and user permission. Bundled
 WebAssembly remains enabled for OCR and Argon2id. Explicit HTTPS links open in
 the system browser. Untrusted Office/ebook imports exclude external resources and
 scripts using the inherited import filters. PDF visual covers do not remove
@@ -42,3 +42,12 @@ Report a suspected vulnerability privately through the repository's GitHub
 security reporting channel where available, or the maintainer contact listed in
 LICENSE. Include synthetic reproduction files; never publish sensitive documents,
 keys, or passwords in a public issue.
+
+Optional network access defaults off. Explicitly enabling it permits HTTPS
+requests through a revocable native gateway with size/time limits, public-address
+checks, TLS verification, and no forwarded cookies or authorization headers.
+Disabling it cancels active external requests. Editable QR services receive the
+destination and service key explicitly supplied for that operation; model
+downloads and image-background requests do not upload the source photo. Only the
+permission preference is persisted by the native shell. Bundled model and runtime
+files are pinned and verified; no remote application updater executes code.

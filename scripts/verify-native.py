@@ -41,6 +41,10 @@ if report.get('profile'):
             data=(root/name).read_bytes();assert data[:8]==b'\x89PNG\r\n\x1a\n'
             assert struct.unpack('>II',data[16:24])==size
     else:raise AssertionError(profile)
+    if profile!='ciphersplat':
+        project=json.loads((root/(profile+'.'+profile)).read_text())
+        assert project['format']=='SplatWorks-project' and project['tool']==profile and project['version']==1
+        if profile=='qrsplat':assert not project['data'].get('wifiPassword')
     assert not list(root.glob('.splatworks-*')),'Unfinished output remains'
     print(f'Native {profile} report and actual export files verified: {root}');sys.exit()
 assert len(report['checks'])>=23,report

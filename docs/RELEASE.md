@@ -39,3 +39,8 @@ repository. Notices and installation instructions are included in the archives;
 corresponding source is available in the repository and source archives.
 
 Debian packages use prerelease ordering that upgrades cleanly to a stable version. An epoch preserves upgrade compatibility with earlier desktop release candidates. The shared shell also supports separately installable GIFsplat, CipherSplat, QRSplat and ImageSplat previews; these are distributed in the standalone-tools release.
+
+This candidate adds a default-off, revocable online-services setting and retains
+strict webview connection rules. Standalone tools share browser editing/project
+code; ImageSplat includes its default AI model and runtime for first-launch
+offline photo removal. See the paired standalone release for these apps.

@@ -3,7 +3,7 @@
 import argparse,json,pathlib,shutil,subprocess,sys
 root=pathlib.Path(__file__).resolve().parents[1]
 profiles=json.loads((root/'profiles.json').read_text())
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('--profile',choices=profiles,required=True);p.add_argument('--version',default='0.1.0-preview.1');p.add_argument('--platform');p.add_argument('--prepare-only',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--profile',choices=profiles,required=True);p.add_argument('--version',default='0.2.0-preview.1');p.add_argument('--platform');p.add_argument('--prepare-only',action='store_true');a=p.parse_args()
 info=profiles[a.profile];stage=root/'output/profiles'/a.profile
 shutil.rmtree(stage,ignore_errors=True);stage.mkdir(parents=True)
 ignore=shutil.ignore_patterns('bin','node_modules','__pycache__','test-results','tests')
@@ -15,17 +15,29 @@ for file in root.glob('*.go'):copy(file,stage/file.name)
 for name in ['go.mod','go.sum','LICENSE','COPYING','NOTICE.md','THIRD-PARTY-NOTICES.md','SECURITY.md','internal','scripts','licenses','docs','build']:
     copy(root/name,stage/name)
 web=stage/'frontend';web.mkdir()
-for name in ['index.html','desktop','assets','splatworks','LICENSE','NOTICE.md']:
+for name in ['index.html','desktop','assets','LICENSE','NOTICE.md']:
     copy(root/'frontend'/name,web/name)
+copy(root/'frontend/splatworks/shared',web/'splatworks/shared')
 for file in (web/'desktop').glob('native-smoke*.js'):
     if file.name!=info['smoke']:file.unlink()
 catalog=json.loads((root/'tools.json').read_text())+json.loads((root/'standalone-tools.json').read_text())
 tool=next(t for t in catalog if t['id']==a.profile)
 copy(root/'frontend'/tool['source'],web/tool['source'])
 if a.profile=='imagesplat':
+    copy(root/'frontend/solutions/fontsplat',web/'solutions/fontsplat')
+    copy(root/'frontend/splatworks/layoutsplat/fonts',web/'splatworks/layoutsplat/fonts')
     copy(root/'frontend/solutions/backdropsplat',web/'solutions/backdropsplat')
+    subprocess.run([sys.executable,str(root/'scripts/prepare-ai.py')],check=True)
+    copy(root/'ai-runtime/vendor',web/'solutions/backdropsplat/vendor')
+    for notice in (root/'ai-runtime/vendor').glob('*'):
+        if 'LICENSE' in notice.name or 'ThirdParty' in notice.name:copy(notice,stage/'licenses/AI'/notice.name)
+    for notice in (root/'frontend/splatworks/layoutsplat/fonts').glob('*'):
+        if notice.suffix.lower() in ['.txt','.md']:copy(notice,stage/'licenses/fonts'/notice.name)
+    copy(root/'ai-runtime/model.json',stage/'licenses/AI/model.json')
+    copy(root/'output/toolchain/models',web/'solutions/backdropsplat/models')
     copy(root/'frontend/vendor/jszip.min.js',web/'vendor/jszip.min.js')
 (web/'tools.json').write_text(json.dumps([tool],indent=2)+'\n')
+if a.profile=='imagesplat':info={**info,'bundledModels':True}
 (web/'app.json').write_text(json.dumps(info,indent=2)+'\n')
 page=web/'index.html';page.write_text(page.read_text().replace('href="/solutions/pdfsplat/pdfsplat.png"','href="/'+info['icon']+'"'))
 config=json.loads((root/'wails.json').read_text());config.update(name=info['slug'],outputfilename=info['binary']);config['info'].update(productName=info['name'],productVersion=a.version.split('-')[0],comments=info['description']);(stage/'wails.json').write_text(json.dumps(config,indent=2)+'\n')

@@ -13,8 +13,11 @@ def copy(rel):
         added.update(str(f.relative_to(web)).replace('\\','/') for f in dst.rglob('*') if f.is_file())
     else:shutil.copy2(src,dst);added.add(rel)
 for tool in tools:copy(tool['source'])
-for rel in ['assets/js/widget-i18n.js','assets/js/gif-encoder.js','assets/js/mp4-muxer.js','assets/brand/DrawSplat_logo.png','assets/brand/DrawSplat_logo_transparent.png','assets/favicons/tools.svg','assets/favicons/splatimage-studio.svg','splatworks/shared/photo-blur.js','splatworks/shared/fontsplat-launcher.js']:
+for rel in ['assets/js/widget-i18n.js','assets/js/gif-encoder.js','assets/js/mp4-muxer.js','assets/brand/DrawSplat_logo.png','assets/brand/DrawSplat_logo_transparent.png','assets/favicons/tools.svg','assets/favicons/splatimage-studio.svg','splatworks/shared/project-files.js','splatworks/shared/project-files.css','splatworks/shared/photo-blur.js','splatworks/shared/fontsplat-launcher.js']:
     copy(rel)
+copy('solutions/fontsplat')
+copy('splatworks/layoutsplat/fonts')
+fontpage=web/'solutions/fontsplat/index.html';fontpage.write_text(re.sub(r'<!-- splat-privacy:start -->.*?<!-- splat-privacy:end -->','',fontpage.read_text(),flags=re.S).replace('<head>','<head><link rel="stylesheet" href="/desktop/frame.css"><script src="/desktop/frame.js"></script>'))
 for name in ['processor.mjs','pixels.mjs','backgrounds.mjs','background-source.mjs','worker.mjs','backgrounds']:
     copy('solutions/backdropsplat/'+name)
 for tool in tools:
@@ -33,7 +36,7 @@ for tool in tools:
         path.write_text(body,encoding='utf-8');added.add(str(path.relative_to(web)).replace('\\','/'))
         return '<script'+attrs+' src="'+filename+'"></script>'
     text=re.sub(r'<script([^>]*)>(.*?)</script>',extract,text,flags=re.S)
-    text=text.replace('</head>','<link rel="stylesheet" href="/desktop/frame.css"><script src="/desktop/frame.js"></script></head>')
+    text=text.replace('<head>','<head><link rel="stylesheet" href="/desktop/frame.css"><script src="/desktop/frame.js"></script>')
     page.write_text(text,encoding='utf-8')
 subprocess.run(['node',str(root/'scripts/adapt-small-tools.mjs')],check=True)
 for tool in tools:
