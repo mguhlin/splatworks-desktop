@@ -1,5 +1,8 @@
 # SplatWorks Desktop
 
+Before resuming development, read `SESSION_NOTES.md` for release state, verification
+and remaining 1.0 requirements.
+
 Keep desktop integration here and the browser tools in mguhlin/drawsplat. Use
 scripts/sync-tools.py to import an explicit DrawSplat checkout; review and commit
 the resulting snapshot and manifest. Do not download application code at runtime.
