@@ -18,9 +18,9 @@ GIFsplat and CipherSplat were requested first. QR creation and quick image editi
 Use the same Go/Wails platform dependencies as the main application:
 
 ```sh
-python3 scripts/build-profile.py --profile gifsplat --version 1.0.0-rc.1
+python3 scripts/build-profile.py --profile gifsplat --version 1.0.0-rc.2
 cd output/profiles/gifsplat
-python3 scripts/package-release.py --platform linux --version 1.0.0-rc.1
+python3 scripts/package-release.py --platform linux --version 1.0.0-rc.2
 ```
 
 Profile names are `gifsplat`, `ciphersplat`, `qrsplat`, `imagesplat`, `audiosplat` and `videosplat`. Use `--platform windows/amd64` or `--platform darwin/universal` on the corresponding build host. Windows packaging requires `scripts/prepare-windows.ps1`. Mac packaging requires ad hoc or developer signing before archiving. `--prepare-only` stages a profile for inspection. The staged tree contains one tool, its local dependencies, license notices and shared desktop assets. PDF/OCR engines are omitted from the standalone profiles. The default photo model is included only in ImageSplat; the FFmpeg transcoder is included only in VideoSplat.
@@ -31,7 +31,7 @@ Import updates explicitly with `python3 scripts/sync-small-tools.py ../drawsplat
 
 The Standalone tools workflow builds all six tools on Linux, Windows and Mac. It exercises production native saves, validates output bytes, installs/removes Debian packages, installs/upgrades/uninstalls Windows apps while preserving user files, and validates Mac archives, signatures and universal architectures. Browser checks run under the production content-security restrictions and decode exported URL and Wi-Fi QR images.
 
-Push a tag such as `tools-v1.0.0-rc.1` to publish a preview. Core suite tags remain `v…`. Stable standalone tags require `STANDALONE_PHYSICAL_VALIDATION_APPROVED=true` and enable signing automatically. A manually dispatched signed build uses `sign_release=true`. Signing uses the same developer-owned identities and secrets described in [SIGNING.md](SIGNING.md). No credential is bundled in an app.
+Push a tag such as `tools-v1.0.0-rc.2` to publish a preview. Core suite tags remain `v…`. Stable standalone tags require `STANDALONE_PHYSICAL_VALIDATION_APPROVED=true` and enable signing automatically. A manually dispatched signed build uses `sign_release=true`. Signing uses the same developer-owned identities and secrets described in [SIGNING.md](SIGNING.md). No credential is bundled in an app.
 
 Before stable approval, run [VALIDATION.md](VALIDATION.md) on every app and applicable platform. Additionally check GIF timing/reordering in an independent viewer; decrypt the standalone Cipher output in the browser tool; scan QR PNG/SVG printouts on a physical phone, including Wi-Fi; and verify image dimensions, transparency, text, undo and background removal in another editor. Test actual native save cancellation, overwrite, permissions, unsaved-work prompts and offline startup. Approve the standalone variable only after recording passing results for the exact tag and architectures.
 

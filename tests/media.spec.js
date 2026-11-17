@@ -114,12 +114,11 @@ test('audio keyboard save captures an unblurred project title',async({page})=>{
  const bytes=await output(page,'Untabbed title.audiosplat.json');expect(JSON.parse(bytes.toString()).project.metadata.title).toBe('Untabbed title');expect(errors).toEqual([]);
 });
 
-test('video timeline export saves MP4 or explains a missing platform encoder',async({page})=>{
+test('video timeline export saves MP4 or explains a missing platform encoder',async({page,browserName})=>{
+ if(browserName==='webkit')await page.addInitScript(()=>{Object.defineProperty(window,'VideoEncoder',{value:undefined,configurable:true});Object.defineProperty(HTMLCanvasElement.prototype,'captureStream',{value:undefined,configurable:true});});
  const {frame,errors}=await start(page,'videosplat');await frame.getByRole('button',{name:'Edit video',exact:false}).click();
- const supported=await frame.locator('body').evaluate(async()=>{
-  if(window.VideoEncoder)for(const hardwareAcceleration of ['prefer-hardware','prefer-software'])try{if((await VideoEncoder.isConfigSupported({codec:'avc1.42001f',width:160,height:120,bitrate:4000000,framerate:5,hardwareAcceleration})).supported)return true;}catch{}
-  return !!HTMLCanvasElement.prototype.captureStream&&typeof MediaRecorder!=='undefined'&&MediaRecorder.isTypeSupported('video/webm');
- });
+ // Exercise real composition in Chromium; simulate unavailable capture/encoding in WebKit.
+ const supported=browserName==='chromium';
  await frame.locator('input[accept^="video/"]').setInputFiles({name:'frame.png',mimeType:'image/png',buffer:await png(page)});await expect(frame.locator('.timeline-clip')).toHaveCount(1);
  await frame.getByRole('menuitem',{name:'File',exact:true}).click();await frame.getByRole('menuitem',{name:'Export video…',exact:true}).click();
  await frame.getByLabel('Export format',{exact:true}).selectOption('mp4');await frame.getByLabel('Export width',{exact:true}).fill('160');await frame.getByLabel('Export height',{exact:true}).fill('120');await frame.getByLabel('Export frame rate',{exact:true}).fill('5');await frame.getByLabel('Export range end',{exact:true}).fill('0.4');await frame.getByLabel('Include timeline audio',{exact:true}).uncheck();await frame.getByRole('button',{name:'Render local MP4',exact:true}).click();
