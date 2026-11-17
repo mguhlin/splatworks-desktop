@@ -27,6 +27,7 @@ for(const id of ['audiosplat','videosplat']){
   fs.writeFileSync(file(app+'/index.html'),page);
   fs.rmSync(file(app+'/public/sw.js'),{force:true});
 }
+fs.copyFileSync(path.join(templates,'audio-project.ts'),file('solutions/audiosplat/src/audio-project.ts'));
 const audio='solutions/audiosplat/src/main.ts';
 edit(audio,text=>{
   text='import {desktop,changed,stamp,loaded,save,commands,confirmReplace} from "./desktop";\n'+text;
@@ -98,7 +99,7 @@ for(const [name,expression] of [['OptimizerDialog','busy'],['RecorderDialog','st
     text='import {desktop} from "../desktop";\n'+text;
     const marker=name==='OptimizerDialog'?'  const options =':'  const session =';
     // State layouts differ; insert before the component's return, after every state declaration.
-    const anchor=name==='OptimizerDialog'?'  return <>':'  return (';
+    const anchor='  return <>';
     const pos=text.lastIndexOf(anchor);if(pos<0)throw Error('Operation hook missing '+name);
     const expr=name==='RecorderDialog'?'state === "recording" || state === "paused" || adding':expression;
     return text.slice(0,pos)+'  useEffect(()=>{if('+expr+')return desktop.beginOperation();},['+ (name==='RecorderDialog'?'state,adding':'busy')+']);\n'+text.slice(pos);
@@ -187,3 +188,41 @@ edit('solutions/shared/subtitles/SubtitleGenerator.tsx',text=>text
 edit('solutions/audiosplat/src/main.ts',text=>text.replace('<span ></span>: <strong id="save-state" ></strong>','<span>Project</span>: <strong id="save-state">In memory</strong>'));
 // Validate/decode an entire imported audio project before replacing the open one.
 edit('solutions/audiosplat/src/main.ts',text=>text.replace('    project = data.project;\n    sources = loaded;', '    for(const source of loaded.values())await engine.loadSource(source);\n    project = data.project;\n    sources = loaded;').replace('function closeDialog(): void {\n  if(!discardDraft("transcript"))return;', 'function closeDialog(): boolean {\n  if(!discardDraft("transcript"))return false;').replace('  document.querySelector("#dialog-backdrop")?.remove();\n}', '  document.querySelector("#dialog-backdrop")?.remove();return true;\n}').replace('  closeDialog();\n  document.body.insertAdjacentHTML(', '  if(!closeDialog())return;\n  document.body.insertAdjacentHTML('));
+
+// 1.0 boundary hardening: decode incoming sources independently of the current cache.
+edit('solutions/audiosplat/src/main.ts',text=>{
+ text='import {validatePortableProject} from "./audio-project";\n'+text;
+ text=text.replace('stamp,loaded,save', 'stamp,loaded as markProjectLoaded,save').replace('    loaded();','    markProjectLoaded();');
+ text=text.replace('!validateProject(data.project)', '!validatePortableProject(data.project)');
+ text=text.replace('!source.dataUrl ||', '!source.dataUrl || typeof source.dataUrl!=="string" || !/^data:[^,]*;base64,[A-Za-z0-9+/]*={0,2}$/i.test(source.dataUrl) || loaded.has(source.id) ||');
+ text=text.replace('    for(const source of loaded.values())await engine.loadSource(source);', `    const decoded=new Map<string,AudioBuffer>();
+    for(const source of loaded.values()){
+      const buffer=await engine.decodeContext().decodeAudioData(await source.blob!.arrayBuffer());
+      if(Math.abs(buffer.duration-source.duration)>.02)throw Error('Audio duration mismatch');
+      decoded.set(source.id,buffer);
+    }`);
+ text=text.replace('    for (const source of sources.values()) await engine.loadSource(source);', '    for(const [id,buffer] of decoded)engine.setBuffer(id,buffer);');
+ return text;
+});
+edit('solutions/videosplat/src/ui/App.tsx',text=>text.replace('onMouseDown={() => { if (!recorderFloating) setDialog(null); }}', `onMouseDown={() => {if(recorderFloating)return;if(dialog==='recorder'){document.querySelector<HTMLButtonElement>('[aria-label="Close recorder"]')?.click();return;}setDialog(null);}}`));
+edit('solutions/shared/subtitles/SubtitleGenerator.tsx',text=>text
+ .replace('      const next = event.target.value === \'local\' ? \'local\' : getWhisperModel(event.target.value).id;', `      if(!mediaSession().discardDraft('transcript'))return;
+      const next = event.target.value === 'local' ? 'local' : getWhisperModel(event.target.value).id;`)
+ .replace('      setModelFile(event.target.files?.[0]);', `      if(!mediaSession().discardDraft('transcript')){event.target.value='';return;}setModelFile(event.target.files?.[0]);`)
+ .replace('onClick={() => setCues(current => current.filter((_, i) => i !== index))}', 'onClick={() => {mediaSession().retain("transcript");setCues(current => current.filter((_, i) => i !== index));}}')
+ .replace('attempt(() => Promise.resolve(onUse(cues)).then(()=>{mediaSession().release("transcript");}))', 'attempt(async()=>{const version=mediaSession().draftStamp("transcript");await onUse(cues);mediaSession().release("transcript",version);})')
+ .replace('Completed sections are saved on this device when storage allows. Select the same file and generate again to resume after an interruption. Reviewed edits are only kept in your downloads.', 'Transcripts stay in memory. Save SRT/text or add captions to the timeline before closing.')
+);
+// Capture a pending project name before keyboard saving, and warn while it is edited.
+edit('solutions/audiosplat/src/main.ts',text=>text
+ .replace('  const savedStamp=stamp(),snapshot=structuredClone(project);','  (document.activeElement as HTMLElement|null)?.blur();\n  const savedStamp=stamp(),snapshot=structuredClone(project);')
+ .replace('  document.addEventListener("click", event=>{void handleAction', '  document.querySelector("#project-title")?.addEventListener("input",()=>changed());\n  document.addEventListener("click", event=>{void handleAction')
+);
+// Native commands must observe the state already visible on the timeline.
+edit('solutions/videosplat/src/ui/App.tsx',text=>'import {useLayoutEffect} from "react";\n'+text
+ .replace('useEffect(()=>{if(previousProject.current!==project)', 'useLayoutEffect(()=>{if(previousProject.current!==project)')
+ .replace('useEffect(()=>{commands({save:', 'useLayoutEffect(()=>{commands({save:')
+);
+edit('solutions/videosplat/src/ui/ExportDialog.tsx',text=>text.replace('Saved to your Downloads folder','Saved to your chosen destination'));
+
+edit('solutions/audiosplat/src/main.ts',text=>text.replace('typeof source.id !== "string" ||', 'typeof source.id !== "string" || !source.id || typeof source.name!=="string" || typeof source.mimeType!=="string" || !Number.isInteger(source.channels) || source.channels<1 || source.channels>32 || !Number.isFinite(source.sampleRate) || source.sampleRate<8000 || source.sampleRate>192000 ||'));

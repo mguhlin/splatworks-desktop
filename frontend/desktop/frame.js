@@ -39,7 +39,10 @@
   });
   window.addEventListener('keydown',event=>{
     if(event.key==='F1'){event.preventDefault();desktop.help();return;}
-    if((event.ctrlKey||event.metaKey)&&!event.altKey&&!event.shiftKey&&['s','o'].includes(event.key.toLowerCase())&&!document.querySelector('dialog[open]')){if(desktop.command(desktop.toolId(location.pathname),event.key.toLowerCase()==='s'?'save':'open'))event.preventDefault();}
+    if((event.ctrlKey||event.metaKey)&&!event.altKey&&!event.shiftKey&&['s','o'].includes(event.key.toLowerCase())){
+      if([...document.querySelectorAll('dialog[open],[role=dialog][aria-modal=true]')].some(dialog=>dialog.getClientRects().length)){event.preventDefault();return;}
+      if(desktop.command(desktop.toolId(location.pathname),event.key.toLowerCase()==='s'?'save':'open'))event.preventDefault();
+    }
     if((event.ctrlKey||event.metaKey)&&['1','2'].includes(event.key)){event.preventDefault();desktop.selectIndex(Number(event.key)-1);}
   });
 })();

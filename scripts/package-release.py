@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Package an already-built platform application with notices and checksums."""
 import argparse
+from macos_dmg import create_image
 import json
 import os
 import re
@@ -34,7 +35,7 @@ if a.platform=='macos':
     subprocess.run(['ditto','-c','-k','--sequesterRsrc','--keepParent',str(stage),str(out/(name+'.zip'))],check=True)
     # The DMG preserves the native bundle's symlinks and executable permissions.
     (stage/'Applications').symlink_to('/Applications')
-    subprocess.run(['hdiutil','create','-volname',appname,'-srcfolder',str(stage),'-ov','-format','UDZO',str(out/(name+'.dmg'))],check=True)
+    create_image(stage,out/(name+'.dmg'),appname)
     if os.environ.get('SIGN_RELEASE')=='true':subprocess.run(['python3',str(root/'scripts/sign-macos.py'),str(out/(name+'.dmg'))],check=True)
 elif a.platform=='windows':
     shutil.copy2(root/'build/bin'/(binary+'.exe'),stage/(binary+'.exe'))

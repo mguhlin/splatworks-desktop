@@ -33,6 +33,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: python3 scripts/check-assets.py
+      - run: python3 -m unittest discover -s scripts/tests
       - run: go test -race ./internal/transfer
       - name: Stable release validation gate
         if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
@@ -54,6 +55,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
+          overwrite: true
           name: browser-failure-details
           path: test-results/
 
@@ -122,7 +124,7 @@ jobs:
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#v}"
-          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="1.0.0-rc.6"; fi
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="1.0.0-rc.7"; fi
           args=()
           if [[ "$RUNNER_OS" == "Linux" ]]; then args+=(-tags webkit2_41); fi
           wails build -platform '${{ matrix.target }}' "${args[@]}" -ldflags "-X main.version=$version"
@@ -186,9 +188,10 @@ jobs:
         run: python3 scripts/test-macos-package.py
       - name: Verify all package checksums
         shell: bash
-        run: python3 scripts/verify-packages.py output/release
+        run: python3 scripts/verify-packages.py output/release --platform '${{ matrix.platform }}' --binary SplatWorks-Desktop --version "$RELEASE_VERSION"
       - uses: actions/upload-artifact@v4
         with:
+          overwrite: true
           name: desktop-${{ matrix.platform }}
           path: output/release/*
           if-no-files-found: error
@@ -196,6 +199,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          overwrite: true
           name: native-check-${{ matrix.platform }}
           path: output/native/*.json
 

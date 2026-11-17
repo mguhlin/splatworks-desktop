@@ -27,7 +27,7 @@ for id,info in profiles.items():
     run([sys.executable,stage/'scripts/package-release.py','--platform',a.platform,'--version',a.version],stage)
     installer={'linux':['bash','scripts/test-linux-install.sh'],'windows':['powershell','-NoProfile','-File','scripts/test-windows-install.ps1'],'macos':[sys.executable,'scripts/test-macos-package.py']}[a.platform]
     run(installer,stage)
-    run([sys.executable,stage/'scripts/verify-packages.py',stage/'output/release'],stage)
+    run([sys.executable,stage/'scripts/verify-packages.py',stage/'output/release','--platform',a.platform,'--binary',info['binary'],'--version',a.version],stage)
     for file in (stage/'output/release').iterdir():shutil.copy2(file,release/file.name)
     evidence=root/'output/standalone-native'/id;evidence.mkdir(parents=True,exist_ok=True)
     for file in native.glob('*.json'):shutil.copy2(file,evidence/file.name)

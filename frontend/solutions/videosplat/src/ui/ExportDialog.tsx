@@ -292,7 +292,7 @@ export function ExportDialog({
       )}
       {result && (
         <div className="optimizer-results">
-          <strong>{saved ? "Saved to your Downloads folder" : "Export ready"} · {bytes(result.blob.size)}</strong>
+          <strong>{saved ? "Saved to your chosen destination" : "Export ready"} · {bytes(result.blob.size)}</strong>
           <button className="primary" onClick={download}>
             Save another {result.format.toUpperCase()} copy
           </button>

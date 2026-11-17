@@ -176,8 +176,7 @@ export function RecorderDialog({ initialMicrophoneDeviceId = "", permissionsPrep
     };
     void refresh();
     navigator.mediaDevices?.addEventListener?.("devicechange", refresh);
-    useEffect(()=>{if(state === "recording" || state === "paused" || state === "saving" || state === "cropping" || starting || adding)return desktop.beginOperation();},[state,starting,adding]);
-  return () => navigator.mediaDevices?.removeEventListener?.("devicechange", refresh);
+    return () => navigator.mediaDevices?.removeEventListener?.("devicechange", refresh);
   }, []);
 
   const stop = async () => {
@@ -384,6 +383,7 @@ export function RecorderDialog({ initialMicrophoneDeviceId = "", permissionsPrep
     window.addEventListener("pointerup", up, { once: true });
   };
 
+  useEffect(()=>{if(state === "recording" || state === "paused" || state === "saving" || state === "cropping" || starting || adding)return desktop.beginOperation();},[state,starting,adding]);
   return <>
     <button className="dialog-close" onClick={close} aria-label="Close recorder">×</button>
     <h2 id="recorder-title">Record locally</h2>

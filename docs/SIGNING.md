@@ -69,9 +69,19 @@ scope.
 ## Standalone tool releases
 
 The **Standalone tools** workflow reuses these signing providers and credential
-names for GIFsplat, CipherSplat, QRSplat and ImageSplat. Dispatch that workflow
+names for GIFsplat, CipherSplat, QRSplat, ImageSplat, AudioSplat and VideoSplat. Dispatch that workflow
 with `sign_release=true` to produce signed candidates. Each app has a separate
 bundle identifier and installer registration. Complete the per-app checks in
 [STANDALONE.md](STANDALONE.md), then set
 `STANDALONE_PHYSICAL_VALIDATION_APPROVED=true` before a stable `tools-v…` tag.
 The core suite's approval variable does not approve standalone tools.
+
+## Inspect 1.0 prerequisites
+
+Run `python3 scripts/release-readiness.py` from the repository, or add `--json`
+for a machine-readable report. The command reads repository variable values and
+secret names through `gh`; it never retrieves or prints secret values. It reports
+missing signing configuration and the separate core/standalone physical approvals.
+Configuration presence alone does not prove certificate validity, successful
+notarization, or physical-device results. Validate a signed candidate before
+approving the applicable stable release.

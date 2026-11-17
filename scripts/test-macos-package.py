@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Verify DMG checksums and the archived universal app, handling mounted images."""
 import json,pathlib,plistlib,subprocess,time
+from macos_dmg import temporary_disk_error
 root=pathlib.Path(__file__).resolve().parents[1]
 release=root/'output/release'
 def checked(*args):subprocess.run(args,check=True)
-for image in release.glob('*.dmg'):
+images=list(release.glob('*.dmg'));assert len(images)==1,'Expected one Mac disk image'
+for image in images:
     image=image.resolve()
     # hdiutil requires an exclusive handle for verify. Detach only our exact
     # image if the build/OS left it mounted; never touch unrelated volumes.
@@ -17,7 +19,7 @@ for image in release.glob('*.dmg'):
         result=subprocess.run(['hdiutil','verify',str(image)],capture_output=True,text=True)
         if result.returncode==0:
             print(result.stdout);break
-        if 'Resource temporarily unavailable' not in result.stderr or attempt==4:
+        if not temporary_disk_error(result.stderr) or attempt==4:
             raise SystemExit(result.stderr)
         time.sleep(2*(attempt+1))
 archives=list(release.glob('*.zip'))

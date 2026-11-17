@@ -1,3 +1,13 @@
+1.0 release candidates for GIFsplat, CipherSplat, QRSplat, ImageSplat, AudioSplat and VideoSplat.
+
+- Fix recorder-dialog initialization and protect unsaved recordings when dismissing the dialog.
+- Harden portable audio imports, decode replacement sources independently, and reject external media URLs or invalid mixer state before replacing open work.
+- Verify embedded video media checksums and keep native project saving synchronized with the visible timeline.
+- Preserve pending project names, unsaved transcript edits and modal keyboard behavior.
+- Retry temporary Mac disk-image contention without hiding permanent packaging failures; make CI artifact uploads safe to retry.
+
+These candidates remain unsigned pending publisher signing and physical-device validation. See docs/1.0.md, docs/SIGNING.md and docs/VALIDATION.md for the stable-release requirements.
+
 AudioSplat and VideoSplat join GIFsplat, CipherSplat, QRSplat and ImageSplat as independently installed desktop apps for Linux, Windows and Mac.
 
 - **AudioSplat:** multitrack audio import/editing, effects, local WAV/MP3 exports, and portable projects with embedded source audio.

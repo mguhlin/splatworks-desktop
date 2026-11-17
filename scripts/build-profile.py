@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Stage a small, independently named application using the shared Go shell."""
-import argparse,json,pathlib,shutil,subprocess,sys
+import argparse,json,pathlib,shutil,subprocess,sys,re
 root=pathlib.Path(__file__).resolve().parents[1]
 profiles=json.loads((root/'profiles.json').read_text())
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('--profile',choices=profiles,required=True);p.add_argument('--version',default='0.3.0-preview.1');p.add_argument('--platform');p.add_argument('--prepare-only',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--profile',choices=profiles,required=True);p.add_argument('--version',default='1.0.0-rc.1');p.add_argument('--platform');p.add_argument('--prepare-only',action='store_true');a=p.parse_args()
 info=profiles[a.profile];stage=root/'output/profiles'/a.profile
 shutil.rmtree(stage,ignore_errors=True);stage.mkdir(parents=True)
 ignore=shutil.ignore_patterns('bin','node_modules','__pycache__','test-results','tests')
@@ -12,6 +12,7 @@ def copy(src,dest):
     if src.is_dir():shutil.copytree(src,dest,ignore=ignore,dirs_exist_ok=True)
     else:shutil.copy2(src,dest)
 for file in root.glob('*.go'):copy(file,stage/file.name)
+main=stage/'main.go';main.write_text(re.sub(r'//go:embed[^\n]+','//go:embed all:frontend',main.read_text()))
 for name in ['go.mod','go.sum','LICENSE','COPYING','NOTICE.md','THIRD-PARTY-NOTICES.md','SECURITY.md','internal','scripts','licenses','docs','build']:
     copy(root/name,stage/name)
 web=stage/'frontend';web.mkdir()

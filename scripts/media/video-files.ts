@@ -1,5 +1,6 @@
 import { validateProject, type VideoSplatProject } from '../domain/project';
 import { loadMedia, saveMedia } from './database';
+import {hashBlob} from '../media/importer';
 import { save, stamp, operation } from '../desktop';
 export const projectFileName = (p:VideoSplatProject) => `${p.name.replace(/[^a-z0-9-_]+/gi,'-')||'project'}.videosplat.json`;
 export const projectFile = (p:VideoSplatProject) => new Blob([JSON.stringify(p,null,2)],{type:'application/json'});
@@ -9,7 +10,7 @@ export async function downloadProject(p:VideoSplatProject) {
   // Snapshot before encoding: editing while a native dialog is open remains dirty.
   const snapshot=structuredClone(p);
   return operation(async()=>{
-    const embeddedMedia:Record<string,string>={};let bytes=0;
+    const embeddedMedia:Record<string,string>=Object.create(null);let bytes=0;
     for(const asset of snapshot.assets){
       const blob=await loadMedia(asset.id);
       if(!blob)throw Error('Relink missing media before saving a portable project: '+asset.name);
@@ -20,6 +21,7 @@ export async function downloadProject(p:VideoSplatProject) {
   });
 }
 export async function readProject(file:File):Promise<VideoSplatProject> {
+ return operation(async()=>{
   if(file.size>360*1024*1024)throw Error('Project file exceeds the 360 MB limit.');
   const raw=JSON.parse(await file.text());const {embeddedMedia,...manifest}=raw;
   const project=validateProject(manifest);
@@ -31,10 +33,12 @@ export async function readProject(file:File):Promise<VideoSplatProject> {
       if(typeof url!=='string'||!/^data:[a-z0-9.+/-]*;base64,[A-Za-z0-9+/]*={0,2}$/i.test(url))throw Error('Invalid or missing embedded media: '+asset.name);
       const blob=await (await fetch(url)).blob();total+=blob.size;
       if(total>256*1024*1024||blob.size!==asset.size)throw Error('Embedded media size mismatch.');
+      if(asset.contentHash && (!/^[0-9a-f]{64}$/i.test(asset.contentHash)||await hashBlob(blob)!==asset.contentHash.toLowerCase()))throw Error('Embedded media checksum mismatch: '+asset.name);
       pending.push([asset.id,blob]);
     }
   }
   // Commit only after the entire file validates, preserving the open workspace on failure.
   for(const [id,blob] of pending)await saveMedia(id,blob);
   return project;
+ });
 }

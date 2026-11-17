@@ -1,5 +1,6 @@
+import {validatePortableProject} from "./audio-project";
 let recordingEnd:(()=>void)|undefined;
-import {desktop,changed,stamp,loaded,save,commands,confirmReplace,discardDraft} from "./desktop";
+import {desktop,changed,stamp,loaded as markProjectLoaded,save,commands,confirmReplace,discardDraft} from "./desktop";
 import { analyzeAudio, formatDbfs } from "./audio/analysis";
 import { encodeWithMediaRecorder } from "./audio/encode";
 import "./styles.css";
@@ -292,6 +293,7 @@ function bindShell(): void {
             (event.target as HTMLInputElement).value.trim() || t("untitled")),
       ),
     );
+  document.querySelector("#project-title")?.addEventListener("input",()=>changed());
   document.addEventListener("click", event=>{void handleAction(event).catch(error=>desktop.status("Action failed: "+error.message));});
   document
     .querySelectorAll<HTMLDetailsElement>("details.menu")
@@ -1715,6 +1717,7 @@ function hasAudioSignal(buffer: AudioBuffer): boolean {
 async function downloadProject(): Promise<void> {
   const desktopEnd=desktop.beginOperation();
   try {
+  (document.activeElement as HTMLElement|null)?.blur();
   const savedStamp=stamp(),snapshot=structuredClone(project);
   const embedded = await Promise.all(
     [...sources.values()].map(async (source) => ({
@@ -1743,7 +1746,7 @@ async function openProject(file?: File): Promise<void> {
       sources: Array<AudioSourceRecord & { dataUrl?: string }>;
     };
     if (
-      !validateProject(data.project) ||
+      !validatePortableProject(data.project) ||
       !Array.isArray(data.sources) ||
       data.sources.length > 1000
     )
@@ -1751,8 +1754,8 @@ async function openProject(file?: File): Promise<void> {
     const loaded = new Map<string, AudioSourceRecord>();
     for (const source of data.sources) {
       if (
-        !source.dataUrl ||
-        typeof source.id !== "string" ||
+        !source.dataUrl || typeof source.dataUrl!=="string" || !/^data:[^,]*;base64,[A-Za-z0-9+/]*={0,2}$/i.test(source.dataUrl) || loaded.has(source.id) ||
+        typeof source.id !== "string" || !source.id || typeof source.name!=="string" || typeof source.mimeType!=="string" || !Number.isInteger(source.channels) || source.channels<1 || source.channels>32 || !Number.isFinite(source.sampleRate) || source.sampleRate<8000 || source.sampleRate>192000 ||
         !Number.isFinite(source.duration) ||
         source.duration <= 0 ||
         source.dataUrl.length > 800_000_000
@@ -1770,7 +1773,12 @@ async function openProject(file?: File): Promise<void> {
         )
           throw new Error("Bad clip bounds");
       }
-    for(const source of loaded.values())await engine.loadSource(source);
+    const decoded=new Map<string,AudioBuffer>();
+    for(const source of loaded.values()){
+      const buffer=await engine.decodeContext().decodeAudioData(await source.blob!.arrayBuffer());
+      if(Math.abs(buffer.duration-source.duration)>.02)throw Error('Audio duration mismatch');
+      decoded.set(source.id,buffer);
+    }
     project = data.project;
     sources = loaded;
     history = [];
@@ -1778,10 +1786,10 @@ async function openProject(file?: File): Promise<void> {
     selectedClipId = null;
     selectedRange = null;
     selectedTrackId = project.tracks[0]?.id ?? "";
-    for (const source of sources.values()) await engine.loadSource(source);
+    for(const [id,buffer] of decoded)engine.setBuffer(id,buffer);
     syncProjectTitle();
     renderWorkspace();
-    loaded();
+    markProjectLoaded();
   } catch {
     toast(t("projectFailed"), true);
   }

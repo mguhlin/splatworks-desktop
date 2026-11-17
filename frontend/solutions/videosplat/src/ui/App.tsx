@@ -1,3 +1,4 @@
+import {useLayoutEffect} from "react";
 import {desktop,changed,loaded,commands,confirmReplace} from "../desktop";
 import { MarkerPanel } from "./MarkerPanel";
 import { readSessionPreference, writeSessionPreference } from "../persistence/preferences";
@@ -106,8 +107,8 @@ export function App() {
     "Ready — everything stays on this device",
   );
   const previousProject=useRef(project),openedProject=useRef<VideoSplatProject|undefined>(undefined);
-  useEffect(()=>{if(previousProject.current!==project){if(openedProject.current===project){loaded();openedProject.current=undefined;}else changed();previousProject.current=project;}},[project]);
-  useEffect(()=>{commands({save:()=>downloadProject(project).catch(error=>setStatus(error.message)),open:()=>fileInput.current?.click()});},[project]);
+  useLayoutEffect(()=>{if(previousProject.current!==project){if(openedProject.current===project){loaded();openedProject.current=undefined;}else changed();previousProject.current=project;}},[project]);
+  useLayoutEffect(()=>{commands({save:()=>downloadProject(project).catch(error=>setStatus(error.message)),open:()=>fileInput.current?.click()});},[project]);
   const [dialog, setDialog] = useState<Dialog>(null);
   const [recorderFloating, setRecorderFloating] = useState(false);
   const [mobilePanel, setMobilePanel] = useState("preview");
@@ -2487,7 +2488,7 @@ export function App() {
       {dialog && (
         <div
           className={`backdrop ${dialog === "recorder" && recorderFloating ? "recorder-floated" : ""}`}
-          onMouseDown={() => { if (!recorderFloating) setDialog(null); }}
+          onMouseDown={() => {if(recorderFloating)return;if(dialog==='recorder'){document.querySelector<HTMLButtonElement>('[aria-label="Close recorder"]')?.click();return;}setDialog(null);}}
         >
           <section
             className={`dialog ${dialog === "optimizer" || dialog === "export" || dialog === "recorder" ? "optimizer-dialog" : ""} ${dialog === "recorder" ? "recorder-dialog" : ""}`}
