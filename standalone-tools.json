@@ -1,5 +1,37 @@
 [
- {"id":"gifsplat","name":"GIFsplat","path":"/solutions/gifsplat/","description":"Create animated GIFs from local image frames.","source":"solutions/gifsplat"},
- {"id":"qrsplat","name":"QRSplat","path":"/solutions/qrsplat/","description":"Create standard QR codes offline, including text, links, and Wi-Fi.","source":"solutions/qrsplat"},
- {"id":"imagesplat","name":"ImageSplat","path":"/solutions/imagesplat/","description":"Edit, annotate, crop, blur, and export images locally.","source":"solutions/imagesplat"}
+  {
+    "id": "gifsplat",
+    "name": "GIFsplat",
+    "path": "/solutions/gifsplat/",
+    "description": "Create animated GIFs from local image frames.",
+    "source": "solutions/gifsplat"
+  },
+  {
+    "id": "qrsplat",
+    "name": "QRSplat",
+    "path": "/solutions/qrsplat/",
+    "description": "Create standard QR codes offline, including text, links, and Wi-Fi.",
+    "source": "solutions/qrsplat"
+  },
+  {
+    "id": "imagesplat",
+    "name": "ImageSplat",
+    "path": "/solutions/imagesplat/",
+    "description": "Edit, annotate, crop, blur, and export images locally.",
+    "source": "solutions/imagesplat"
+  },
+  {
+    "id": "audiosplat",
+    "name": "AudioSplat",
+    "path": "/solutions/audiosplat/",
+    "description": "Record, arrange and edit multitrack audio with effects and local WAV/MP3 exports.",
+    "source": "solutions/audiosplat"
+  },
+  {
+    "id": "videosplat",
+    "name": "VideoSplat",
+    "path": "/solutions/videosplat/",
+    "description": "Edit local video with layered timelines, titles, captions, audio mixing and local exports.",
+    "source": "solutions/videosplat"
+  }
 ]

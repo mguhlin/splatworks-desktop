@@ -1,0 +1,41 @@
+{
+  "name": "videosplat",
+  "version": "0.1.0",
+  "private": false,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/prepare-build.mjs && node node_modules/vite/bin/vite.js --host 127.0.0.1",
+    "build": "node scripts/prepare-build.mjs && node node_modules/typescript/bin/tsc -b && node node_modules/vite/bin/vite.js build && node scripts/publish.mjs",
+    "preview": "node node_modules/vite/bin/vite.js preview",
+    "test": "node node_modules/vitest/vitest.mjs run",
+    "test:watch": "node node_modules/vitest/vitest.mjs",
+    "test:e2e": "node node_modules/@playwright/test/cli.js test"
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@mediapipe/tasks-vision": "^1.0.1",
+    "@splat/local-subtitles": "file:../shared/subtitles",
+    "@vitejs/plugin-react": "6.0.5",
+    "hash-wasm": "4.12.0",
+    "mediabunny": "1.56.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "vite": "8.3.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "jsdom": "26.1.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.12"
+  },
+  "overrides": {
+    "@huggingface/transformers": {
+      "sharp": "0.35.5"
+    }
+  }
+}

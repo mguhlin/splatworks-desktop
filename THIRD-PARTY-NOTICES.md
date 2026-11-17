@@ -40,3 +40,15 @@ Embedded FontSplat uses the bundled Liberation, DejaVu, Comic Neue and Noto
 typefaces. Their original font licenses are included under `licenses/fonts/`
 in ImageSplat distributions and beside the font sources. No FFmpeg core is
 required by the embedded still-image lettering workflow.
+
+
+AudioSplat and VideoSplat snapshots, source hashes and the reviewed browser revision
+are recorded in `frontend/media-manifest.json`. Each media app includes dependency
+license texts in its `licenses/` directory. AudioSplat includes the LGPL-3.0
+MP3 encoder `@breezystack/lamejs`; VideoSplat includes React (MIT), Mediabunny (MPL-2.0),
+and `@ffmpeg/ffmpeg` (MIT). The separately bundled `@ffmpeg/core` 0.12.10 is
+GPL-2.0-or-later and includes GPL-enabled codec libraries. FFmpeg core, build source
+and component notices are documented in [Media engine sources](docs/MEDIA-SOURCES.md).
+DejaVu Sans and its notice accompany the FFmpeg assets. Both apps also include the
+shared local subtitle engines (Transformers.js, ONNX Runtime and whisper.cpp);
+original notices and GGML runtime sources remain alongside their assets.

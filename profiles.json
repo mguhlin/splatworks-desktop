@@ -58,5 +58,35 @@
       "Save an .imagesplat project to preserve layers, text and canvas settings. PNG/GIF exports produce shareable artwork. Ctrl/Cmd+S saves a project; Ctrl/Cmd+O opens one.",
       "Fast photo background removal, white/color removal and embedded FontSplat lettering are bundled for offline use. Best-model downloads and online backgrounds require optional connections in Settings. Live capture depends on webview and device support."
     ]
+  },
+  "audiosplat": {
+    "id": "audiosplat",
+    "name": "AudioSplat",
+    "slug": "audiosplat",
+    "binary": "AudioSplat",
+    "registry": "SplatWorksAudioSplat",
+    "settingsKey": "AudioSplat",
+    "icon": "desktop/icons/audiosplat.png",
+    "description": "Record, arrange and edit multitrack audio with effects and local WAV/MP3 exports.",
+    "smoke": "native-smoke-media.js",
+    "help": [
+      "Import local audio or record with a supported microphone. Edit clips, tracks and effects; export WAV/MP3 or save a portable .audiosplat.json project with embedded audio.",
+      "Workspaces and transcripts stay in memory. Save a project before closing. Speech models require optional connections or a local GGML .bin file. Recording and optional codecs depend on the system webview and device permissions."
+    ]
+  },
+  "videosplat": {
+    "id": "videosplat",
+    "name": "VideoSplat",
+    "slug": "videosplat",
+    "binary": "VideoSplat",
+    "registry": "SplatWorksVideoSplat",
+    "settingsKey": "VideoSplat",
+    "icon": "desktop/icons/videosplat.png",
+    "description": "Edit local video with layered timelines, titles, captions, audio mixing and local exports.",
+    "smoke": "native-smoke-media.js",
+    "help": [
+      "Import local video, audio and images, arrange a timeline, and export locally. Save a portable .videosplat.json project with embedded source media (up to 256 MB total). Browser project manifests can be opened and missing media relinked.",
+      "Workspaces and transcripts stay in memory. Save before closing. The FFmpeg conversion engine is bundled. Recording, WebM composition and hardware codecs depend on the system webview. Speech models require optional connections or a local GGML .bin file."
+    ]
   }
 }

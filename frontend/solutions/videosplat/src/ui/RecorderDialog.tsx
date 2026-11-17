@@ -1,0 +1,531 @@
+import {desktop,retain,draftStamp,release,discardDraft,save} from "../desktop";
+import { saveTransfer } from "../../../shared/video-handoff/index.js";
+import { writeSessionPreference } from "../persistence/preferences";
+import { instagramCrop, type InstagramFormat } from "../recorder/instagram";
+import { recordingWarning } from "../media/recording-integrity";
+import { ChromaControls } from "./ChromaControls";
+import { defaultChroma } from "../render/chroma";
+import { RecordingAudioMeter } from "./RecordingAudioMeter";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { createPortal } from "react-dom";
+import {
+  supportedRecordingType,
+  captureErrorMessage,
+  startCapture,
+  type CaptureMode,
+  type CaptureSession,
+  type DisplaySurfacePreference,
+} from "../recorder/capture";
+import { cropRecording, type CropRect } from "../recorder/crop";
+
+interface RecorderDialogProps {
+  initialMicrophoneDeviceId?: string;
+  permissionsPrepared?: boolean;
+  onClose(): void;
+  onAdd(file: File, generateSubtitles?: boolean): Promise<void>;
+  onStatus(message: string): void;
+  onFloatingChange?(floating: boolean): void;
+  onMicrophoneChange?(deviceId: string): void;
+}
+
+interface DocumentPictureInPictureController {
+  requestWindow(options: { width: number; height: number }): Promise<Window>;
+}
+
+const clock = (seconds: number) =>
+  `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+
+export function RecorderDialog({ initialMicrophoneDeviceId = "", permissionsPrepared = false, onClose, onAdd, onStatus, onFloatingChange, onMicrophoneChange }: RecorderDialogProps) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const reviewVideo = useRef<HTMLVideoElement>(null);
+  const [instagramFormat, setInstagramFormat] = useState<InstagramFormat>("original");
+  const [sourceSize, setSourceSize] = useState({ width: 16, height: 9 });
+  const [transferUrl, setTransferUrl] = useState("");
+  const [generateSubtitles, setGenerateSubtitles] = useState(false);
+  const [reviewPlaying, setReviewPlaying] = useState(false);
+  const [recordingStream, setRecordingStream] = useState<MediaStream>();
+  const session = useRef<CaptureSession | undefined>(undefined);
+  const stopping = useRef(false);
+  const cropping = useRef<AbortController | undefined>(undefined);
+  const screenAvailable = typeof navigator.mediaDevices?.getDisplayMedia === "function";
+  const cameraAvailable = typeof navigator.mediaDevices?.getUserMedia === "function";
+  const encoderAvailable = !!supportedRecordingType(false);
+  const startup = useRef<AbortController | undefined>(undefined);
+  const [starting, setStarting] = useState(false);
+  const [startupMessage, setStartupMessage] = useState("");
+  const stopCurrent = useRef<() => Promise<void>>(async () => {});
+  const [mode, setMode] = useState<CaptureMode>(screenAvailable ? "screen" : "camera");
+  const [displaySurface, setDisplaySurface] = useState<DisplaySurfacePreference>("browser");
+  const [microphone, setMicrophone] = useState(true);
+  const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
+  const [microphoneDeviceId, setMicrophoneDeviceId] = useState(initialMicrophoneDeviceId);
+  useEffect(() => {
+    writeSessionPreference("videosplat-microphone-id", microphoneDeviceId);
+    onMicrophoneChange?.(microphoneDeviceId);
+  }, [microphoneDeviceId, onMicrophoneChange]);
+  const [systemAudio, setSystemAudio] = useState(true);
+  const [chroma, setChroma] = useState(defaultChroma);
+  const [backgroundFile, setBackgroundFile] = useState<File>();
+  const [backgroundUrl, setBackgroundUrl] = useState("");
+  const [countdown, setCountdown] = useState(3);
+  const [counting, setCounting] = useState<number>();
+  const [elapsed, setElapsed] = useState(0);
+  const [state, setState] = useState<"setup" | "recording" | "paused" | "saving" | "review" | "cropping">("setup");
+  const [error, setError] = useState<string>();
+  const [adding, setAdding] = useState(false);
+  const [recording, setRecording] = useState<File>();
+  const [recordingUrl, setRecordingUrl] = useState("");
+  const [crop, setCrop] = useState<CropRect>({ x: 0, y: 0, width: 1, height: 1 });
+  const [cropProgress, setCropProgress] = useState(0);
+  const [floatingWindow, setFloatingWindow] = useState<Window>();
+  const floatingPreview = useRef<HTMLVideoElement>(null);
+
+  const dockRecorder = () => {
+    const target = floatingWindow;
+    setFloatingWindow(undefined);
+    onFloatingChange?.(false);
+    if (target && !target.closed) target.close();
+  };
+
+  const floatRecorder = async () => {
+    setError(undefined);
+    try {
+      const controller = (window as Window & {
+        documentPictureInPicture?: DocumentPictureInPictureController;
+      }).documentPictureInPicture;
+      const target = controller
+        ? await controller.requestWindow({ width: 520, height: 420 })
+        : window.open("", "videosplat-recorder", "popup=yes,width=520,height=420,resizable=yes");
+      if (!target) throw new Error("The browser blocked the recorder window. Allow popups for VideoSplat and retry.");
+      target.document.title = "VideoSplat Recorder";
+      target.document.documentElement.className = document.documentElement.className;
+      target.document.body.className = "recorder-floating-body";
+      document.querySelectorAll('link[rel="stylesheet"], style').forEach((node) =>
+        target.document.head.append(node.cloneNode(true)),
+      );
+      const returned = () => {
+        setFloatingWindow(undefined);
+        onFloatingChange?.(false);
+      };
+      target.addEventListener("pagehide", returned, { once: true });
+      setFloatingWindow(target);
+      onFloatingChange?.(true);
+      target.focus();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The recorder window could not be opened.");
+    }
+  };
+
+  useEffect(() => {
+    if (state !== "recording" && state !== "paused") return;
+    const timer = window.setInterval(
+      () => {
+        const active = session.current;
+        if (!active || stopping.current) return;
+        if (active.state === "stopped") {
+          setError("The browser stopped recording before you pressed Stop. Review the saved portion before using it; it may be incomplete.");
+          void stopCurrent.current();
+          return;
+        }
+        if (state === "recording")
+          setElapsed(Math.floor((Date.now() - active.startedAt) / 1000));
+      },
+      250,
+    );
+    return () => clearInterval(timer);
+  }, [state]);
+
+  useEffect(() => () => {
+    startup.current?.abort();
+    cropping.current?.abort();
+    session.current?.cancel();
+  }, []);
+
+  useEffect(() => () => {
+    if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+  }, [recordingUrl]);
+
+  useEffect(() => () => {
+    if (floatingWindow && !floatingWindow.closed) floatingWindow.close();
+  }, [floatingWindow]);
+
+  useEffect(() => {
+    const preview = floatingPreview.current;
+    if (!preview || !floatingWindow || !session.current) return;
+    preview.srcObject = session.current.previewStream;
+    void preview.play();
+    return () => { preview.srcObject = null; };
+  }, [floatingWindow, state]);
+
+  useEffect(() => () => {
+    if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+  }, [backgroundUrl]);
+
+  useEffect(() => {
+    const refresh = async () => {
+      if (!navigator.mediaDevices?.enumerateDevices) return;
+      const devices = (await navigator.mediaDevices.enumerateDevices()).filter(
+        (device) => device.kind === "audioinput",
+      );
+      setMicrophones(devices);
+      setMicrophoneDeviceId((current) =>
+        current && devices.some((device) => device.deviceId === current)
+          ? current
+          : devices[0]?.deviceId ?? "",
+      );
+    };
+    void refresh();
+    navigator.mediaDevices?.addEventListener?.("devicechange", refresh);
+    useEffect(()=>{if(state === "recording" || state === "paused" || state === "saving" || state === "cropping" || starting || adding)return desktop.beginOperation();},[state,starting,adding]);
+  return () => navigator.mediaDevices?.removeEventListener?.("devicechange", refresh);
+  }, []);
+
+  const stop = async () => {
+    if (!session.current || stopping.current) return;
+    stopping.current = true;
+    setState("saving");
+    try {
+      const active = session.current;
+      const blob = await active.stop();
+      const warning = await recordingWarning(blob, active.durationSeconds ?? elapsed).catch(() => "The saved recording could not be verified. Download the original recording before closing this window.");
+      if (warning) setError(warning);
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const file = new File([blob], `VideoSplat-recording-${stamp}.webm`, { type: blob.type });
+      const url = URL.createObjectURL(file);
+      setRecording(file);retain("recording");
+      setRecordingUrl(url);
+      setCrop({ x: 0, y: 0, width: 1, height: 1 });
+      session.current = undefined;
+      setState("review");
+      onStatus("Recording finished — select the portion to keep");
+    } catch (reason) {
+      session.current = undefined;
+      setError(captureErrorMessage(reason));
+      setState("setup");
+    } finally {
+      stopping.current = false;
+    }
+  };
+
+  useEffect(() => { stopCurrent.current = stop; });
+
+  const begin = async () => {
+    if (startup.current || session.current) return;
+    const controller = new AbortController();
+    startup.current = controller;
+    setStarting(true);
+    setStartupMessage("Opening browser sharing dialog…");
+    setError(undefined);
+    try {
+      const backgroundImage = mode !== "screen" && backgroundFile
+        ? await createImageBitmap(backgroundFile)
+        : undefined;
+      const captured = await startCapture(
+        {
+          signal: controller.signal,
+          mode,
+          microphone,
+          microphoneDeviceId: microphoneDeviceId || undefined,
+          systemAudio: mode !== "camera" && displaySurface === "browser" && systemAudio,
+          countdownSeconds: countdown,
+          displaySurface,
+          backgroundImage,
+          chroma: mode !== "screen" && chroma.enabled ? chroma : undefined,
+        },
+        canvas.current!,
+        () => void stopCurrent.current(),
+        setCounting,
+        setStartupMessage,
+      );
+      if (controller.signal.aborted) { captured.cancel(); return; }
+      session.current = captured;
+      setSourceSize({ width: canvas.current!.width, height: canvas.current!.height });
+      setRecordingStream(session.current.previewStream);
+      setElapsed(0);
+      setState("recording");
+      onStatus("Recording locally — no media is being uploaded");
+    } catch (reason) {
+      if (controller.signal.aborted) return;
+      setError(captureErrorMessage(reason));
+      setState("setup");
+    } finally {
+      startup.current = undefined;
+      if (!controller.signal.aborted) { setStarting(false); setCounting(undefined); }
+    }
+  };
+
+  const close = () => {
+    if(!discardDraft("recording"))return;
+    startup.current?.abort();
+    cropping.current?.abort();
+    session.current?.cancel();
+    session.current = undefined;
+    onStatus("Recording canceled; no recording was saved");
+    dockRecorder();
+    onClose();
+  };
+
+  const addRecording = async (file: File, message: string) => {
+    if (adding) return;
+    setAdding(true);
+    setError(undefined);
+    reviewVideo.current?.pause();
+    try {
+      await onAdd(file, generateSubtitles);
+      onStatus(message);release("recording");
+      onClose();
+    } catch (reason) {
+      setError(`${captureErrorMessage(reason)} Download the original recording below to keep a copy.`);
+      setState("review");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const putIntoClipSplat = async () => {
+    if (!recording || adding) return;
+    // Reserve the tab during the click, before asynchronous encoding/storage.
+    const tab = window.open("about:blank", "_blank");
+    if (!tab) { setError("Allow pop-ups for VideoSplat, then press Put into ClipSplat again. Your recording is still here."); return; }
+    tab.document.title = "Preparing ClipSplat";
+    tab.document.body.textContent = "Your recording is being prepared locally. Keep VideoSplat visible until ClipSplat loads.";
+    window.focus();
+    tab.opener = null;
+    reviewVideo.current?.pause();
+    setReviewPlaying(false);
+    setAdding(true);
+    setError(undefined);
+    setState("cropping");
+    setCropProgress(0);
+    const controller = new AbortController();
+    cropping.current = controller;
+    try {
+      const blob = await cropRecording(recording, crop, setCropProgress, controller.signal);
+      controller.signal.throwIfAborted();
+      const file = new File([blob], recording.name.replace(/\.webm$/i, "-clipsplat.webm"), { type: blob.type });
+      const id = await saveTransfer(file, instagramFormat === "original" ? "reel" : instagramFormat, recording);
+      const url = new URL("../clipsplat/", location.href);
+      url.searchParams.set("videosplat-transfer", id);
+      setTransferUrl(url.href);
+      controller.signal.throwIfAborted();
+      if (tab.closed) throw new Error("The ClipSplat tab was closed. Use Open ClipSplat below to recover the stored recording.");
+      dockRecorder();
+      onStatus("Recording saved locally for ClipSplat");
+      onClose();
+      tab.location.replace(url.href);
+    } catch (reason) {
+      if (!tab.closed) tab.close();
+      if (controller.signal.aborted) return;
+      setError(`${captureErrorMessage(reason)} Your original recording is still available below.`);
+      setState("review");
+    } finally { setAdding(false); }
+  };
+
+  const applyCrop = async () => {
+    if (!recording) return;
+    reviewVideo.current?.pause();
+    setReviewPlaying(false);
+    setState("cropping");
+    setCropProgress(0);
+    setError(undefined);
+    const controller = new AbortController();
+    cropping.current = controller;
+    try {
+      const blob = await cropRecording(recording, crop, setCropProgress, controller.signal);
+      controller.signal.throwIfAborted();
+      const cropped = new File(
+        [blob],
+        recording.name.replace(/\.webm$/i, "-cropped.webm"),
+        { type: blob.type },
+      );
+      await addRecording(cropped, "Cropped recording saved locally and added to the timeline");
+    } catch (reason) {
+      if (controller.signal.aborted) return;
+      setError(captureErrorMessage(reason));
+      setState("review");
+    }
+  };
+
+  const beginCropSelection = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const point = (clientX: number, clientY: number) => ({
+      x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
+      y: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)),
+    });
+    const start = point(event.clientX, event.clientY);
+    if (instagramFormat !== "original") {
+      const frame = instagramCrop(instagramFormat, reviewVideo.current?.videoWidth ?? 0, reviewVideo.current?.videoHeight ?? 0);
+      const position = (clientX: number, clientY: number) => {
+        const at = point(clientX, clientY);
+        setCrop({ ...frame, x: Math.max(0, Math.min(1 - frame.width, at.x - frame.width / 2)), y: Math.max(0, Math.min(1 - frame.height, at.y - frame.height / 2)) });
+      };
+      position(event.clientX, event.clientY);
+      const move = (e: PointerEvent) => position(e.clientX, e.clientY);
+      const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up, { once: true });
+      return;
+    }
+    setCrop({ ...start, width: .02, height: .02 });
+    const move = (moveEvent: PointerEvent) => {
+      const end = point(moveEvent.clientX, moveEvent.clientY);
+      setCrop({
+        x: Math.min(start.x, end.x),
+        y: Math.min(start.y, end.y),
+        width: Math.max(.02, Math.abs(end.x - start.x)),
+        height: Math.max(.02, Math.abs(end.y - start.y)),
+      });
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up, { once: true });
+  };
+
+  return <>
+    <button className="dialog-close" onClick={close} aria-label="Close recorder">×</button>
+    <h2 id="recorder-title">Record locally</h2>
+    <p className="lead">Capture your screen, camera, and audio directly into this project. Permission is requested only when you start; the recording is not uploaded.</p>
+    <label>Recording frame<select aria-label="Recording frame" value={instagramFormat} disabled={starting || !["setup", "review"].includes(state) || adding} onChange={event => {
+      const format = event.target.value as InstagramFormat;
+      setInstagramFormat(format);
+      setCrop(instagramCrop(format, reviewVideo.current?.videoWidth ?? 0, reviewVideo.current?.videoHeight ?? 0));
+    }}>
+      <option value="original">Original · free crop</option>
+      <option value="reel">Instagram Reel · 9:16</option>
+      <option value="story">Instagram Story · 9:16</option>
+      <option value="feed">Instagram portrait feed · 4:5</option>
+    </select></label>
+    <p className="hint">The original is preserved. Instagram framing crops the selected portion when you add or send the recording; ClipSplat exports at 1080 × 1920 or 1080 × 1350. Review and reposition the frame after stopping.</p>
+    {state !== "review" && state !== "cropping" && <div className="recorder-preview" style={{ aspectRatio: `${sourceSize.width}/${sourceSize.height}`, height: "auto", maxWidth: `min(100%, calc(25vh * ${sourceSize.width / sourceSize.height}))`, marginInline: "auto" }}>
+      <canvas ref={canvas} aria-label="Recording preview" />
+      {instagramFormat !== "original" && state !== "setup" && <i className="instagram-frame" style={(() => {
+        const rect = instagramCrop(instagramFormat, canvas.current?.width ?? 0, canvas.current?.height ?? 0);
+        return { left: `${rect.x * 100}%`, top: `${rect.y * 100}%`, width: `${rect.width * 100}%`, height: `${rect.height * 100}%` };
+      })()} />}
+      {state === "setup" && !starting && !counting && <span>Preview appears after permission is granted</span>}
+      {counting && <strong className="recorder-countdown" aria-live="assertive">{counting}</strong>}
+      {state !== "setup" && <output>{state === "paused" ? "Paused · " : "● "}{clock(elapsed)}</output>}
+    </div>}
+    {(state === "review" || state === "cropping") && recording && <div className="crop-review">
+      <p>{instagramFormat === "original" ? "Drag over the preview to select the part of the recorded tab you want to keep." : "Drag to position the Instagram frame. Only the outlined portion will be sent."}</p>
+      <div className="crop-stage" style={{ aspectRatio: `${sourceSize.width}/${sourceSize.height}` }} onPointerDown={state === "review" ? beginCropSelection : undefined}>
+        <video ref={reviewVideo} onLoadedMetadata={() => {
+          const video = reviewVideo.current!;
+          setSourceSize({ width: video.videoWidth, height: video.videoHeight });
+          setCrop(instagramCrop(instagramFormat, video.videoWidth, video.videoHeight));
+        }} src={recordingUrl} playsInline onEnded={() => setReviewPlaying(false)} aria-label="Recorded screen crop preview" />
+        <i className="crop-selection" style={{ left: `${crop.x * 100}%`, top: `${crop.y * 100}%`, width: `${crop.width * 100}%`, height: `${crop.height * 100}%` }} />
+      </div>
+      {state === "review" && <div className="recorder-audio-review"><button onClick={async () => {
+        const video=reviewVideo.current; if(!video)return;
+        if(reviewPlaying){video.pause();setReviewPlaying(false);return;}
+        video.muted=false;video.volume=1;
+        if(video.ended)video.currentTime=0;
+        try{await video.play();setReviewPlaying(true);}catch{setError("The recording could not play. Try Play recording with sound again.");}
+      }}>{reviewPlaying ? "Pause recording review" : "Play recording with sound"}</button><p>Listen before adding this recording to your project. A silent source cannot gain audio from timeline edits.</p></div>}
+      {instagramFormat === "original" && <div className="crop-presets" aria-label="Crop presets">
+        <button onClick={() => setCrop({ x: 0, y: 0, width: 1, height: 1 })}>Full frame</button>
+        <button onClick={() => setCrop({ x: .125, y: 0, width: .75, height: 1 })}>Center</button>
+        <button onClick={() => setCrop({ x: 0, y: 0, width: .5, height: 1 })}>Left half</button>
+        <button onClick={() => setCrop({ x: .5, y: 0, width: .5, height: 1 })}>Right half</button>
+      </div>}
+      {state === "review" && <label><input type="checkbox" checked={generateSubtitles} onChange={event => setGenerateSubtitles(event.target.checked)}/> Generate subtitles when adding this recording (English)</label>}
+      {state === "review" && <div className="recorder-actions">
+        <button className="primary" disabled={adding} onClick={applyCrop}>Crop and add to timeline</button>
+        <button disabled={adding} onClick={() => addRecording(recording, "Full recording saved locally and added to the timeline")}>Use full recording</button>
+        <button disabled={adding} onClick={() => void putIntoClipSplat()} hidden>Put into ClipSplat</button>
+        <button className="danger" onClick={close}>Discard</button>
+      </div>}
+      {transferUrl && <p><a href={transferUrl} target="_blank" rel="noopener">Open ClipSplat with stored recording</a></p>}
+      <p><button onClick={async()=>{const version=draftStamp("recording");try{if(await save(recording,recording.name))release("recording",version);}catch(reason){setError((reason as Error).message);}}}>Save original recording</button> · {(recording.size / 1024 / 1024).toFixed(1)} MB</p>
+      {adding && <p role="status">Adding recording to the timeline… You can download the original while this finishes.</p>}
+      {state === "cropping" && <><progress max="1" value={cropProgress} /><p role="status">Cropping locally… {Math.round(cropProgress * 100)}%</p></>}
+    </div>}
+    {error && <p className="recorder-error" role="alert">{error}</p>}
+    {state === "setup" && <div className={`recorder-permission-state ${permissionsPrepared ? "ready" : "pending"}`} role="status">
+      <strong>{permissionsPrepared ? "✓ Camera and microphone ready for this session" : "Camera and microphone setup was skipped"}</strong>
+      <span>{permissionsPrepared ? "Your selected microphone is remembered. The browser will only ask you to choose which screen or tab to share." : "The browser may request camera or microphone access when recording starts."}</span>
+    </div>}
+    {state === "setup" && <fieldset disabled={starting} className="recorder-settings" style={{ border: 0, padding: 0, margin: 0 }}>
+      <label>Record<select aria-label="Recording source" value={mode} onChange={(event) => setMode(event.target.value as CaptureMode)}><option disabled={!screenAvailable} value="screen">Screen only · best for switching tabs</option><option disabled={!screenAvailable || !cameraAvailable} value="screen-camera">Screen + camera overlay</option><option disabled={!cameraAvailable} value="camera">Camera only</option></select></label>
+      <label className="check"><input type="checkbox" checked={microphone} onChange={(event) => setMicrophone(event.target.checked)} /> Microphone</label>
+      {mode !== "camera" && <fieldset className="surface-choices">
+        <legend>What do you want to share?</legend>
+        {([
+          ["browser", "▣", "Browser tab", "Best for a website or video"],
+          ["window", "▤", "Application window", "One open application"],
+          ["monitor", "▧", "Entire screen", "Everything on one display"],
+        ] as const).map(([value, icon, title, detail]) => <button
+          type="button"
+          key={value}
+          className={displaySurface === value ? "selected" : ""}
+          aria-pressed={displaySurface === value}
+          onClick={() => setDisplaySurface(value)}
+        ><b aria-hidden="true">{icon}</b><strong>{title}</strong><small>{detail}</small></button>)}
+        <p>The browser's secure chooser opens next and makes the final selection.</p>
+      </fieldset>}
+      {microphone && <label>Microphone source<select aria-label="Microphone source" value={microphoneDeviceId} onChange={(event) => setMicrophoneDeviceId(event.target.value)}>{microphones.length ? microphones.map((device, index) => <option value={device.deviceId} key={device.deviceId}>{device.label || `Microphone ${index + 1}`}</option>) : <option value="">System default microphone</option>}</select></label>}
+      {mode !== "screen" && <div className="camera-background-setting">
+        <ChromaControls value={chroma} onChange={setChroma}/>
+        <label>Virtual background<input
+          aria-label="Virtual background image"
+          type="file"
+          accept="image/*"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+            setBackgroundFile(file);
+            setBackgroundUrl(file ? URL.createObjectURL(file) : "");
+          }}
+        /></label>
+        {backgroundUrl && <div className="camera-background-preview">
+          <img src={backgroundUrl} alt="Selected virtual background" />
+          <button type="button" onClick={() => {
+            URL.revokeObjectURL(backgroundUrl);
+            setBackgroundFile(undefined);
+            setBackgroundUrl("");
+          }}>Remove</button>
+        </div>}
+        <small>{chroma.enabled ? "Green-screen removal is applied to the recorded camera video. Choose a replacement image above; without one, the screen or a black background shows through. Settings are fixed when recording starts." : "Choose an image for automatic person-background replacement, or enable Green screen to remove a colored backdrop. Processing stays on this device."}</small>
+      </div>}
+      <label className="check"><input
+        type="checkbox"
+        disabled={mode === "camera" || displaySurface !== "browser"}
+        checked={mode !== "camera" && displaySurface === "browser" && systemAudio}
+        onChange={(event) => setSystemAudio(event.target.checked)}
+      /> Shared browser-tab audio when available</label>
+      {mode !== "camera" && displaySurface !== "browser" && <small className="audio-capture-note">Chrome on this system only offers shared audio when you select a browser tab.</small>}
+      <label>Countdown<select aria-label="Recording countdown" value={countdown} onChange={(event) => setCountdown(Number(event.target.value))}><option value="0">None</option><option value="3">3 seconds</option><option value="5">5 seconds</option></select></label>
+      <button className="primary wide" disabled={starting || !encoderAvailable || (mode === "camera" ? !cameraAvailable : !screenAvailable)} onClick={begin}>{starting ? (counting ? "Get ready…" : "Starting…") : "Start recording"}</button>
+    </fieldset>}
+    {!screenAvailable && <p>Screen sharing is unavailable in this browser. Use the camera or import a video recorded on your device.</p>}
+    {!encoderAvailable && <p role="alert">This browser cannot encode WebM recordings. You can still import and edit videos; use Chrome or Firefox on a computer to record and export.</p>}
+    {starting && <p role="status">{startupMessage}</p>}
+    {(state === "recording" || state === "paused") && <div className="recorder-actions">
+      <button onClick={() => { if (state === "recording") { session.current?.pause(); setState("paused"); } else { session.current?.resume(); setState("recording"); } }}>{state === "recording" ? "Pause" : "Resume"}</button>
+      <button className="primary" onClick={stop}>Stop and choose crop</button>
+      <button className="danger" onClick={close}>Cancel</button>
+      {!floatingWindow && <button onClick={() => void floatRecorder()}>Float recorder</button>}
+    </div>}
+    {recordingStream && !floatingWindow && (state === "recording" || state === "paused") && <RecordingAudioMeter stream={recordingStream} paused={state === "paused"}/>}
+    {state === "saving" && <p role="status">Finishing the recording locally…</p>}
+    <p className="hint">Choose your headset under Microphone source. Browsers require the screen/tab chooser for every new screen capture; VideoSplat cannot bypass it. For recording another tab, use Screen only and select that tab in the chooser. Keep VideoSplat visible when using the camera-overlay compositor.</p>
+    {floatingWindow && createPortal(
+      <section className="recorder-floating-controller" role="dialog" aria-label="Floating VideoSplat recorder">
+        <header><strong>VideoSplat Recorder</strong><button onClick={dockRecorder}>Return to editor</button></header>
+        <video ref={floatingPreview} muted playsInline autoPlay aria-label="Floating recording preview" />
+        <output>{state === "paused" ? "Paused · " : "● Recording · "}{clock(elapsed)}</output>
+        {recordingStream && <RecordingAudioMeter stream={recordingStream} paused={state === "paused"}/>}
+        <div className="recorder-actions">
+          <button onClick={() => { if (state === "recording") { session.current?.pause(); setState("paused"); } else { session.current?.resume(); setState("recording"); } }}>{state === "recording" ? "Pause" : "Resume"}</button>
+          <button className="primary" onClick={() => { dockRecorder(); void stop(); }}>Stop and choose crop</button>
+          <button className="danger" onClick={close}>Cancel</button>
+        </div>
+      </section>,
+      floatingWindow.document.body,
+    )}
+  </>;
+}

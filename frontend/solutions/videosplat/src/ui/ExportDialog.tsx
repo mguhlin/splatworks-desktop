@@ -1,0 +1,310 @@
+import {save,desktop} from "../desktop";
+import { saveToGoogleDrive } from "../../../../splatworks/shared/google-drive.js";
+import { ExportProgress } from "./ExportProgress";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { VideoSplatProject } from "../domain/project";
+import {
+  DEFAULT_EXPORT,
+  exportProject,
+  type ExportOptions,
+} from "../export/exporter";
+import {
+  createExportReport,
+  downloadExportReport,
+  exportPreflight,
+  type ExportReport,
+} from "../export/preflight";
+import { projectDuration } from "../timeline/engine";
+
+const bytes = (value: number) =>
+  value < 1024 * 1024
+    ? `${Math.round(value / 1024)} KB`
+    : `${(value / 1024 / 1024).toFixed(1)} MB`;
+const exportName = (projectName: string, format: ExportOptions["format"]) =>
+  `${projectName.replace(/[^a-z0-9-_]+/gi, "-") || "videosplat-export"}.${format}`;
+const saveBlob=save;
+
+export function ExportDialog({
+  project,
+  urls,
+  onClose,
+  onStatus,
+}: {
+  project: VideoSplatProject;
+  urls: Record<string, string>;
+  onClose: () => void;
+  onStatus: (message: string) => void;
+}) {
+  const [options, setOptions] = useState<ExportOptions>({
+    ...DEFAULT_EXPORT,
+    width: Math.min(1920, project.canvas.width),
+    height: Math.min(1080, project.canvas.height),
+    frameRate: project.canvas.frameRate,
+    rangeStart: 0,
+    rangeEnd: projectDuration(project),
+  });
+  const [engineStatus, setEngineStatus] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [result, setResult] = useState<{ blob: Blob; format: ExportOptions["format"] }>();
+  const [report, setReport] = useState<ExportReport>();
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const issues = useMemo(
+    () => exportPreflight(project, urls, options),
+    [project, urls, options],
+  );
+  const hasErrors = issues.some((issue) => issue.severity === "error");
+  const controller = useRef<AbortController | undefined>(undefined);
+  useEffect(() => () => controller.current?.abort(), []);
+  const run = async () => {
+    const end=desktop.beginOperation();
+    setBusy(true);
+    setResult(undefined);
+    setReport(undefined);
+    setError("");
+    setSaved(false);
+    setProgress(0);
+    controller.current = new AbortController();
+    try {
+      if (hasErrors)
+        throw new Error("Resolve export preflight errors before rendering.");
+      const blob = await exportProject(
+        project,
+        urls,
+        options,
+        setProgress,
+        controller.current.signal,
+        setEngineStatus,
+      );
+      const format = options.format;
+      setResult({ blob, format });
+      setReport(await createExportReport(project, options, blob, issues));
+      controller.current.signal.throwIfAborted();
+      const ok=await saveBlob(blob, exportName(project.name, format));
+      setSaved(ok);
+      onStatus(ok?`Export saved · ${bytes(blob.size)}`:"Save cancelled — rendered video is still available");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : "Export failed";
+      setError(message);
+      onStatus(message);
+    } finally {
+      end();setBusy(false);
+    }
+  };
+  const download = async () => {
+    if (!result) return;
+    try {setSaved(await saveBlob(result.blob, exportName(project.name, result.format)));}catch(error){setError((error as Error).message);}
+  };
+  return (
+    <>
+      <button
+        className="dialog-close"
+        onClick={onClose}
+        aria-label="Close"
+        autoFocus
+      >
+        ×
+      </button>
+      <h2 id="export-title">Export video locally</h2>
+      <p className="lead">
+        Render the complete timeline in this browser. Exports use a native destination dialog.
+        Auto uses fast frame export and requests hardware encoding when supported. Compatible export runs in real time; OGM also needs conversion afterward. Keep this dialog open until the export finishes.
+      </p>
+      <fieldset className="export-settings" disabled={busy}>
+      <label>Processing<select aria-label="Export processing" value={options.acceleration ?? 'auto'} onChange={event => setOptions({ ...options, acceleration: event.target.value as ExportOptions['acceleration'] })}>
+        <option value="auto">Auto · prefer hardware acceleration</option>
+        <option value="software">CPU · software frame encoding</option>
+        <option value="compatible">Compatible · original real-time export</option>
+      </select></label>
+      <p>If fast export is unavailable or fails, export restarts automatically in compatible mode. The browser controls hardware availability.</p>
+      <div className="optimizer-grid">
+        <label>
+          Quality preset
+          <select
+            aria-label="Export quality preset"
+            defaultValue="custom"
+            onChange={(event) => {
+              const presets = {
+                draft: { width: 854, height: 480, videoBitsPerSecond: 1_500_000 },
+                hd: { width: 1280, height: 720, videoBitsPerSecond: 4_000_000 },
+                fullhd: { width: 1920, height: 1080, videoBitsPerSecond: 8_000_000 },
+              } as const;
+              const preset = presets[event.target.value as keyof typeof presets];
+              if (preset) setOptions({ ...options, ...preset });
+            }}
+          >
+            <option value="custom">Custom</option>
+            <option value="draft">Draft · 480p</option>
+            <option value="hd">HD · 720p</option>
+            <option value="fullhd">Full HD · 1080p</option>
+          </select>
+        </label>
+        <label>
+          Format
+          <select
+            aria-label="Export format"
+            value={options.format}
+            onChange={(event) => {
+              const format = event.target.value as ExportOptions["format"];
+              setOptions({ ...options, format });
+              if (result?.format !== format) {
+                setResult(undefined);
+                setReport(undefined);
+                setSaved(false);
+                setProgress(0);
+              }
+            }}
+          >
+            <option value="webm">WebM · fastest</option>
+            <option value="mp4">MP4 · widest compatibility</option>
+            <option value="ogm">OGM · open Theora/Vorbis</option>
+          </select>
+        </label>
+        <label>
+          Width
+          <input
+            aria-label="Export width"
+            type="number"
+            min="160"
+            value={options.width}
+            onChange={(event) =>
+              setOptions({ ...options, width: Number(event.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Height
+          <input
+            aria-label="Export height"
+            type="number"
+            min="90"
+            value={options.height}
+            onChange={(event) =>
+              setOptions({ ...options, height: Number(event.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Frame rate
+          <input
+            aria-label="Export frame rate"
+            type="number"
+            min="1"
+            max="60"
+            value={options.frameRate}
+            onChange={(event) =>
+              setOptions({ ...options, frameRate: Number(event.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Video Mbps
+          <input
+            aria-label="Export bitrate"
+            type="number"
+            min=".2"
+            step=".5"
+            value={options.videoBitsPerSecond / 1e6}
+            onChange={(event) =>
+              setOptions({
+                ...options,
+                videoBitsPerSecond: Number(event.target.value) * 1e6,
+              })
+            }
+          />
+        </label>
+        <label>
+          Range start
+          <input
+            aria-label="Export range start"
+            type="number"
+            min="0"
+            step="0.1"
+            value={options.rangeStart}
+            onChange={(event) =>
+              setOptions({ ...options, rangeStart: Number(event.target.value) })
+            }
+          />
+        </label>
+        <label>
+          Range end
+          <input
+            aria-label="Export range end"
+            type="number"
+            min="0"
+            step="0.1"
+            value={options.rangeEnd}
+            onChange={(event) =>
+              setOptions({ ...options, rangeEnd: Number(event.target.value) })
+            }
+          />
+        </label>
+      </div>
+      <label>
+        <input
+          type="checkbox"
+          checked={options.includeAudio}
+          onChange={(event) =>
+            setOptions({ ...options, includeAudio: event.target.checked })
+          }
+        />{" "}
+        Include timeline audio
+      </label>
+      <label><input type="checkbox" disabled={busy} checked={options.burnSubtitles !== false} onChange={event => setOptions({...options, burnSubtitles: event.target.checked})}/> Burn in subtitles</label>
+      <p>Visible caption tracks become permanent text in the exported video. Hidden caption tracks are excluded. Import SRT/VTT using File → Burn in subtitles.</p>
+      <div className="export-preflight" aria-label="Export preflight">
+        <strong>Preflight</strong>
+        <ul>
+          {issues.map((issue) => (
+            <li
+              className={issue.severity}
+              key={`${issue.code}-${issue.message}`}
+            >
+              {issue.severity}: {issue.message}
+            </li>
+          ))}
+        </ul>
+      </div>
+      </fieldset>
+      {engineStatus && <p role="status">{engineStatus}</p>}
+      {(busy || result || error) && <ExportProgress progress={progress} format={options.format} busy={busy} finished={saved} direct={engineStatus.startsWith('Fast frame') || engineStatus.startsWith('Preparing frame')}/>}
+      {busy && (
+        <>
+          <button
+            className="danger wide"
+            onClick={() => controller.current?.abort()}
+          >
+            Cancel export
+          </button>
+        </>
+      )}
+      {error && <div className="export-error" role="alert">Export failed: {error}</div>}
+      {!busy && !result && (
+        <button className="primary wide" onClick={run} disabled={hasErrors}>
+          Render local {options.format.toUpperCase()}
+        </button>
+      )}
+      {result && (
+        <div className="optimizer-results">
+          <strong>{saved ? "Saved to your Downloads folder" : "Export ready"} · {bytes(result.blob.size)}</strong>
+          <button className="primary" onClick={download}>
+            Save another {result.format.toUpperCase()} copy
+          </button>
+          
+          <button onClick={run}>Render again</button>
+          {report && (
+            <button onClick={() => downloadExportReport(report)}>
+              Download export report
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  );
+}

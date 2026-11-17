@@ -51,3 +51,12 @@ destination and service key explicitly supplied for that operation; model
 downloads and image-background requests do not upload the source photo. Only the
 permission preference is persisted by the native shell. Bundled model and runtime
 files are pinned and verified; no remote application updater executes code.
+
+
+AudioSplat and VideoSplat keep project media and generated transcripts in memory.
+The desktop snapshots replace browser autosave/checkpoint storage with volatile
+workspaces; users explicitly save portable projects and exports through the native
+writer. Playback/import still decodes untrusted media using the platform codecs
+and bundled processing engines. Portable video projects validate the manifest and
+all embedded media sizes before replacing the session data. Large sources and
+codec limitations remain application constraints.

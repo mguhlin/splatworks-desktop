@@ -35,3 +35,14 @@ Record the tested release tag, OS version, architecture, result, and any issues
 without maintenance timestamps. Approve `PHYSICAL_VALIDATION_APPROVED` only when
 the applicable checks pass. An issue found during validation can require another
 release candidate.
+
+For AudioSplat, import representative WAV/MP3 sources, edit multiple tracks, apply
+an effect, undo it, record from an actual microphone, and export WAV/MP3. Listen
+in an independent player and reopen the portable project with networking off.
+For VideoSplat, combine video, audio, still images, titles and captions; check
+trimming, playback synchronization and a short exported video in another player.
+Reopen a portable project on another machine and confirm its embedded media is
+present. Test native save cancellation and edits made while a destination dialog
+is open. Check that closing an unsaved recording or transcript warns independently
+of saving the timeline. Verify optional model-download refusal when connections
+are off and local GGML transcription without networking.

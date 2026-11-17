@@ -3,7 +3,7 @@
 import argparse,hashlib,json,pathlib,re,shutil,subprocess
 root=pathlib.Path(__file__).resolve().parents[1];web=root/'frontend'
 p=argparse.ArgumentParser(description=__doc__);p.add_argument('source',type=pathlib.Path);a=p.parse_args();source=a.source.resolve()
-tools=json.loads((root/'standalone-tools.json').read_text())
+tools=[t for t in json.loads((root/'standalone-tools.json').read_text()) if t['id'] not in ['audiosplat','videosplat']]
 added=set()
 def copy(rel):
     src=source/rel;dst=web/rel

@@ -1,4 +1,11 @@
-GIFsplat, CipherSplat, QRSplat and ImageSplat for Linux, Windows and Mac.
+AudioSplat and VideoSplat join GIFsplat, CipherSplat, QRSplat and ImageSplat as independently installed desktop apps for Linux, Windows and Mac.
+
+- **AudioSplat:** multitrack audio import/editing, effects, local WAV/MP3 exports, and portable projects with embedded source audio.
+- **VideoSplat:** layered timelines, titles/captions, audio mixing, local exports, and portable projects with embedded source media. The FFmpeg conversion engine is bundled for offline use.
+- Both share native destination dialogs, close protection, operation tracking and the default-off connection gate. Save completion is reported after the native write; cancellation, failed writes and newer edits remain unsaved.
+- Workspaces and transcription progress stay in memory. Save a project before closing. Local GGML speech models work offline; optional model downloads require connections enabled in Settings.
+
+Video portable projects support 256 MB of source media and 360 MB per file. Video composition export, recording, system audio and optional codecs depend on webview support, permissions and hardware. Browser VideoSplat manifests may require relinking source media. Google Drive and cross-app transfers are omitted from these desktop editions.
 
 - Share editing and project code with the browser tools, with automated source and project-interchange checks.
 - Save/open portable GIF, image and QR projects. Preserve frames, layers, text and styling; exclude Wi-Fi passwords.

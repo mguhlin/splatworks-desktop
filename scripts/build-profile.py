@@ -3,7 +3,7 @@
 import argparse,json,pathlib,shutil,subprocess,sys
 root=pathlib.Path(__file__).resolve().parents[1]
 profiles=json.loads((root/'profiles.json').read_text())
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('--profile',choices=profiles,required=True);p.add_argument('--version',default='0.2.0-preview.1');p.add_argument('--platform');p.add_argument('--prepare-only',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--profile',choices=profiles,required=True);p.add_argument('--version',default='0.3.0-preview.1');p.add_argument('--platform');p.add_argument('--prepare-only',action='store_true');a=p.parse_args()
 info=profiles[a.profile];stage=root/'output/profiles'/a.profile
 shutil.rmtree(stage,ignore_errors=True);stage.mkdir(parents=True)
 ignore=shutil.ignore_patterns('bin','node_modules','__pycache__','test-results','tests')
@@ -23,6 +23,10 @@ for file in (web/'desktop').glob('native-smoke*.js'):
 catalog=json.loads((root/'tools.json').read_text())+json.loads((root/'standalone-tools.json').read_text())
 tool=next(t for t in catalog if t['id']==a.profile)
 copy(root/'frontend'/tool['source'],web/tool['source'])
+if a.profile in ['audiosplat','videosplat']:
+    copy(root/'frontend/solutions/shared/subtitles',web/'solutions/shared/subtitles')
+    copy(root/'frontend/media-manifest.json',web/'media-manifest.json')
+    if a.profile=='videosplat':copy(root/'frontend/solutions/mediasplat/ffmpeg',web/'solutions/mediasplat/ffmpeg')
 if a.profile=='imagesplat':
     copy(root/'frontend/solutions/fontsplat',web/'solutions/fontsplat')
     copy(root/'frontend/splatworks/layoutsplat/fonts',web/'splatworks/layoutsplat/fonts')

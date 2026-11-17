@@ -6,6 +6,24 @@ assert report['passed'] and not report.get('errors'),report
 if report.get('profile'):
     import struct,xml.etree.ElementTree as ET
     profile=report['profile'];assert len(report['checks'])>=10,report
+    if profile in ['audiosplat','videosplat']:
+        if profile=='audiosplat':
+            import wave
+            wav=next(root.glob('*.wav'))
+            with wave.open(str(wav),'rb') as audio:
+                assert audio.getnchannels()>=1 and audio.getnframes()>100
+                assert any(audio.readframes(audio.getnframes())), 'Silent synthetic export'
+            mp3=next(root.glob('*.mp3'));assert mp3.stat().st_size>100
+            project=json.loads(next(root.glob('*.audiosplat.json')).read_text())
+            assert project['project']['app']=='AudioSplat' and project['project']['tracks'][0]['clips']
+            assert project['sources'][0]['dataUrl'].startswith('data:audio/')
+        else:
+            data=(root/'native.mp4').read_bytes();assert data[4:8]==b'ftyp' and b'mdat' in data
+            project=json.loads(next(root.glob('*.videosplat.json')).read_text())
+            assert project['schema']=='videosplat-project' and len(project['assets'])==1
+            assert project['embeddedMedia'][project['assets'][0]['id']].startswith('data:image/png;base64,')
+        assert not list(root.glob('.splatworks-*')), 'Unfinished output remains'
+        print(f'Native {profile} report, portable project, and encoded media verified: {root}');sys.exit()
     if profile=='ciphersplat':
         assert (root/'sample.txt.csplat').read_bytes().startswith(b'CSPCS4!!')
         assert (root/'decrypted-message.txt').read_text()=='Standalone OpenPGP round trip'
