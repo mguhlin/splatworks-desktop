@@ -15,6 +15,7 @@ sudo apt-get install -y ./output/release/*.deb
 test -x /usr/bin/$slug
 test -f /usr/share/applications/$slug.desktop
 mkdir -p output/installed-native
+trap 'sudo chown -R "$(id -u):$(id -g)" output/installed-native' EXIT
 sudo -E unshare --net -- bash -c 'ip link set lo up; xvfb-run -a dbus-run-session -- timeout 240 "$1" --smoke-test "$PWD/output/installed-native"' _ "/usr/bin/$slug"
 sudo chown -R "$(id -u):$(id -g)" output/installed-native
 python3 scripts/verify-native.py output/installed-native

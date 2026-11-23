@@ -49,8 +49,10 @@ screen readers, Gatekeeper/SmartScreen behavior, offline Windows installation
 without an existing runtime, and representative physical devices still require
 human qualification before stable approval.
 
-Live camera and screen capture use the browser editions. Existing-photo scanning
-is included. Existing document memory and format-conversion limits still apply.
+Camera and microphone recording depend on system privacy permissions and webview
+support. Use the browser edition when a required screen-sharing mode is unavailable.
+Existing-photo scanning is included. Existing document memory and format-conversion
+limits still apply.
 Optional online connections remain off by default and can be revoked in Settings.
 
 The six smaller standalone tools remain available in the separate tools release.

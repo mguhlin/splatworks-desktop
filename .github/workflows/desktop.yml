@@ -170,6 +170,12 @@ jobs:
       - name: Verify native report
         shell: bash
         run: python3 scripts/verify-native.py output/native
+      - name: Collect Linux native diagnostics
+        if: runner.os == 'Linux' && always()
+        shell: bash
+        run: |
+          if [[ -d output/native ]]; then sudo chown -R "$(id -u):$(id -g)" output/native; fi
+          if [[ -f output/native/native-smoke.json ]]; then cat output/native/native-smoke.json; fi
       - name: Package application and checksums
         shell: bash
         run: python3 scripts/package-release.py --platform '${{ matrix.platform }}' --version "$RELEASE_VERSION"
