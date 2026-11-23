@@ -10,7 +10,7 @@ existing SplatWorks web tools provide the editors, import/export engines, OCR, a
 [SplatWorks](https://splatworks.org) ·
 [Browser-tool source](https://github.com/mguhlin/drawsplat)
 
-![SplatWorks Desktop running PDFsplat on Linux](docs/desktop-preview.png)
+![SplatWorks Desktop workspace preview](docs/desktop-preview.png)
 
 ## Install
 

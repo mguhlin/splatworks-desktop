@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mguhlin/drawsplat",
-  "revision": "7506f1b87499d3e7c2af7e06bec1f34af7543779",
+  "revision": "ccaad8a4b8bf2f77862920eecbeaa8b318210983",
   "tools": [
     "pdfsplat",
     "ciphersplat",
@@ -731,7 +731,6 @@
     "splatworks/layoutsplat/presentation-odp.mjs": "fc5edd0e406723b8fcafd7d6c2c3408387f211edbb41d97477666810d0682377",
     "splatworks/layoutsplat/presentation-pptx.mjs": "7229cd28460f8c71c54a6950bdf56f5bd942c04bea76274040ea2a651b0b912d",
     "splatworks/layoutsplat/presentation.test.mjs": "e6da9b9ec42e94dde27d376864dc941ab4f45cae31424b6f968ba74579f4499b",
-    "splatworks/layoutsplat/printer/__pycache__/pdfx.cpython-313.pyc": "4e558bd2f21cb11f23b8958b98b81be327a17bf2a7654f19274bde6b24178b0f",
     "splatworks/layoutsplat/printer/pdfx.py": "43635021a7e0fb37634d7af286c6334c5866cc542a517189fba45246fd6a4d39",
     "splatworks/layoutsplat/publication-designs.mjs": "b2d4c7b988a592e7321d8f36515dd380b8ed42047623a75aad63bc671ad7bc39",
     "splatworks/layoutsplat/publication-fields.mjs": "5d53d1d5374e0d440eeae8e31edc9e2e6b6e92ded1e654858582f144382b05ae",
@@ -896,7 +895,7 @@
     "splatworks/plansplat/model.mjs": "a16c2754e7d07e66601fcf0b72d49b0a0cdddc7fc732567137b0096ab9d51df7",
     "splatworks/plansplat/storage.mjs": "a7929dde205e18bce8ed54ef32ea87f946e1616c4c60f04eff11ca363acf2e37",
     "splatworks/plansplat/styles.css": "bb793d89a545d4fb5b443667e75f066dbc9adb77a7031a486c51371ff4335873",
-    "splatworks/plansplat/sw.js": "8ec0c43625ffd7bc8f7f37123e90d12124a07af7f96063c7c99e056841f708f0",
+    "splatworks/plansplat/sw.js": "ed940db20cb75224b52c58b6b928945b69bc31be2c4d24ae275205e7b49208aa",
     "splatworks/shared/LICENSE.txt": "52eca25b9dccb840957d9b11993e1dca64ad00e51a14c56f51b3ec7b8a441aad",
     "splatworks/shared/desktop-workspace.d.ts": "689229019aa275dce188196e9f7f0cae30c00aa4649030dbfe320e7ee273c58b",
     "splatworks/shared/desktop-workspace.js": "59b87b32ab6cef4aff460bb0ba530a8805fe17a79485869074d605569911cb16",

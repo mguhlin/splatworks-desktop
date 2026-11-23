@@ -113,3 +113,13 @@ loop. Snapshot/asset verification passed 1580 hashes; five Python packaging test
 and Go transfer race tests passed. Native platform CI, packaged artifacts and
 published downloads must pass before advancing the website beyond rc.11.
 Signing, notarization and physical-device approval remain open.
+
+
+The rc.12 integrity gate rejected an ignored Python bytecode file referenced in
+the imported manifest; it was never published. The importer now selects committed
+source inputs and excludes caches. The replacement rc.13 snapshot imports DrawSplat
+`ccaad8a`, including PlanSplat's browser offline-cache fix. All 1579 asset hashes
+pass locally and every manifest path exists in Git. The full 130 browser checks
+passed before this packaging-only correction; the office workflows are repeated
+after the clean import. Native CI and published-package verification remain the
+release gate before changing the download catalogue.

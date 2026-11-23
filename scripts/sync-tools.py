@@ -15,9 +15,20 @@ args = parser.parse_args()
 source = args.source.resolve()
 dest = ROOT / 'frontend'
 registry = json.loads((ROOT / 'tools.json').read_text(encoding='utf-8'))
-ignored = shutil.ignore_patterns('node_modules', 'downloads', 'test-results', 'playwright-report', '.DS_Store', '*.zip', 'integrity.json', 'dist', '.vite', '*.tsbuildinfo')
+ignored = shutil.ignore_patterns('node_modules', 'downloads', 'test-results', 'playwright-report', '.DS_Store', '*.zip', 'integrity.json', 'dist', '.vite', '*.tsbuildinfo', '__pycache__', '*.pyc', '*.pyo', '.pytest_cache', '.git')
+
+# Import committed inputs only; a developer's ignored caches are not release assets.
+tracked=set(subprocess.check_output(['git','-C',str(source),'ls-files','-z'],text=True).split('\0'))
+tracked_dirs={str(parent) for name in tracked if name for parent in Path(name).parents}
+def ignore_local(folder,names):
+    denied=set(ignored(folder,names))
+    for name in names:
+        rel=(Path(folder)/name).relative_to(source).as_posix()
+        if rel not in tracked and rel not in tracked_dirs:denied.add(name)
+    return denied
 
 def copy_file(rel):
+    if rel not in tracked:raise SystemExit('Source asset is not committed: '+rel)
     target = dest / rel
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source / rel, target)
@@ -25,12 +36,12 @@ def copy_file(rel):
 for tool in registry:
     rel = tool['source']
     shutil.rmtree(dest / rel, ignore_errors=True)
-    shutil.copytree(source / rel, dest / rel, ignore=ignored)
+    shutil.copytree(source / rel, dest / rel, ignore=ignore_local)
 
 # Office applications share importers, bundled fonts, media decoders and widgets.
 for rel in ['vendor','splatworks/shared','assets/backgrounds','solutions/mediasplat/ffmpeg']:
     shutil.rmtree(dest/rel,ignore_errors=True)
-    shutil.copytree(source/rel,dest/rel,ignore=ignored)
+    shutil.copytree(source/rel,dest/rel,ignore=ignore_local)
 # Bundle the exact images offered by the publication background picker.
 for item in json.loads((source/'splatworks/layoutsplat/whiteboard-catalog.json').read_text()):
     copy_file(item['path'])
