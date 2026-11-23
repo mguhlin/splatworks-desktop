@@ -17,16 +17,18 @@ Local verification passed 102 Chromium/WebKit checks, Go transfer race tests/vet
 five Python packaging tests and all snapshot/runtime-asset checks. The browser
 port passed 57 Chromium/Firefox/WebKit checks, independent CipherEnc fixtures,
 direct-file offline checks and automated WCAG A/AA scans of all three pages.
-Publisher signing and physical-device testing remain open. The next release
-candidates are core `v1.0.0-rc.11` and standalone `tools-v1.0.0-rc.5`; verify their
-published artifacts before replacing the recorded candidates below.
+Publisher signing and physical-device testing remain open. Published candidates are core `v1.0.0-rc.11` and standalone `tools-v1.0.0-rc.5`.
+All 98 public files were downloaded and matched adjacent checksums, official
+sizes and GitHub SHA-256 digests. The extracted Linux suite and CipherSplat
+standalone each passed eight Chromium/WebKit workflow checks. All three native
+build platforms passed smoke, installation/archive and packaging checks.
 
 ## Published candidates
 
 | Distribution | Release | Build source | Automated delivery |
 | --- | --- | --- | --- |
-| PDF/Cipher suite | [v1.0.0-rc.10](https://github.com/mguhlin/splatworks-desktop/releases/tag/v1.0.0-rc.10) | `297d64b` | [Successful workflow](https://github.com/mguhlin/splatworks-desktop/actions/runs/45215148011) |
-| Six standalone apps | [tools-v1.0.0-rc.4](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v1.0.0-rc.4) | `caf7cec` | [Successful workflow](https://github.com/mguhlin/splatworks-desktop/actions/runs/45214337641) |
+| PDF/Cipher suite | [v1.0.0-rc.11](https://github.com/mguhlin/splatworks-desktop/releases/tag/v1.0.0-rc.11) | `ef4bf55` | [Successful workflow](https://github.com/mguhlin/splatworks-desktop/actions/runs/45225213734) |
+| Six standalone apps | [tools-v1.0.0-rc.5](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v1.0.0-rc.5) | `ef4bf55` | [Successful workflow](https://github.com/mguhlin/splatworks-desktop/actions/runs/45225214790) |
 
 Standalone apps: GIFsplat, CipherSplat, QRSplat, ImageSplat, AudioSplat and VideoSplat.
 Both workflows use Intel Mac runners to build universal packages. Their native
@@ -68,10 +70,10 @@ Ignored evidence is under `output/public/`; browser logs are in `/tmp/` and do n
 survive every environment. A fresh checkout can reproduce package verification:
 
 ```sh
-gh release download v1.0.0-rc.10 --dir output/public/v1.0.0-rc.10
-python3 scripts/verify-packages.py output/public/v1.0.0-rc.10
-gh release download tools-v1.0.0-rc.4 --dir output/public/tools-v1.0.0-rc.4
-python3 scripts/verify-packages.py output/public/tools-v1.0.0-rc.4
+gh release download v1.0.0-rc.11 --dir output/public/v1.0.0-rc.11
+python3 scripts/verify-packages.py output/public/v1.0.0-rc.11
+gh release download tools-v1.0.0-rc.5 --dir output/public/tools-v1.0.0-rc.5
+python3 scripts/verify-packages.py output/public/tools-v1.0.0-rc.5
 ```
 
 ## Qualification boundaries
