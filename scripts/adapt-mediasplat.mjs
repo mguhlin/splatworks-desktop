@@ -8,9 +8,9 @@ function section(start,end,next){const a=text.indexOf(start),b=text.indexOf(end,
 text='import {desktop,changed,loaded,stamp,save,commands,confirmReplace,retain,release,draftStamp,discardDrafts} from "../desktop";\n'+text;
 swap('useEffect, useRef, useState','useEffect, useLayoutEffect, useRef, useState');
 swap('  const clearResults = () => setResults([]);',`  const resultVersions=useRef(new Map<Blob,{key:string;token:number|undefined;revision:number}>());
-  const previous=useRef('');
+  const previous=useRef(''),previousSubtitle=useRef<File|undefined>(undefined);
   const config=JSON.stringify([tool,items.map(item=>item.id),mode,start,end,splitBy,count,hours,minutes,seconds,targetSize,sizeUnit,ranges,subtitle?.name,subtitle?.size,subtitleOptions]);
-  useLayoutEffect(()=>{if(previous.current&&previous.current!==config){if(items.length||subtitle)changed();else loaded();}previous.current=config;},[config]);
+  useLayoutEffect(()=>{if(previous.current&&(previous.current!==config||previousSubtitle.current!==subtitle)){if(items.length||subtitle)changed();else loaded();}previous.current=config;previousSubtitle.current=subtitle;},[config,subtitle]);
   const clearResults = () => {for(const value of resultVersions.current.values())release(value.key,value.token);resultVersions.current.clear();setResults([]);};
   const [saving,setSaving]=useState(false);
   useLayoutEffect(()=>{commands({open:()=>{if(!busy)input.current?.click();},save:()=>results.length?results.length===1?download(results[0]):downloadAll():setStatus('Process media first, then save the output files.')});});`);

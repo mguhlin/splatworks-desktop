@@ -1,8 +1,7 @@
 # Office apps in SplatWorks Desktop
 
-The combined app includes ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat,
-PlanSplat, PDFsplat and CipherSplat. The office editors reuse the committed browser
-engines; Go supplies the native window, connection gate and destination dialogs.
+The combined app includes six office editors alongside PDF, encryption, image and
+media tools. The office editors reuse the committed browser engines; Go supplies the native window, connection gate and destination dialogs.
 `frontend/source-manifest.json` identifies the browser revision and bundled hashes.
 
 | Task | Support | Desktop behavior |

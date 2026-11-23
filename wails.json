@@ -7,5 +7,5 @@
   "frontend:build":"",
   "frontend:dev:watcher":"",
   "author":{"name":"Miguel Guhlin","email":"drawsplat@gmail.com"},
-  "info":{"companyName":"SplatWorks","productName":"SplatWorks Desktop","productVersion":"1.0.0","copyright":"DrawSplat Developer(s)","comments":"Eight local SplatWorks apps. AGPL shell; component licenses retained."}
+  "info":{"companyName":"SplatWorks","productName":"SplatWorks Desktop","productVersion":"1.0.0","copyright":"DrawSplat Developer(s)","comments":"Fourteen local SplatWorks apps. AGPL shell; component licenses retained."}
 }

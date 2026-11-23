@@ -27,4 +27,5 @@ test('MediaSplat keeps output after cancelled and failed saves and rejects bad r
  await page.evaluate(()=>{__cancel=false;__fail=true});await frame.locator('.results .download').click();await expect(frame.locator('[role=alert]')).toContainText('disk full');
  await frame.locator('.drop-zone input').setInputFiles({name:'bad.txt',mimeType:'text/plain',buffer:Buffer.from('bad')});await expect(frame.locator('.results article')).toHaveCount(1);await expect(frame.locator('.file-name strong')).toHaveText('retry.wav');
  await page.evaluate(()=>__fail=false);await frame.locator('.results .download').click();await expect.poll(()=>page.evaluate(()=>SplatDesktop.dirty)).toEqual([]);
+ await frame.getByLabel('Start time',{exact:true}).fill('0.1');await frame.locator('.results .download').click();expect(await page.evaluate(()=>SplatDesktop.dirty)).toContain('MediaSplat');
 });
