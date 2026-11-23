@@ -1,129 +1,91 @@
 # SplatWorks Desktop development handoff
 
-The PDF/Cipher suite and all six standalone apps have published, verified release
-candidates. Stable publisher signing and physical-device qualification remain open.
-
-## CipherSplat workspace update
-
-The current work imports the committed CipherSplat 1.1.0 browser port of CipherEnc.
-It preserves CipherSplat branding and CS4/legacy formats while adding automatic
-input detection, local OpenPGP key import/fingerprints, verified compressed file
-saves, safe ZIP/PDF restoration, and static in-app Help. Native saves retain
-cancelled/failed results for retry; mode changes, Clear and input replacement
-protect unsaved work. Empty directories use a narrow save-session capability
-inside the private restoration stage. No automatic recovery copies are created.
-
-Local verification passed 102 Chromium/WebKit checks, Go transfer race tests/vet,
-five Python packaging tests and all snapshot/runtime-asset checks. The browser
-port passed 57 Chromium/Firefox/WebKit checks, independent CipherEnc fixtures,
-direct-file offline checks and automated WCAG A/AA scans of all three pages.
-Publisher signing and physical-device testing remain open. Published candidates are core `v1.0.0-rc.11` and standalone `tools-v1.0.0-rc.5`.
-All 98 public files were downloaded and matched adjacent checksums, official
-sizes and GitHub SHA-256 digests. The extracted Linux suite and CipherSplat
-standalone each passed eight Chromium/WebKit workflow checks. All three native
-build platforms passed smoke, installation/archive and packaging checks.
+The eight-app suite is published as `v1.0.0-rc.14`. The six smaller standalone
+apps remain at `tools-v1.0.0-rc.5`. Stable publisher signing and physical-device
+qualification remain open.
 
 ## Published candidates
 
 | Distribution | Release | Build source | Automated delivery |
 | --- | --- | --- | --- |
-| PDF/Cipher suite | [v1.0.0-rc.11](https://github.com/mguhlin/splatworks-desktop/releases/tag/v1.0.0-rc.11) | `ef4bf55` | [Successful workflow](https://github.com/mguhlin/splatworks-desktop/actions/runs/45225213734) |
+| Eight-app suite | [v1.0.0-rc.14](https://github.com/mguhlin/splatworks-desktop/releases/tag/v1.0.0-rc.14) | `4d6e709` | [Successful workflow](https://github.com/mguhlin/splatworks-desktop/actions/runs/45242637093) |
 | Six standalone apps | [tools-v1.0.0-rc.5](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v1.0.0-rc.5) | `ef4bf55` | [Successful workflow](https://github.com/mguhlin/splatworks-desktop/actions/runs/45225214790) |
 
-Standalone apps: GIFsplat, CipherSplat, QRSplat, ImageSplat, AudioSplat and VideoSplat.
-Both workflows use Intel Mac runners to build universal packages. Their native
-checks qualify build runners, not physical devices or Apple-silicon hardware.
+Combined apps: ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat,
+PDFsplat and CipherSplat. Standalones: GIFsplat, CipherSplat, QRSplat, ImageSplat,
+AudioSplat and VideoSplat. The Mac packages are universal; native execution ran
+on Intel build runners, not Apple-silicon hardware.
 
-## Regression fixes
+## Core integration
 
-- Imported DrawSplat `a19b34d` into the PDF/Cipher snapshot. PDF page insertion,
-  duplication and reordering retain painted thumbnails while previews are pending.
-- Improved CipherSplat password-strength label contrast in the suite and its
-  standalone app. Both regressions failed in Chromium and WebKit before import
-  and passed afterward.
-- The snapshot includes editable external/file links and internal PDF page
-  destinations. Native-save checks reopen exported annotations and destinations.
-- Link-aware rotation is asynchronous. Native smoke checks now wait for the
-  rotation before exporting; a save overlapping later edits must retain its warning.
+The suite imports committed DrawSplat `ccaad8a`. The Apps chooser retains mounted
+documents and the app uses the SplatWorks icon. Native project saves protect
+newer edits, cancelled/failed writes, import replacement and unfinished planner
+forms. Known cross-app office formats move in memory. Desktop drafts and service
+workers do not persist document content. Chart/image data-URL exports use native
+destination dialogs. Suite Help preserves edited work.
 
-The browser applications remain owned by `mguhlin/drawsplat`. Desktop adapters,
-registries, native authority, installers and packaging remain in this repository.
-The paired browser/core-app regression work is recorded in the sibling checkout's
-`CORE_SESSION_NOTES.md`.
+ShowSplat Present explicitly saves WebDeck HTML for presentation in a browser.
+Printing uses exported HTML/PDF in a browser; cloud-account workflows use browser
+editions. Grid project files preserve sheet data, formulas and formatting; chart
+appearance needs a separate image export. See `docs/OFFICE.md` for support limits.
+Browser editions retain their browser saving and offline behavior. PlanSplat's
+worker caches the new shared adapter for offline reloads.
+
+The importer now selects committed source inputs and excludes developer caches.
+An ignored Python bytecode entry caused the rc.12 integrity gate to fail before
+publication. Superseded candidates were cancelled; no failed candidate's packages
+were promoted on the website. Keep source/browser changes upstream, commit them,
+and import an explicit checkout with `scripts/sync-tools.py`.
 
 ## Evidence
 
-- 102 Chromium/WebKit checks passed locally and in core CI.
-- Go transfer race tests and vet passed locally; five Python packaging checks passed.
-- Both release workflows passed Linux, Windows and universal Mac build, native
-  smoke, installer/archive and checksum checks. Linux native checks run offline.
-- All 98 public files were downloaded: seven core distribution artifacts and
-  their checksums, plus 42 standalone artifacts and their checksums. Sizes and
-  SHA-256 digests matched GitHub metadata and adjacent checksum files.
-- The downloaded Linux suite and standalone CipherSplat each passed eight
-  Chromium/WebKit checks covering compatible encryption, text round trips,
-  cancelled saves and mode/Help lifecycle. The suite checks also exercised PDF
-  interoperability. The other five standalone apps passed native CI; their
-  published files were verified by size and digest here.
+- 134 Chromium/WebKit checks passed in release CI, including all six office
+  project saves, reopen/browser interoperability, cancellation, late results,
+  unsaved decisions, no persistent drafts, exports, navigation and Help.
+- All three native platforms passed 58 smoke checks with real Go writes, plus
+  Windows install/upgrade/uninstall, Linux install/removal, Mac archive/disk-image
+  and universal-architecture checks. Linux native execution ran without networking.
+- All 1579 snapshot/runtime hashes passed. Five Python packaging tests and Go
+  transfer race tests passed. Every core manifest path exists in Git.
+- All 14 distribution files matched the public GitHub sizes and SHA-256 digests.
+  Public sidecars, the WebView2 manifest and Linux archive were fetched directly;
+  Windows/Mac package bytes came from CI and matched their public release digests.
+- The downloaded Linux runtime served its production security policy and passed
+  64 Chromium/WebKit office, PDF, CipherSplat and lifecycle checks. This loopback
+  verification uses browser automation; native webviews were exercised in CI.
+- The six standalone packages retain their earlier qualification: all 84 files
+  matched official metadata/checksums and all platforms passed native/package CI.
 
-Ignored evidence is under `output/public/`; browser logs are in `/tmp/` and do not
-survive every environment. A fresh checkout can reproduce package verification:
+Ignored evidence is under `output/native-proof/`, `output/pre-release/` and
+`output/public/`; the public verification receipt is
+`output/public/v1.0.0-rc.14-verified.json`. Public downloads and the short guide are
+maintained in the sibling checkout's `data/desktop-apps.json` and
+`docs/desktop-apps.md`. School privacy/agreement resources are at
+https://splatworks.org/schools/ . Preserve the user's unrelated untracked
+`pages/audit_instructions.md` in that checkout.
 
-```sh
-gh release download v1.0.0-rc.11 --dir output/public/v1.0.0-rc.11
-python3 scripts/verify-packages.py output/public/v1.0.0-rc.11
-gh release download tools-v1.0.0-rc.5 --dir output/public/tools-v1.0.0-rc.5
-python3 scripts/verify-packages.py output/public/tools-v1.0.0-rc.5
-```
+## CipherSplat and PDF compatibility
+
+CipherSplat retains its name, CS4/legacy formats, CipherEnc-derived automatic input
+detection, local OpenPGP key import/fingerprints, compressed and verified saves,
+empty-directory restoration, and static Help. Cancelled/failed results stay open
+for retry; mode changes and replacement protect unsaved work. PDFsplat retains
+editable web/file links and internal destinations, stable painted thumbnails
+during page edits, and local English/Spanish OCR. Covers are not secure redaction.
 
 ## Qualification boundaries
 
 | Gate | Result and limits |
 | --- | --- |
 | Task/design/accessibility | Automated editing, save/reopen, cancellation and keyboard paths PASS; real screen-reader, native-picker and touch qualification NOT_RUN. |
-| Privacy/education applicability | Exercised local processing, explicit saves and connection controls PASS; institution-specific deployment review is separate. |
-| Security boundaries | Tested native save/restoration rejection, lifecycle and integrity checks PASS; this is not a complete security audit. |
-| Recoverable delivery | Candidate builds, packages and published bytes PASS; publisher signing and physical approval NOT_RUN. |
+| Privacy/education applicability | Exercised local processing, explicit saving and connection controls PASS; institution-specific deployment review is separate. |
+| Security boundaries | Native capability, lifecycle and integrity checks PASS; not a complete security audit. |
+| Recoverable delivery | Candidate builds, native/platform checks, package integrity and publication PASS; publisher signing and physical approval NOT_RUN. |
 
 Decision: CONDITIONAL for unsigned evaluation candidates. Do not publish stable
-`v1.0.0` or `tools-v1.0.0`, set physical-approval flags, or claim trusted publisher
-identity without the evidence in `docs/SIGNING.md` and `docs/VALIDATION.md`.
-No credentials or hardware approval were supplied. Never persist document
-contents, passwords or recovery copies automatically.
-
-This machine has Go 1.27.4 and Wails 2.17.1, but lacks the GTK/WebKit development
-headers and pkg-config needed for local native rebuilding. Source/browser checks
-ran here; native builds and installed-package tests ran in CI. The downloaded
-Linux loopback runtimes ran here. Preserve these distinctions.
-
-## Expanded core-app candidate
-
-The working candidate imports DrawSplat `7506f1b` and adds ListSplat, GridSplat,
-WriteSplat, ShowSplat, LayoutSplat and PlanSplat alongside PDFsplat and CipherSplat.
-The Apps chooser retains mounted documents, and the suite uses the SplatWorks icon.
-Native project saves protect newer edits, cancellation, import replacement and
-unfinished planner forms. Cross-app office files move in memory; desktop document
-storage and service workers are disabled. Chart/image data-URL exports now use
-native destination dialogs. ShowSplat Present explicitly exports WebDeck HTML.
-Cloud connections and printing use the browser routes described in docs/OFFICE.md.
-
-Local validation passed 130 Chromium/WebKit checks, including all six project
-save/reopen/browser-interoperability workflows and the new office native-smoke
-loop. Snapshot/asset verification passed 1580 hashes; five Python packaging tests
-and Go transfer race tests passed. Native platform CI, packaged artifacts and
-published downloads must pass before advancing the website beyond rc.11.
-Signing, notarization and physical-device approval remain open.
-
-
-The rc.12 integrity gate rejected an ignored Python bytecode file referenced in
-the imported manifest; it was never published. The importer now selects committed
-source inputs and excludes caches. The replacement rc.13 snapshot imports DrawSplat
-`ccaad8a`, including PlanSplat's browser offline-cache fix. All 1579 asset hashes
-pass locally and every manifest path exists in Git. The full 130 browser checks
-passed before this packaging-only correction; the office workflows are repeated
-after the clean import. Native CI and published-package verification remain the
-release gate before changing the download catalogue.
-
-Desktop Help now consistently opens the suite guide from ListSplat and WriteSplat;
-workspace-specific help remains available inside each tool. Four additional
-Chromium/WebKit checks verify that Help preserves edited documents.
+releases or set physical-approval flags without the evidence in `docs/SIGNING.md`
+and `docs/VALIDATION.md`. Never persist documents, credentials or recovery copies
+automatically. Go 1.27.4 and Wails 2.17.1 are installed here; GTK/WebKit development
+headers and pkg-config are absent. Source/browser and downloaded loopback checks
+ran here; native builds and installation/archive checks ran in CI.
