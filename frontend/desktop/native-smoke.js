@@ -35,6 +35,9 @@
     const closing=desktop.requestClose();await wait(()=>document.getElementById('leaveDialog').open,'unsaved close prompt');
     document.getElementById('keepWorking').click();check(!await closing&&desktop.dirty.includes('PDFsplat'),'unsaved PDF close warning preserves work');
     pdf.document.getElementById('rotateRightButton').click();
+    // Link-aware rotation loads source geometry asynchronously. Save only after
+    // that edit completes; saving during a new edit must keep its dirty warning.
+    await wait(()=>pdf.document.getElementById('status').textContent.endsWith('rotated.')&&!desktop.busy,'page rotation completion');
     const select=pdf.document.getElementById('saveAsSelect');select.value='pdf';select.dispatchEvent(new pdf.Event('change',{bubbles:true}));
     await wait(()=>saved.some(item=>item.name==='desktop-lesson-edited.pdf'),'native PDF save');
     const edited=saved.find(item=>item.name==='desktop-lesson-edited.pdf');
