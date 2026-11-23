@@ -126,7 +126,7 @@
       await openLink('https://splatworks.org'+url.pathname+url.search+url.hash);
     }
   }
-  const showHelp=()=>{const workspace=active==='ciphersplat'&&frames.get(active)?.contentWindow?.CipherSplatWorkspace;if(workspace)workspace.showHelp();else if(commands.get(active)?.help)void commands.get(active).help();else help.showModal();};
+  const showHelp=()=>{const workspace=active==='ciphersplat'&&frames.get(active)?.contentWindow?.CipherSplatWorkspace;if(workspace)workspace.showHelp();else help.showModal();};
   const bridge={registerFileReceiver:(id,receive)=>fileReceivers.set(id,receive),openWorkspaceFile,get onlineEnabled(){return online;},registerCommands:(id,actions)=>commands.set(id,actions),command:(id,name)=>{const action=commands.get(id)?.[name];if(!action)return false;void action();return true;},saveBlob,saveFolder,selectTool,selectIndex:index=>{if(tools[index])selectTool(tools[index].id);},openLink,beginOperation,confirmReplace,requestClose,changed,
     toolId:path=>tools.find(tool=>path.startsWith(tool.path))?.id,
     get profile(){return info;},

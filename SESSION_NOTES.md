@@ -123,3 +123,7 @@ pass locally and every manifest path exists in Git. The full 130 browser checks
 passed before this packaging-only correction; the office workflows are repeated
 after the clean import. Native CI and published-package verification remain the
 release gate before changing the download catalogue.
+
+Desktop Help now consistently opens the suite guide from ListSplat and WriteSplat;
+workspace-specific help remains available inside each tool. Four additional
+Chromium/WebKit checks verify that Help preserves edited documents.
