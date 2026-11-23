@@ -1,5 +1,6 @@
 1.0 release candidates for GIFsplat, CipherSplat, QRSplat, ImageSplat, AudioSplat and VideoSplat.
 
+- Improve CipherSplat's password-strength label contrast on the credential panel.
 - Fix recorder-dialog initialization and protect unsaved recordings when dismissing the dialog.
 - Harden portable audio imports, decode replacement sources independently, and reject external media URLs or invalid mixer state before replacing open work.
 - Verify embedded video media checksums and keep native project saving synchronized with the visible timeline.

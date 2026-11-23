@@ -1,4 +1,4 @@
-SplatWorks Desktop 1.0 release candidate: the core PDF/Cipher application now excludes unrelated AudioSplat/VideoSplat processing engines from its embedded payload. Mac disk-image creation retries temporary service contention, and release-artifact uploads support safe job retries. Stable publisher signing and physical-device validation remain required.
+SplatWorks Desktop 1.0 release candidate: preserve painted PDF thumbnails while inserting, duplicating and reordering pages, and improve CipherSplat password-strength label contrast. The refreshed browser-tool snapshot also adds editable web/file links and internal PDF page destinations, with native-save round-trip checks. Stable publisher signing and physical-device validation remain required.
 
 SplatWorks Desktop: PDFsplat and CipherSplat for Linux, Windows, and Mac.
 Automated engineering and packaging checks cover the supported build platforms.

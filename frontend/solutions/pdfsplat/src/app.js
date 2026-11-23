@@ -1,3 +1,4 @@
+import { normalizeLinkUrl, appendPdfLinks, readPdfLinks, removeImportedPdfLinks } from './pdf-links.js';
 import {setupToolbar} from './toolbar.js';
 import {setupOcr, OCR_LIMITS} from './ocr.js';
 import { collectEpubImages } from "./epub-images.js";
@@ -21,7 +22,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = "../../vendor/pdf.worker.min.js";
 const $ = (id) => document.getElementById(id);
 const ids = ["saveDriveButton", "openButton", "presentButton", "fullscreenButton", "pagesButton", "chooseButton", "fileInput", "mergeButton", "mergeInput", "imageInput", "imagePagesInput", "signatureImageInput", "vaultInput", "protectButton", "unlockButton", "saveAsSelect", "undoButton", "redoButton", "sidebar", "thumbnails", "pageCount", "dropZone", "documentView", "pageShell", "pdfCanvas", "textHitLayer", "annotationLayer", "status", "editTextButton", "removeAreaButton", "addTextButton", "highlightButton", "drawButton", "addImageButton", "signatureButton", "cropButton", "customRotateButton", "rotateLeftButton", "rotateRightButton", "reversePagesButton", "blankPageButton", "imagePagesButton", "exportImagesButton", "removeBlankPagesButton", "decorateButton", "sanitizeButton", "accessibilityButton", "duplicatePageButton", "deletePageButton", "extractPageButton", "splitButton", "textProperties", "textValue", "fontSize", "textColor", "deleteTextButton", "objectProperties", "objectOpacity", "imageAltRow", "imageAltText", "deleteObjectButton", "previousPageButton", "nextPageButton", "pagePosition", "zoomOutButton", "zoomInButton", "zoomLabel", "fitButton", "privacyButton", "privacyDialog", "splitDialog", "splitForm", "splitRanges", "cropDialog", "cropForm", "cropTop", "cropRight", "cropBottom", "cropLeft", "cropReset", "cropCancel", "customRotateDialog", "customRotateForm", "customRotation", "customRotateCancel", "signatureDialog", "signatureForm", "signatureText", "signatureUpload", "signatureCancel", "decorateDialog", "decorateForm", "headerText", "footerText", "decorationAlignment", "decorateCancel", "sanitizeDialog", "sanitizeForm", "sanitizeCancel", "accessibilityDialog", "accessibilityForm", "documentTitle", "documentLanguage", "accessibilityResults", "accessibilityCancel", "accessibleHtmlButton", "epubDialog", "epubForm", "epubTitle", "epubAuthor", "epubPublisher", "epubDescription", "epubRights", "epubLanguage", "epubPageChapters", "epubCover", "epubCoverAltRow", "epubCoverAlt", "epubPreflight", "epubCancel", "epubRun", "pageActionsDialog", "pageActionsTitle", "pageActionsCopy", "contextMoveButton", "contextDuplicateButton", "contextExtractButton", "contextSplitButton", "contextDeleteButton", "contextCancelButton", "movePagesDialog", "movePagesForm", "movePagesCopy", "movePagePosition", "movePagesCancel", "vaultDialog", "vaultForm", "vaultTitle", "vaultIntro", "vaultFields", "vaultCopy", "vaultPassword", "vaultConfirm", "vaultConfirmRow", "vaultGeneratorLink", "vaultProtectChoice", "vaultUnlockChoice", "vaultCancel", "vaultRun"];
 ids.push("textSaveLayout", "textSaveLayoutRow", "epubLayout", "textSaveDialog", "textSaveForm", "textSaveHeading", "textSaveTitle", "textSaveLanguage", "textSaveStatus", "textSaveClose", "textSaveRun");
-ids.push("ocrButton");
+ids.push("ocrButton", "addLinkButton", "linkProperties", "linkDestination", "editLinkButton", "followLinkButton", "deleteLinkButton", "linkDialog", "linkForm", "linkKind", "linkUrlRow", "linkUrl", "linkPageRow", "linkPage", "linkLabel", "linkError", "linkCancel", "linkSave");
 const els = Object.fromEntries(ids.map((id) => [id, $(id)]));
 const state = {
   fileName: "document.pdf",
@@ -122,7 +123,7 @@ function restore(value) {
 }
 function setEnabled(on) {
   if (els.saveDriveButton) els.saveDriveButton.disabled = !on;
-  ["ocrButton", "presentButton", "fullscreenButton", "pagesButton", "mergeButton", "saveAsSelect", "editTextButton", "removeAreaButton", "addTextButton", "highlightButton", "drawButton", "addImageButton", "signatureButton", "cropButton", "customRotateButton", "rotateLeftButton", "rotateRightButton", "reversePagesButton", "blankPageButton", "imagePagesButton", "exportImagesButton", "removeBlankPagesButton", "decorateButton", "sanitizeButton", "accessibilityButton", "duplicatePageButton", "deletePageButton", "extractPageButton", "splitButton", "previousPageButton", "nextPageButton", "zoomOutButton", "zoomInButton", "fitButton"].forEach((id) => (els[id].disabled = !on));
+  ["ocrButton", "presentButton", "fullscreenButton", "pagesButton", "mergeButton", "saveAsSelect", "editTextButton", "removeAreaButton", "addTextButton", "highlightButton", "drawButton", "addImageButton", "signatureButton", "addLinkButton", "cropButton", "customRotateButton", "rotateLeftButton", "rotateRightButton", "reversePagesButton", "blankPageButton", "imagePagesButton", "exportImagesButton", "removeBlankPagesButton", "decorateButton", "sanitizeButton", "accessibilityButton", "duplicatePageButton", "deletePageButton", "extractPageButton", "splitButton", "previousPageButton", "nextPageButton", "zoomOutButton", "zoomInButton", "fitButton"].forEach((id) => (els[id].disabled = !on));
   syncPageNavigation();
 }
 function syncPageNavigation() {
@@ -132,17 +133,23 @@ function syncPageNavigation() {
   els.nextPageButton.disabled = !count || state.current >= count - 1;
 }
 let cancelInk = null;
+let cancelLinkBox = null;
+let pendingLink = null;
 function setMode(mode) {
   if (mode !== "select") finishInlineTextEditing();
   imageRequest++;
   placement.cancel();
   cancelInk?.();
+  cancelLinkBox?.();
   $("inkTools").hidden = mode !== "draw";
   $("inkUndo").disabled = state.history.at(-1)?.label !== "Draw";
   state.mode = mode;
   document.body.classList.toggle("inking", mode === "draw");
   els.annotationLayer.classList.toggle("drawing", mode === "draw");
   els.annotationLayer.classList.toggle("masking", mode === "mask");
+  els.annotationLayer.classList.toggle("linking", mode === "link");
+  els.addLinkButton.classList.toggle("active", mode === "link");
+  els.addLinkButton.setAttribute("aria-pressed", String(mode === "link"));
   els.annotationLayer.classList.toggle("editing-text", mode === "edit-text");
   els.textHitLayer.classList.toggle("active", mode === "edit-text");
   els.drawButton.classList.toggle("active", mode === "draw");
@@ -158,16 +165,18 @@ async function loadSource(file) {const __desktopDone=globalThis.SplatDesktop?.be
   if (!file || !file.name.toLowerCase().endsWith(".pdf")) throw Error("Choose a PDF file.");
   const bytes = new Uint8Array(await file.arrayBuffer());
   const pdf = await pdfjs.getDocument({isEvalSupported:false, data: bytes.slice(), fontExtraProperties: true }).promise;
-  return { id: uid(), name: file.name, bytes, pdf };
+  return { id: uid(), name: file.name, bytes, pdf, links: await readPdfLinks(pdf) };
 }finally{__desktopDone?.();}}
 function pagesFor(source) {
-  return Array.from({ length: source.pdf.numPages }, (_, sourceIndex) => ({
-    id: uid(),
-    sourceId: source.id,
-    sourceIndex,
-    rotation: 0,
-    annotations: [],
+  const pages = Array.from({ length: source.pdf.numPages }, (_, sourceIndex) => ({
+    id: uid(), sourceId: source.id, sourceIndex, rotation: 0, annotations: [],
   }));
+  pages.forEach((page,index)=>{
+    const links=source.links[index] || [];
+    page.importedLinkIds=links.map(link=>link.sourceLinkId);
+    page.annotations=links.map(({targetIndex,...link})=>({...link,id:uid(),targetPageId:pages[targetIndex]?.id}));
+  });
+  return pages;
 }
 let importToken = 0;
 els.fileInput.accept = importAccept;
@@ -247,6 +256,7 @@ async function renderAll() {const __desktopDone=globalThis.SplatDesktop?.beginOp
 }finally{__desktopDone?.();}}
 async function renderCurrent() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   cancelInk?.();
+  cancelLinkBox?.();
   if (placement.active && placement.pageId !== currentPage()?.id) setMode("select");
   const token = ++state.renderToken,
     item = currentPage();
@@ -381,8 +391,8 @@ function queueThumbnailRefresh() {
   },180);
 }
 async function renderThumbnail(li) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
-  const index=Number(li.dataset.index), original=state.pages[index];
-  if(!original)return;
+  const original=state.pages.find(page=>page.id===li.dataset.pageId);
+  if(!original || li.parentElement!==els.thumbnails)return;
   const item=structuredClone(original),key=JSON.stringify(item);
   if(li.renderedKey===key||li.pendingThumbnailKey===key)return;
   const token=(li.thumbnailToken||0)+1;li.thumbnailToken=token;li.pendingThumbnailKey=key;
@@ -396,40 +406,55 @@ async function renderThumbnail(li) {const __desktopDone=globalThis.SplatDesktop?
     } else {page=await sourcePage(item);viewport=page.getViewport({scale:.2,rotation:(page.rotate+item.rotation)%360});}
     canvas.width=Math.max(1,Math.ceil(viewport.width));canvas.height=Math.max(1,Math.ceil(viewport.height));
     await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
-    if(token!==li.thumbnailToken||!li.isConnected||JSON.stringify(state.pages[index])!==key)return;
+    if(token!==li.thumbnailToken||li.parentElement!==els.thumbnails||JSON.stringify(state.pages.find(page=>page.id===item.id))!==key)return;
     const target=li.querySelector('canvas');target.width=canvas.width;target.height=canvas.height;target.getContext('2d').drawImage(canvas,0,0);
     li.renderedKey=key;delete li.dataset.previewError;
-  } catch(error) {if(li.isConnected&&state.pages[index]?.id===item.id){li.dataset.previewError=error.message;console.warn('Page preview could not refresh',error);}}
-  finally {canvas.width=canvas.height=0;if(edited)await edited.destroy();if(token===li.thumbnailToken){li.pendingThumbnailKey=null;li.removeAttribute('aria-busy');}}
+  } catch(error) {if(li.parentElement===els.thumbnails&&state.pages.some(page=>page.id===item.id)){li.dataset.previewError=error.message;console.warn('Page preview could not refresh',error);}}
+  finally {
+    canvas.width=canvas.height=0;if(edited)await edited.destroy();
+    if(token===li.thumbnailToken){
+      li.pendingThumbnailKey=null;li.removeAttribute('aria-busy');
+      const current=state.pages.find(page=>page.id===item.id),currentKey=current&&JSON.stringify(current);
+      // A changed page can invalidate an in-flight render after the debounced
+      // refresh has already fired. Observe it again instead of leaving it blank.
+      if(li.parentElement===els.thumbnails&&currentKey&&currentKey!==key&&li.renderedKey!==currentKey)
+        state.thumbnailObserver?.observe(li);
+    }
+  }
 }finally{__desktopDone?.();}}
 async function renderThumbnails() {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   state.thumbnailObserver?.disconnect();
-  els.thumbnails.replaceChildren();
+  const existing=new Map([...els.thumbnails.children].map(li=>[li.dataset.pageId,li]));
   state.thumbnailObserver = new IntersectionObserver(
-    (entries) => {
+    (entries, observer) => {
       for (const entry of entries)
         if (entry.isIntersecting) {
+          observer.unobserve(entry.target);
           renderThumbnail(entry.target);
-          state.thumbnailObserver.unobserve(entry.target);
         }
     },
     { root: els.sidebar, rootMargin: "240px" },
   );
   for (let index = 0; index < state.pages.length; index++) {
-    const li = document.createElement("li"),
-      canvas = document.createElement("canvas"),
-      label = document.createElement("span");
+    const item=state.pages[index],li=existing.get(item.id)||document.createElement("li");
+    existing.delete(item.id);
+    if(!li.firstElementChild){
+      const canvas=document.createElement("canvas");canvas.width=120;canvas.height=160;
+      li.append(canvas,document.createElement("span"));
+    }
+    const label=li.querySelector('span');
+    li.dataset.pageId=item.id;
     li.className = `thumbnail${state.selectedPageIds.has(state.pages[index].id) ? " selected" : ""}${index === state.current ? " current" : ""}`;
     li.draggable = true;
     li.dataset.index = index;
     li.tabIndex = 0;
     li.setAttribute("aria-label", `Page ${index + 1}`);
     li.setAttribute("aria-selected", String(state.selectedPageIds.has(state.pages[index].id)));
-    canvas.width = 120;
-    canvas.height = 160;
     label.textContent = `Page ${index + 1}`;
-    li.append(canvas, label);
-    els.thumbnails.append(li);
+    // Retain the painted canvas for unchanged pages, including pages shifted
+    // by an insertion or reorder. Selecting a page must not clear its preview.
+    if(els.thumbnails.children[index]!==li)
+      els.thumbnails.insertBefore(li,els.thumbnails.children[index]||null);
     li.onclick = (event) => selectPage(index, event);
     li.onkeydown = (e) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -455,8 +480,9 @@ async function renderThumbnails() {const __desktopDone=globalThis.SplatDesktop?.
       e.preventDefault();
       openPageActions(index);
     };
-    state.thumbnailObserver.observe(li);
+    if(li.renderedKey!==JSON.stringify(item))state.thumbnailObserver.observe(li);
   }
+  for(const li of existing.values())li.remove();
 }finally{__desktopDone?.();}}
 function selectPage(index, event = {}) {
   finishInlineTextEditing();
@@ -563,13 +589,29 @@ function submitMovePages(event) {
   els.movePagesDialog.close();
   moveSelectedPages(position - 1);
 }
-function rotate(delta) {
+function rotateLinkBoxes(item, source, angle) {
+  const before=source.getViewport({scale:1,rotation:source.rotate+item.rotation+(item.fineRotation||0)});
+  const after=source.getViewport({scale:1,rotation:angle});
+  for(const link of item.annotations.filter(o=>o.type==='link')){
+    const points=[[link.x,link.y],[link.x+link.w,link.y],[link.x,link.y+link.h],[link.x+link.w,link.y+link.h]]
+      .map(([x,y])=>before.convertToPdfPoint(x*before.width,y*before.height))
+      .map(([x,y])=>after.convertToViewportPoint(x,y));
+    const x=Math.min(...points.map(p=>p[0])),y=Math.min(...points.map(p=>p[1]));
+    Object.assign(link,{x:x/after.width,y:y/after.height,w:(Math.max(...points.map(p=>p[0]))-x)/after.width,h:(Math.max(...points.map(p=>p[1]))-y)/after.height});
+  }
+}
+async function rotate(delta) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const indexes = selectedPageIndexes();
   if (indexes.some(index => state.pages[index].annotations.some(o => o.ocr))) return announce("Rotate pages before OCR. Undo the OCR batch before changing page orientation, then recognize the rotated page again.");
-  mutate("Rotate pages", () => indexes.forEach((index) => (state.pages[index].rotation = (state.pages[index].rotation + delta + 360) % 360)));
+  const sources=await Promise.all(indexes.map(index=>sourcePage(state.pages[index])));
+  mutate("Rotate pages", () => indexes.forEach((index,i) => {
+    const item=state.pages[index], rotation=(item.rotation+delta+360)%360;
+    rotateLinkBoxes(item,sources[i],sources[i].rotate+rotation+(item.fineRotation||0));
+    item.rotation=rotation;
+  }));
   renderAll();
   announce(`${indexes.length} ${indexes.length === 1 ? "page" : "pages"} rotated.`);
-}
+}finally{__desktopDone?.();}}
 function reversePages() {
   mutate("Reverse page order", () => {
     state.pages.reverse();
@@ -607,16 +649,21 @@ function applyCrop(event, reset = false) {
   renderAll();
   announce(`${indexes.length} page(s) ${reset ? "crop reset" : "cropped"}.`);
 }
-function applyCustomRotation(event) {
+async function applyCustomRotation(event) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   event.preventDefault();
   const angle = Number(els.customRotation.value), indexes = selectedPageIndexes();
   if (indexes.some(index => state.pages[index].annotations.some(o => o.ocr))) { els.customRotateDialog.close(); return announce("Set page orientation before OCR. Undo the OCR batch before changing fine rotation."); }
   if (!Number.isFinite(angle) || Math.abs(angle) > 45) return announce("Enter an angle from -45 to 45 degrees.");
-  mutate("Deskew pages", () => indexes.forEach((index) => (state.pages[index].fineRotation = angle)));
+  const sources=await Promise.all(indexes.map(index=>sourcePage(state.pages[index])));
+  mutate("Deskew pages", () => indexes.forEach((index,i) => {
+    const item=state.pages[index];
+    rotateLinkBoxes(item,sources[i],sources[i].rotate+item.rotation+angle);
+    item.fineRotation=angle;
+  }));
   els.customRotateDialog.close();
   renderAll();
   announce(`${indexes.length} page(s) set to ${angle}° fine rotation.`);
-}
+}finally{__desktopDone?.();}}
 async function addImagePages(files) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   const chosen = [...(files || [])].filter((file) => ["image/png", "image/jpeg"].includes(file.type));
   if (!chosen.length) return announce("Choose one or more PNG or JPEG images.");
@@ -719,7 +766,7 @@ function duplicatePage() {
     const copies = indexes.map((index) => {
       const copy = structuredClone(state.pages[index]);
       copy.id = uid();
-      copy.annotations.forEach((o) => (o.id = uid()));
+      copy.annotations.forEach((o) => { o.id = uid(); if(o.targetPageId===state.pages[index].id)o.targetPageId=copy.id; });
       return copy;
     });
     state.pages.splice(insertAt, 0, ...copies);
@@ -821,6 +868,11 @@ function renderAnnotations() {
       image.draggable = false;
       image.style.opacity = object.opacity ?? 1;
       node.append(image);
+    } else if (object.type === "link") {
+      node.title = linkDescription(object);
+      node.setAttribute('aria-label', `Link: ${object.label || linkDescription(object)}`);
+      node.onfocus = () => { if (state.mode === 'select') selectObject(object.id); };
+      node.ondblclick = event => { event.preventDefault(); openLinkDialog(object); };
     } else node.style.background = object.color || "#ffffff";
     Object.assign(node.style, {
       left: `${object.x * 100}%`,
@@ -829,7 +881,7 @@ function renderAnnotations() {
       height: `${object.h * 100}%`,
       opacity: object.type === "image" ? 1 : object.opacity ?? 1,
     });
-    if (["text", "highlight", "mask"].includes(object.type)) {
+    if (["text", "highlight", "mask", "link"].includes(object.type)) {
       const handle = document.createElement("button");
       handle.type = "button";
       handle.className = "resize-handle";
@@ -870,10 +922,13 @@ function renderAnnotations() {
     node.onpointerdown = (e) => startDrag(e, node, object);
     node.onclick = (e) => {
       e.stopPropagation();
+      if (state.mode === "link") return;
       if (!object.cover) selectObject(object.id);
     };
-    if (!object.cover) node.onblur = () => syncSize(node, object);
+    if (!object.cover && object.type !== "link") node.onblur = () => syncSize(node, object);
     node.onkeydown = (e) => {
+      if (state.mode === "link") return;
+      if (object.type === "link" && e.key === "Enter") { e.preventDefault(); openLinkDialog(object); return; }
       if (object.cover) {
         if (e.key === "Escape") node.blur();
       } else if (!e.target.matches("textarea")) objectKeydown(e, object);
@@ -985,7 +1040,10 @@ function updateProperties() {
   }
   els.textProperties.disabled = !isText;
   els.textProperties.hidden = !isText;
-  els.objectProperties.hidden = !o || isText || o.type === "drawing";
+  els.linkProperties.hidden = o?.type !== 'link';
+  els.linkProperties.disabled = o?.type !== 'link';
+  if (o?.type === 'link') els.linkDestination.textContent = linkDescription(o);
+  els.objectProperties.hidden = !o || isText || o.type === "drawing" || o.type === 'link';
   const opacityParent = isText ? els.textProperties : els.objectProperties;
   if ($("opacityProperty").parentElement !== opacityParent)
     opacityParent.insertBefore($("opacityProperty"), isText ? els.deleteTextButton : opacityParent.firstElementChild.nextElementSibling);
@@ -1183,7 +1241,7 @@ function startResize(event, node, object) {
   };
   const up = () => {
     handle.removeEventListener("pointermove", move);
-    if(record) commit(before, "Resize object");
+    commit(before, "Resize object");
     renderAnnotations();
     announce(`${object.type === "text" ? "Text box" : "Object"} resized.`);
   };
@@ -1232,6 +1290,7 @@ function objectKeydown(event, o) {
   clampObject(o);
   commit(before, "Move object");
   renderAnnotations();
+  if (o.type === "link") els.annotationLayer.querySelector(`[data-id="${o.id}"]`)?.focus();
 }
 function startDrawing(event) {
   if (state.mode !== "draw" || event.button !== 0 || event.isPrimary === false || cancelInk) return;
@@ -1325,22 +1384,130 @@ function startMask(event) {
   els.annotationLayer.addEventListener("pointerup", up, { once: true });
 }
 
+
+function linkDescription(link) {
+  if (!link.targetPageId) return link.url || '';
+  const index = state.pages.findIndex(p => p.id === link.targetPageId);
+  return index < 0 ? 'Destination page removed. Edit or delete this link.' : `Page ${index+1}`;
+}
+function syncLinkKind() {
+  const internal = els.linkKind.value === 'page';
+  els.linkUrlRow.hidden = internal; els.linkUrl.disabled = internal; els.linkUrl.required = !internal;
+  els.linkPageRow.hidden = !internal; els.linkPage.disabled = !internal; els.linkPage.required = internal;
+  els.linkError.textContent = '';
+}
+function openLinkDialog(link, page = currentPage()) {
+  setMode('select');
+  pendingLink = {pageId:page.id, object:link, existing:page.annotations.includes(link)};
+  els.linkKind.value = link.targetPageId ? 'page' : 'url';
+  els.linkUrl.value = link.url || ''; els.linkLabel.value = link.label || '';
+  els.linkPage.replaceChildren(...state.pages.map((item,index)=>new Option(`Page ${index+1}`,item.id)));
+  els.linkPage.value = link.targetPageId || page.id;
+  syncLinkKind();
+  els.linkSave.textContent = pendingLink.existing ? 'Save link' : 'Add link';
+  els.linkDialog.showModal();
+  (link.targetPageId ? els.linkPage : els.linkUrl).focus();
+}
+function startLinkBox(event) {
+  if (state.mode !== 'link' || event.button !== 0 || event.isPrimary === false || cancelLinkBox) return;
+  event.preventDefault();
+  const layer=els.annotationLayer, rect=layer.getBoundingClientRect(), page=currentPage();
+  const position=e=>[Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height))];
+  const [sx,sy]=position(event), object={id:uid(),type:'link',x:sx,y:sy,w:0,h:0};
+  const preview=document.createElement('div'); preview.className='link-box-preview'; layer.append(preview);
+  const move=e=>{
+    if(e.pointerId!==event.pointerId)return;
+    const [x,y]=position(e); object.x=Math.min(x,sx);object.y=Math.min(y,sy);object.w=Math.abs(x-sx);object.h=Math.abs(y-sy);
+    Object.assign(preview.style,{left:`${object.x*100}%`,top:`${object.y*100}%`,width:`${object.w*100}%`,height:`${object.h*100}%`});
+  };
+  const finish=()=>{
+    cancelLinkBox=null;
+    layer.removeEventListener('pointermove',move);layer.removeEventListener('pointerup',up);layer.removeEventListener('pointercancel',cancel);layer.removeEventListener('lostpointercapture',cancel);
+    if(layer.hasPointerCapture(event.pointerId))layer.releasePointerCapture(event.pointerId);
+    preview.remove();
+  };
+  const cancel=e=>{if(!e || e.pointerId===event.pointerId)finish();};
+  const up=e=>{
+    if(e.pointerId!==event.pointerId)return;
+    move(e);finish();
+    if(object.w*rect.width<6 || object.h*rect.height<6){announce('Draw a larger link box.');return;}
+    openLinkDialog(object,page);
+  };
+  cancelLinkBox=()=>cancel();
+  layer.addEventListener('pointermove',move);layer.addEventListener('pointerup',up);layer.addEventListener('pointercancel',cancel);layer.addEventListener('lostpointercapture',cancel);
+  layer.setPointerCapture(event.pointerId);
+}
+els.addLinkButton.onclick=()=>{
+  setMode(state.mode==='link'?'select':'link');
+  state.selectedId=null;renderAnnotations();
+  announce(state.mode==='link'?'Drag a box over the area to make clickable. Press Enter for a keyboard link box. Escape cancels.':'Link tool cancelled.');
+  if(state.mode==='link')els.annotationLayer.focus();
+};
+els.linkKind.onchange=syncLinkKind;
+els.linkForm.onsubmit=event=>{
+  event.preventDefault();
+  if(!pendingLink)return;
+  const page=state.pages.find(p=>p.id===pendingLink.pageId);
+  if(!page){els.linkDialog.close();return;}
+  let url='',targetPageId;
+  try {
+    if(els.linkKind.value==='page'){
+      targetPageId=els.linkPage.value;
+      if(!state.pages.some(p=>p.id===targetPageId))throw Error('Choose a destination page.');
+    } else url=normalizeLinkUrl(els.linkUrl.value);
+  }catch(error){els.linkError.textContent=error.message;return;}
+  const {object,existing}=pendingLink;
+  mutate(existing?'Edit link':'Add link',()=>{
+    Object.assign(object,{url,targetPageId,destination:undefined,label:els.linkLabel.value.trim()});
+    if(!existing)page.annotations.push(object);
+    state.selectedId=object.id;
+  });
+  els.linkDialog.close();renderAnnotations();
+  els.annotationLayer.querySelector(`[data-id="${object.id}"]`)?.focus();
+  announce('Link saved. Export as PDF to use the clickable area.');
+};
+els.linkCancel.onclick=()=>els.linkDialog.close();
+els.linkDialog.addEventListener('close',()=>{pendingLink=null;});
+els.editLinkButton.onclick=()=>{const o=selectedObject();if(o?.type==='link')openLinkDialog(o);};
+els.deleteLinkButton.onclick=deleteSelected;
+els.followLinkButton.onclick=()=>{
+  const link=selectedObject();if(link?.type!=='link')return;
+  if(link.targetPageId){
+    const index=state.pages.findIndex(p=>p.id===link.targetPageId);
+    if(index<0)return announce(linkDescription(link));
+    state.current=index;state.selectedId=null;selectOnlyPage(index);renderCurrent();
+  }else{
+    const url=normalizeLinkUrl(link.url);
+    if(url.startsWith('file:'))return announce('File links open from the downloaded PDF if your PDF reader allows local files.');
+    window.open(url,'_blank','noopener,noreferrer');
+  }
+};
+els.annotationLayer.addEventListener('pointerdown',startLinkBox);
+els.annotationLayer.addEventListener('keydown',event=>{
+  if(state.mode!=='link' || event.target!==els.annotationLayer || event.key!=='Enter')return;
+  event.preventDefault();openLinkDialog({id:uid(),type:'link',x:.2,y:.2,w:.3,h:.08});
+});
+window.addEventListener('blur',()=>cancelLinkBox?.());
+
 function hexColor(hex) {
   const n = parseInt(hex.slice(1), 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 async function buildPdf(items, {finishEditing=true} = {}) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
   if(finishEditing) finishInlineTextEditing();
+  if(finishEditing && items.some(p=>p.annotations.some(o=>o.type==='link' && o.targetPageId && !state.pages.some(target=>target.id===o.targetPageId))))
+    throw Error('Destination page removed. Edit or delete this link.');
   const output = await PDFDocument.create(),
     font = await output.embedFont(StandardFonts.Helvetica),
     docs = new Map(),
-    images = new Map();
+    images = new Map(), linkGeometries = [];
   const textFonts = new Map([[StandardFonts.Helvetica, font]]);
   output.setTitle(state.documentTitle || state.fileName.replace(/\.pdf$/i, ""));
   output.setLanguage(state.documentLanguage || "en");
   output.setCreator("PDFSplat");
   for (const item of items) {
     if (!docs.has(item.sourceId)) docs.set(item.sourceId, await PDFDocument.load(state.sources.get(item.sourceId).bytes));
+    removeImportedPdfLinks(docs.get(item.sourceId).getPage(item.sourceIndex), item.importedLinkIds);
     const [page] = await output.copyPages(docs.get(item.sourceId), [item.sourceIndex]);
     output.addPage(page);
     if (item.rotation) page.setRotation(degrees((page.getRotation().angle + item.rotation) % 360));
@@ -1352,6 +1519,7 @@ async function buildPdf(items, {finishEditing=true} = {}) {const __desktopDone=g
       const [px, py] = viewport.convertToPdfPoint(x * width, y * height);
       return {x:px, y:py};
     };
+    linkGeometries.push({viewport:sourceView.getViewport({scale:1,rotation:angle+(item.fineRotation||0)}),box:page.getCropBox(),rotation:angle});
     for (const o of item.annotations) {
       if (o.type === "text") {
         if (o.cover) {
@@ -1421,8 +1589,11 @@ async function buildPdf(items, {finishEditing=true} = {}) {const __desktopDone=g
         }
     }
   }
+  if (!items.some((item) => item.crop || item.fineRotation)) {
+    appendPdfLinks(output, items, linkGeometries);
+    return output.save();
+  }
   const baseBytes = await output.save();
-  if (!items.some((item) => item.crop || item.fineRotation)) return baseBytes;
   const base = await PDFDocument.load(baseBytes), transformed = await PDFDocument.create();
   for (let index = 0; index < items.length; index++) {
     const item = items[index];
@@ -1461,6 +1632,7 @@ async function buildPdf(items, {finishEditing=true} = {}) {const __desktopDone=g
     transformed.addPage([Math.max(...rx)-x,Math.max(...ry)-y])
       .drawPage(embedded,{x:-x,y:-y,width:croppedWidth,height:croppedHeight,rotate:degrees(angle)});
   }
+  appendPdfLinks(transformed, items, linkGeometries);
   return transformed.save();
 }finally{__desktopDone?.();}}
 async function downloadBytes(bytes, name, type = "application/pdf", details = {}) {const __desktopDone=globalThis.SplatDesktop?.beginOperation();try{
@@ -1489,7 +1661,7 @@ async function exportPdf(items = state.pages, suffix = "-edited") {finishInlineT
     return bytes;
   } catch (error) {
     console.error(error);
-    announce("Export failed. The source PDF is unchanged.");
+    announce(error.message || "Export failed. The source PDF is unchanged.");
     return null;
   } finally {
     els.saveAsSelect.disabled = false;
@@ -2017,6 +2189,7 @@ for (const name of ["dragleave", "drop"])
   });
 els.dropZone.addEventListener("drop", (e) => openFile(e.dataTransfer.files));
 window.addEventListener("keydown", (e) => {
+  if (e.defaultPrevented) return;
   if (!document.getElementById("presentationViewer")?.hidden) return;
   const mod = e.ctrlKey || e.metaKey,
     key = e.key.toLowerCase();
@@ -2028,6 +2201,7 @@ window.addEventListener("keydown", (e) => {
     e.preventDefault(); setMode('select'); announce('Placement cancelled.'); return;
   }
   if (document.getElementById("scanDialog").open || document.getElementById("ocrDialog")?.open) return;
+  if (modalOpen) return;
   if (mod && key === "o") {
     e.preventDefault();
     els.fileInput.click();
@@ -2055,7 +2229,7 @@ window.addEventListener("keydown", (e) => {
     e.preventDefault();
     navigatePage(1);
   }
-  if (e.key === "Escape" && state.mode === "draw") setMode("select");
+  if (e.key === "Escape" && !modalOpen && ["draw", "link"].includes(state.mode)) setMode("select");
 });
 window.addEventListener("resize", () => {
   if (state.pages.length) renderCurrent();
