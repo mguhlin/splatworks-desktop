@@ -65,7 +65,16 @@ if report.get('profile'):
         if profile=='qrsplat':assert not project['data'].get('wifiPassword')
     assert not list(root.glob('.splatworks-*')),'Unfinished output remains'
     print(f'Native {profile} report and actual export files verified: {root}');sys.exit()
-assert len(report['checks'])>=23,report
+assert len(report['checks'])>=55,report
+import zipfile
+for app in ['listsplat','gridsplat','writesplat','showsplat','layoutsplat','plansplat']:
+    file=next(root.glob('*.'+app+('.json' if app!='layoutsplat' else '')))
+    if app=='layoutsplat':
+        with zipfile.ZipFile(file) as archive:model=json.loads(archive.read('publication.json'))
+    else:model=json.loads(file.read_text(encoding='utf-8'))
+    assert ('Native '+app) in json.dumps(model), (app,file)
+    if app=='gridsplat':assert model['sheets'][0]['cells'][1][1]=='=B1*2'
+    if app=='plansplat':assert any(task['title']=='Native plansplat' for task in model['tasks'].values())
 pdf=root/'desktop-lesson-edited.pdf';assert pdf.read_bytes().startswith(b'%PDF-')
 restored=list(root.glob('CipherSplat-restored-*/classroom/lesson.pdf'));assert restored,'Missing restored PDF'
 assert any(hashlib.sha256(file.read_bytes()).digest()==hashlib.sha256(pdf.read_bytes()).digest() for file in restored),'Restored bytes differ from the saved PDF'

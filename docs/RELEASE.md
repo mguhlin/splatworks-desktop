@@ -1,50 +1,44 @@
-SplatWorks Desktop 1.0 release candidate: preserve painted PDF thumbnails while inserting, duplicating and reordering pages, and improve CipherSplat password-strength label contrast. The refreshed browser-tool snapshot also adds editable web/file links and internal PDF page destinations, with native-save round-trip checks. Stable publisher signing and physical-device validation remain required.
+SplatWorks Desktop now brings eight apps together for Windows, Mac, and Linux:
+**ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat, PDFsplat,
+and CipherSplat.** Choose an app from the Apps menu; switching keeps workspaces open.
 
-CipherSplat adopts the streamlined CipherEnc workspace while retaining its name and file compatibility. It adds automatic input detection, local OpenPGP key import and fingerprints, compressed and verified file encryption, native automatic saves, safe restoration including empty directories, and Help that preserves open work. PDFSplat opens new compressed CipherSplat PDF packages and verifies its own protected PDFs before saving.
+- Save editable office work through native destination dialogs using the existing portable project formats. Browser editions can reopen those files.
+- Preserve unsaved work after cancelled/failed saves, reject stale imports after newer edits, and warn before replacing work or closing. Unfinished planner forms also trigger the close warning.
+- Keep document drafts and file handoffs in memory; no automatic recovery or presentation copies are written.
+- Bundle office editors, fonts, import/export libraries, publication backgrounds, PDF/OCR engines, English/Spanish OCR models, and encryption engines.
+- Save chart/picture-graph images through native dialogs. GridSplat project files preserve sheet data, formulas and formatting; save chart appearance separately as images.
+- Export ShowSplat WebDeck HTML to present in a browser. Export HTML/PDF and print from a browser. Google Drive and Calendar connections use the browser editions.
 
-SplatWorks Desktop: PDFsplat and CipherSplat for Linux, Windows, and Mac.
-Automated engineering and packaging checks cover the supported build platforms.
-Stable release tags require developer signing and physical-device approval.
+CipherSplat retains its name and CS4/legacy compatibility, including its recent
+CipherEnc usability improvements, compressed/verified encryption, local OpenPGP
+key import, safe folder restoration, and Help that preserves work. PDFsplat retains
+editable PDF links, painted thumbnails during page edits, and local OCR. PDF
+visual covers are not secure redaction; OCR and conversion require review.
 
-- Warn before closing unsaved work or replacing an edited PDF; block closing during processing and saving.
-- Wait for native writes before reporting success. Cancellation and failure preserve unsaved work, including newer edits made while an earlier save is pending.
-- Add a Windows per-user setup executable with shortcuts, uninstall registration, upgrade support, and Microsoft's included offline WebView2 runtime installer.
-- Preserve user-created files during Windows uninstall; restore encrypted folders into new directories.
-- Restrict restoration using Go's rooted filesystem API, keep bounded native write capabilities, and disable PDF.js JavaScript evaluation.
-- Exercise PDF editing/export, English/Spanish OCR, CS4 file encryption, Unicode text vaults, wrong-password/tamper rejection, and OpenPGP public/private-key round trips.
-- Prepare signing for Windows applications/installers/uninstallers and Mac hardened runtime, signing, notarization, and stapling. Stable releases fail without credentials and physical validation approval.
+Choose the package for your platform:
 
-Download the package matching your platform and its `.sha256` file. Windows users
-can choose `-setup.exe` or the portable ZIP. Linux users can choose a `.deb` or
-portable archive. Mac users can choose a universal DMG or ZIP for Intel and Apple
-silicon.
+- **Windows:** per-user setup executable with shortcuts, uninstall support, and Microsoft's full offline WebView2 installer; portable ZIP requires an existing WebView2 runtime.
+- **Mac:** universal DMG or ZIP for Intel and Apple silicon.
+- **Linux:** Debian package or portable archive; requires GTK3/WebKitGTK 4.1.
 
-Unsigned candidates have **no verified Windows publisher signature or Apple
-Developer ID/notarization** and can show publisher warnings. Mac unsigned
-candidates use ad hoc hardened-runtime signing for automated compatibility
-checks. Signed candidate workflows use configured developer identities; stable
-workflows require signing and human validation approval. Verify the downloaded
-file signature and use the release tag to identify the intended build.
+Adjacent SHA-256 files verify download integrity. Unsigned candidates have **no
+verified Windows publisher signature or Apple Developer ID/notarization**. Mac
+candidates use ad hoc hardened-runtime signing for automated compatibility.
+Stable publisher signing and physical-device qualification remain required.
 
-Automated checks cover all three build platforms, Windows install/upgrade/
-uninstall, Linux install/removal, Mac disk-image/archive integrity, and Linux
-editing/OCR/encryption without networking. Actual file pickers, screen readers,
-Gatekeeper/SmartScreen behavior, offline Windows installation without a preexisting
-runtime, and representative physical hardware require human validation before
-stable approval.
+Release gates exercise real platform webviews and Go writes, office project
+save/reopen, PDF/OCR/encryption, Linux execution without networking, Windows
+install/upgrade/uninstall, Linux install/removal, Mac archive/disk-image integrity,
+and package checksums. These are build-runner checks. Actual file pickers,
+screen readers, Gatekeeper/SmartScreen behavior, offline Windows installation
+without an existing runtime, and representative physical devices still require
+human qualification before stable approval.
 
-Live camera and screen capture are outside the desktop 1.0 feature contract; use
-the browser edition for those workflows. Existing-photo scanning is included.
-PDF visual covers are not secure redaction. Existing document memory and
-conversion limits still apply.
+Live camera and screen capture use the browser editions. Existing-photo scanning
+is included. Existing document memory and format-conversion limits still apply.
+Optional online connections remain off by default and can be revoked in Settings.
 
-See `docs/SIGNING.md`, `docs/VALIDATION.md`, and `SECURITY.md` in the source
-repository. Notices and installation instructions are included in the archives;
-corresponding source is available in the repository and source archives.
-
-Debian packages use prerelease ordering that upgrades cleanly to a stable version. An epoch preserves upgrade compatibility with earlier desktop release candidates. The shared shell also supports separately installable GIFsplat, CipherSplat, QRSplat and ImageSplat previews; these are distributed in the standalone-tools release.
-
-This candidate adds a default-off, revocable online-services setting and retains
-strict webview connection rules. Standalone tools share browser editing/project
-code; ImageSplat includes its default AI model and runtime for first-launch
-offline photo removal. See the paired standalone release for these apps.
+The six smaller standalone tools remain available in the separate tools release.
+Source, component notices and qualification details:
+https://github.com/mguhlin/splatworks-desktop (docs/OFFICE.md, docs/SIGNING.md,
+docs/VALIDATION.md, THIRD-PARTY-NOTICES.md).

@@ -1,4 +1,58 @@
 [
-  {"id":"pdfsplat","name":"PDFsplat","path":"/solutions/pdfsplat/","description":"Organize, annotate, recognize text, and export PDFs.","source":"solutions/pdfsplat"},
-  {"id":"ciphersplat","name":"CipherSplat","path":"/solutions/CipherSplat/","description":"Encrypt and unlock files, folders, and text locally.","source":"solutions/CipherSplat"}
+  {
+    "id": "pdfsplat",
+    "name": "PDFsplat",
+    "path": "/solutions/pdfsplat/",
+    "description": "Organize, annotate, recognize text, and export PDFs.",
+    "source": "solutions/pdfsplat"
+  },
+  {
+    "id": "ciphersplat",
+    "name": "CipherSplat",
+    "path": "/solutions/CipherSplat/",
+    "description": "Encrypt and unlock files, folders, and text locally.",
+    "source": "solutions/CipherSplat"
+  },
+  {
+    "id": "listsplat",
+    "name": "ListSplat",
+    "path": "/splatworks/listsplat/",
+    "description": "Build databases, lists, forms, and reports.",
+    "source": "splatworks/listsplat"
+  },
+  {
+    "id": "gridsplat",
+    "name": "GridSplat",
+    "path": "/splatworks/gridsplat/",
+    "description": "Work with spreadsheets, formulas, and charts.",
+    "source": "splatworks/gridsplat"
+  },
+  {
+    "id": "writesplat",
+    "name": "WriteSplat",
+    "path": "/splatworks/writesplat/",
+    "description": "Write and format documents.",
+    "source": "splatworks/writesplat"
+  },
+  {
+    "id": "showsplat",
+    "name": "ShowSplat",
+    "path": "/splatworks/showsplat/",
+    "description": "Create slides and export presentations.",
+    "source": "splatworks/showsplat"
+  },
+  {
+    "id": "layoutsplat",
+    "name": "LayoutSplat",
+    "path": "/splatworks/layoutsplat/",
+    "description": "Design publications, newsletters, and page layouts.",
+    "source": "splatworks/layoutsplat"
+  },
+  {
+    "id": "plansplat",
+    "name": "PlanSplat",
+    "path": "/splatworks/plansplat/",
+    "description": "Organize tasks, courses, and study time.",
+    "source": "splatworks/plansplat"
+  }
 ]

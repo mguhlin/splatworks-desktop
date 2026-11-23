@@ -1,8 +1,9 @@
 # SplatWorks Desktop
 
-PDFsplat and CipherSplat in a local desktop application for Linux, Windows, and
-macOS. Go and Wails provide the application shell and native file saving. The
-existing SplatWorks web tools provide PDF rendering, editing, OCR, and encryption.
+Eight SplatWorks apps in one local desktop application for Linux, Windows, and
+macOS: ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat, PDFsplat,
+and CipherSplat. Go and Wails provide the application shell and native file saving. The
+existing SplatWorks web tools provide the editors, import/export engines, OCR, and encryption.
 
 [Download desktop apps](https://splatworks.org/pages/download.html#desktop-apps) ·
 [Short user guide](https://splatworks.org/wiki/desktop-apps.html) ·
@@ -38,15 +39,23 @@ download.
 
 ## Use
 
-Choose **PDFsplat** or **CipherSplat** in the application bar. Switching tools
-keeps both workspaces open. Open a file with the tool's picker or drop it into the
-workspace. Saves use native destination dialogs and report success after the write
-completes. Tool tabs indicate unsaved work. The app warns before discarding it or
-replacing an edited PDF and blocks closing during operations. CipherSplat restores folder
-packages inside a newly created directory, preserving nested paths and empty
-files without overlaying an existing folder. Close the application to discard
-unsaved work and in-memory keys after confirmation. No automatic recovery copies
-are written. Ctrl/Cmd+1 and Ctrl/Cmd+2 switch tools.
+Open **Apps** to choose a workspace. Switching apps keeps each document open.
+Open a local file with the tool's picker or supported drop area. Saves use native
+destination dialogs and report success after writing. The app warns before
+replacing unsaved work and waits for operations before closing. No automatic
+recovery copies are written. Ctrl/Cmd+1 through Ctrl/Cmd+8 switch apps; Ctrl/Cmd+S
+saves and Ctrl/Cmd+O opens a file in the active app.
+
+Office projects use their existing portable formats. GridSplat saves spreadsheet
+data, formulas and cell formatting; export chart and picture-graph images
+separately to keep their appearance. ShowSplat exports WebDeck HTML for presenting
+in your browser. Print from an exported HTML or PDF file in your browser. Google
+Drive and Calendar connections use the browser editions. See [Office apps and
+limits](docs/OFFICE.md).
+
+CipherSplat restores folder packages inside a newly created directory, preserving
+nested paths and empty files without overlaying existing folders. Closing after
+confirmation discards unsaved work and in-memory keys.
 
 The complete PDF/OCR engines, English and Spanish OCR models, Argon2id engine,
 OpenPGP engine, icons, and interface translations are bundled. CipherSplat retains
@@ -57,8 +66,7 @@ requires review and does not create tagged accessible PDFs. Browser-engine memor
 limits and existing import/export limitations still apply. Capture and recording share the browser implementations; availability depends on
 webview APIs, codecs, device permissions and hardware. Importing existing photos
 works independently of those capture capabilities. WebDeck exports open in
-a browser for presentation and printing. Google Drive integration is omitted from
-the desktop interface.
+a browser for presentation and printing. Use the browser editions for Google Drive and Calendar integration.
 
 ## Smaller standalone apps
 
@@ -108,8 +116,9 @@ The explicit smoke-test option uses synthetic files and bypasses destination
 dialogs. It runs the real desktop renderer, editing/export, chunked native saves,
 CS4 authentication, folder restoration, and bundled OCR. `native-smoke.json`
 contains the result. On Linux it can run under Xvfb with networking disabled.
-The release workflow runs 23 native checks on each build platform, Go save/security
-tests, and browser tests for lifecycle, save failure/cancellation and compatibility.
+The release workflow checks PDF/OCR/encryption plus save/reopen workflows for all
+six office apps on each build platform. It also runs Go save/security tests and
+browser checks for lifecycle, save failure/cancellation and compatibility.
 It also installs, upgrades and uninstalls the Windows setup package, installs and
 removes the Linux package, and checks the Mac archive/DMG and both architectures.
 These automated checks do not establish physical-device screen-reader, touch,

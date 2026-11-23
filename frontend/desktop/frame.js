@@ -11,9 +11,15 @@
   URL.createObjectURL=value=>{const url=create(value);if(value instanceof Blob)blobs.set(url,value);return url;};
   URL.revokeObjectURL=url=>{blobs.delete(url);revoke(url);};
   function download(a){
-    if(!a.hasAttribute('download')||!a.href.startsWith('blob:'))return false;
-    const blob=blobs.get(a.href);if(!blob)return false;
-    void desktop.saveBlob(blob,a.download||'document').catch(error=>desktop.status('Save failed: '+error.message));return true;
+    if(!a.hasAttribute('download')||! /^(blob:|data:)/.test(a.href))return false;
+    if(a.href.startsWith('data:')&&a.href.length>64*1024*1024){desktop.status('This image export is too large. Choose a smaller image.');return true;}
+    const blob=a.href.startsWith('blob:')?blobs.get(a.href):null;
+    if(a.href.startsWith('blob:')&&!blob)return false;
+    const content=blob?Promise.resolve(blob):fetchOriginal(a.href).then(response=>response.blob());
+    void content.then(value=>desktop.saveBlob(value,a.download||'document'))
+      .then(ok=>window.dispatchEvent(new CustomEvent('desktop:export-result',{detail:{ok}})))
+      .catch(error=>{desktop.status('Save failed: '+error.message);window.dispatchEvent(new CustomEvent('desktop:export-result',{detail:{ok:false,error:error.message}}));});
+    return true;
   }
   const click=HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click=function(){if(download(this))return;return click.call(this);};
@@ -30,6 +36,11 @@
     const id=desktop.toolId(location.pathname);
     if(id==='ciphersplat')desktop.registerCommands(id,{open:()=>document.getElementById('chooseFiles')?.click(),save:()=>{const result=document.getElementById('resultPanel');if(result&&!result.classList.contains('hidden'))document.getElementById('downloadResult')?.click();else desktop.status('Encrypt or unlock something before saving a result.');}});
     for(const type of ['input','change','click'])document.addEventListener(type,()=>queueMicrotask(()=>desktop.changed(id)));
+    if(['listsplat','gridsplat','writesplat','showsplat','layoutsplat','plansplat'].includes(id)){
+      for(const button of document.querySelectorAll('[data-action="save-drive"],[data-action="cloud-save"],[data-action="cloud-open"],#connectGoogle,#connectionNoteButton,#connectCalendar,#syncNow')){button.disabled=true;button.title='Use the browser edition for cloud connections.';}
+      for(const button of document.querySelectorAll('[data-action="open-local-library"]')){button.textContent='Open saved file';button.title='Open a project saved on this device';}
+      window.print=()=>{desktop.status('Export PDF or HTML, then open the saved file in your browser to print.');window.dispatchEvent(new CustomEvent('desktop:export-result',{detail:{ok:false,error:'Export PDF or HTML and open it in your browser to print'}}));};
+    }
     const drive=document.getElementById('saveDriveButton');if(drive)drive.hidden=true;
     const launcher=document.querySelector('[data-ds-app-launcher]');if(launcher)launcher.hidden=true;
     for(const a of document.querySelectorAll('.online-link')){a.classList.remove('online-link');a.href='https://splatworks.org/pages/tools';}
@@ -38,11 +49,19 @@
     const docs=document.querySelectorAll('a[href*="docs/pdfsplat"]');for(const a of docs)a.addEventListener('click',event=>{event.preventDefault();desktop.help();});
   });
   window.addEventListener('keydown',event=>{
+    if(!['listsplat','gridsplat','writesplat','showsplat','layoutsplat','plansplat'].includes(desktop.toolId(location.pathname)))return;
+    if((event.ctrlKey||event.metaKey)&&!event.altKey&&!event.shiftKey&&['s','o'].includes(event.key.toLowerCase())){
+      event.preventDefault();event.stopImmediatePropagation();
+      if(document.querySelector('dialog[open],[role=dialog][aria-modal=true]:not([hidden])'))return;
+      desktop.command(desktop.toolId(location.pathname),event.key.toLowerCase()==='s'?'save':'open');
+    }
+  },true);
+  window.addEventListener('keydown',event=>{
     if(event.key==='F1'){event.preventDefault();desktop.help();return;}
     if((event.ctrlKey||event.metaKey)&&!event.altKey&&!event.shiftKey&&['s','o'].includes(event.key.toLowerCase())){
       if([...document.querySelectorAll('dialog[open],[role=dialog][aria-modal=true]')].some(dialog=>dialog.getClientRects().length)){event.preventDefault();return;}
       if(desktop.command(desktop.toolId(location.pathname),event.key.toLowerCase()==='s'?'save':'open'))event.preventDefault();
     }
-    if((event.ctrlKey||event.metaKey)&&['1','2'].includes(event.key)){event.preventDefault();desktop.selectIndex(Number(event.key)-1);}
+    if((event.ctrlKey||event.metaKey)&&/^[1-8]$/.test(event.key)){event.preventDefault();desktop.selectIndex(Number(event.key)-1);}
   });
 })();

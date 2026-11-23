@@ -15,7 +15,7 @@ args = parser.parse_args()
 source = args.source.resolve()
 dest = ROOT / 'frontend'
 registry = json.loads((ROOT / 'tools.json').read_text(encoding='utf-8'))
-ignored = shutil.ignore_patterns('node_modules', 'downloads', 'test-results', 'playwright-report', '.DS_Store', '*.zip', 'integrity.json')
+ignored = shutil.ignore_patterns('node_modules', 'downloads', 'test-results', 'playwright-report', '.DS_Store', '*.zip', 'integrity.json', 'dist', '.vite', '*.tsbuildinfo')
 
 def copy_file(rel):
     target = dest / rel
@@ -27,12 +27,39 @@ for tool in registry:
     shutil.rmtree(dest / rel, ignore_errors=True)
     shutil.copytree(source / rel, dest / rel, ignore=ignored)
 
-for name in ['pdf.min.js', 'pdf.worker.min.js', 'jszip.min.js']:
-    copy_file('vendor/' + name)
-for name in ['google-drive.js', 'google-drive-auth.js', 'LICENSE.txt']:
-    copy_file('splatworks/shared/' + name)
+# Office applications share importers, bundled fonts, media decoders and widgets.
+for rel in ['vendor','splatworks/shared','assets/backgrounds','solutions/mediasplat/ffmpeg']:
+    shutil.rmtree(dest/rel,ignore_errors=True)
+    shutil.copytree(source/rel,dest/rel,ignore=ignored)
+# Bundle the exact images offered by the publication background picker.
+for item in json.loads((source/'splatworks/layoutsplat/whiteboard-catalog.json').read_text()):
+    copy_file(item['path'])
+for name in ['assets/smithsonian-animals/README.md','assets/coloring-book/README.md']:
+    copy_file(name)
+# Keep redistribution notices alongside the compiled office engines. The lockfiles
+# select versions; dependency code is never downloaded by the installed app.
+for app in ['gridsplat','writesplat']:
+    folder=source/'splatworks'/app
+    notices=dest/'splatworks'/app/'dependency-notices'
+    shutil.rmtree(notices,ignore_errors=True)
+    records=[]
+    for rel,record in json.loads((folder/'package-lock.json').read_text())['packages'].items():
+        if not rel or record.get('dev'):continue
+        package=folder/rel
+        files=[file for file in package.iterdir() if file.is_file() and re.match(r'(?i)^(license|licence|copying|notice)(?:[.\-_]|$)',file.name)]
+        if not files:
+            # Older npm releases put their notice in README and package metadata.
+            files=[file for file in package.iterdir() if file.is_file() and (file.name.lower().startswith('readme') or file.name=='package.json')]
+        if not files:raise SystemExit('Missing runtime notices: '+str(package))
+        name=rel.removeprefix('node_modules/').replace('/node_modules/','__').replace('/','__')
+        for file in files:
+            target=notices/name/file.name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(file,target)
+        records.append({'package':rel,'version':record.get('version'),'license':record.get('license'),'source':record.get('resolved')})
+    if app=='gridsplat':shutil.copy2(ROOT/'licenses/office/Saxes-5.0.1-LICENSE',notices/'Saxes-5.0.1-LICENSE')
+    (notices/'packages.json').write_text(json.dumps(records,indent=2)+'\n')
+copy_file('assets/brand/SplatWorks_logo.png')
 copy_file('scripts/build-pdfsplat.mjs')
-for name in ['app-language.js', 'pdf-ui-strings.js', 'pdf-language-loader.js', 'action-cards.js']:
+for name in ['app-language.js', 'pdf-ui-strings.js', 'pdf-language-loader.js', 'action-cards.js', 'widget-i18n.js']:
     copy_file('assets/js/' + name)
 for name in ['app-language.css', 'action-cards.css', 'action-icons.css']:
     copy_file('assets/css/' + name)
@@ -57,6 +84,7 @@ for page in dict.fromkeys(pages):
     text = re.sub(r' integrity="[^"]*"', '', text)
     text = text.replace('</head>', '<link rel="stylesheet" href="/desktop/frame.css"><script src="/desktop/frame.js"></script></head>')
     text = re.sub(r'<link rel="stylesheet" href="../../assets/css/(?:tool-launcher|launcher-trigger)\.css[^\"]*">', '', text)
+    text = re.sub(r'<script[^>]+src="[^"]*(?:tool-launcher(?:-loader)?|layoutsplat-cache-recovery)\.js[^"]*"[^>]*></script>', '', text)
     text = re.sub(r'<a class="offline-download"[^>]*>.*?</a>', '', text)
     if page.parent.name == 'CipherSplat':
         text = text.replace('· Browser version', '· Desktop workspace').replace('CipherSplat browser encryption.', 'CipherSplat desktop encryption.')
@@ -80,8 +108,8 @@ subprocess.run(['node',str(dest/'scripts/build-pdfsplat.mjs')],check=True)
 (dest / 'tools.json').write_text(json.dumps(registry, indent=2) + '\n', encoding='utf-8')
 revision = subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()
 files = {}
-owned = [t['source']+'/' for t in registry]+['vendor/','scripts/','docs/','assets/icons/']
-shared = {'LICENSE','NOTICE.md','tools.json'} | {'splatworks/shared/'+n for n in ['google-drive.js','google-drive-auth.js','LICENSE.txt']} | {'assets/js/'+n for n in ['app-language.js','pdf-ui-strings.js','pdf-language-loader.js','action-cards.js']} | {'assets/css/'+n for n in ['app-language.css','action-cards.css','action-icons.css']}
+owned = [t['source']+'/' for t in registry]+['vendor/','scripts/','docs/','assets/icons/','assets/brand/','assets/backgrounds/','assets/coloring-book/','assets/scratch-art/','assets/smithsonian-animals/','splatworks/shared/','solutions/mediasplat/ffmpeg/']
+shared = {'LICENSE','NOTICE.md','tools.json'} | {'splatworks/shared/'+n for n in ['google-drive.js','google-drive-auth.js','LICENSE.txt']} | {'assets/js/'+n for n in ['app-language.js','pdf-ui-strings.js','pdf-language-loader.js','action-cards.js','widget-i18n.js']} | {'assets/css/'+n for n in ['app-language.css','action-cards.css','action-icons.css']}
 for file in sorted(dest.rglob('*')):
     rel=file.relative_to(dest).as_posix()
     if (rel in shared or any(rel.startswith(prefix) for prefix in owned)) and file.is_file() and 'node_modules' not in file.parts and file.relative_to(dest).parts[0] not in ['desktop'] and file.name not in ['index.html', 'source-manifest.json']:
@@ -92,6 +120,6 @@ for tool in registry:
     files[name] = hashlib.sha256((dest/name).read_bytes()).hexdigest()
 manifest = {'repository':'https://github.com/mguhlin/drawsplat', 'revision':revision, 'tools':[t['id'] for t in registry], 'files':dict(sorted(files.items()))}
 (dest/'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
-shutil.copy2(source/'solutions/pdfsplat/pdfsplat.png', ROOT/'build/appicon.png')
+shutil.copy2(source/'assets/brand/SplatWorks_logo.png', ROOT/'build/appicon.png')
 print(f'Imported {len(registry)} tools from DrawSplat {revision[:12]} ({len(files)} bundled files).')
 shutil.rmtree(dest/'solutions/pdfsplat/node_modules')

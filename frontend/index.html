@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SplatWorks Desktop</title>
-  <link rel="icon" href="/solutions/pdfsplat/pdfsplat.png">
+  <link rel="icon" href="/assets/brand/SplatWorks_logo.png">
   <link rel="stylesheet" href="/desktop/shell.css">
   <script src="/desktop/shell.js" defer></script>
 </head>
 <body>
   <header class="desktop-bar">
     <a class="desktop-brand" href="#pdfsplat" aria-label="SplatWorks Desktop home">SplatWorks <span>Desktop</span></a>
-    <nav id="tools" aria-label="Installed tools"></nav>
+    <details id="appsMenu"><summary>Apps <span id="currentApp">PDFsplat</span></summary><nav id="tools" aria-label="Installed tools"></nav></details>
     <span class="local-label">Files stay on this device</span>
     <button id="settingsButton" type="button">Settings</button><button id="helpButton" type="button">Help</button>
   </header>
@@ -24,13 +24,13 @@
   </dialog>
   <dialog id="helpDialog" aria-labelledby="helpTitle">
     <h1 id="helpTitle">SplatWorks Desktop</h1>
-    <p>PDFsplat and CipherSplat run locally. The editor, PDF libraries, OCR engines, English and Spanish models, and encryption tools are included.</p>
-    <h2>Your files</h2><p>Use Open file or drag files into a tool. Saving opens a native destination picker. Switching tools keeps each workspace open. The app warns before discarding unsaved work and waits for active operations before closing. It does not create automatic recovery copies.</p>
+    <p>ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat, PDFsplat, and CipherSplat run locally. Choose an app from the Apps menu. The editors, import libraries, PDF and OCR engines, English and Spanish OCR models, and encryption tools are included.</p>
+    <h2>Your files</h2><p>Use Open file or drag files into a tool. Ctrl/Command+S saves a complete project; other exports keep the original project marked as unsaved. Google Drive and Calendar connections are available in the browser editions. Saving opens a native destination picker. Switching tools keeps each workspace open. The app warns before discarding unsaved work and waits for active operations before closing. It does not create automatic recovery copies.</p>
     <p>CipherSplat restores folders inside a new folder at your chosen destination. Existing folders are never overlaid. Passwords cannot be recovered; test an encrypted copy before deleting an original.</p>
     <h2>Features to review</h2><p>PDF text replacement and visual covers preserve underlying content. They are not secure redaction. OCR requires review and does not create a tagged, accessible PDF.</p>
     <p>Live camera and screen capture are available in the browser edition. In this desktop edition, import existing photos for scanning. WebDeck exports open in your browser for presentation and printing.</p>
     <h2>About this edition</h2><p>This is a Go desktop shell using Wails and the existing local web tools. Native saves are streamed in chunks. The tools retain their existing PDF and browser memory limits.</p>
-    <p>AGPL-3.0-or-later. Bundled dependencies retain their licenses. <a href="https://github.com/mguhlin/splatworks-desktop">Source, licenses, and downloads</a> · <a href="https://splatworks.org">SplatWorks website</a>. Website links open in your browser and require an internet connection.</p>
+    <p>The shell is AGPL-3.0-or-later. Office apps are GPL-3.0-only. Bundled dependencies retain their licenses. <a href="https://github.com/mguhlin/splatworks-desktop">Source, licenses, and downloads</a> · <a href="https://splatworks.org">SplatWorks website</a>. Website links open in your browser and require an internet connection.</p>
     <form method="dialog"><button autofocus>Close help</button></form>
   </dialog>
 <dialog id="settingsDialog" aria-labelledby="settingsTitle"><h1 id="settingsTitle">Online features</h1><label><input id="optionalOnline" type="checkbox">Allow optional online connections</label><p>Off by default. Bundled features work offline. Turn this on to use optional model downloads, configured QR services or online image backgrounds where available in this app. Photo processing stays on this device.</p><p>Turning this off stops active external requests. Service credentials are kept in memory. Application updates are downloaded and installed manually.</p><p id="onlineStatus" role="status"></p><p><a href="https://github.com/mguhlin/splatworks-desktop/releases">Open application downloads</a></p><form method="dialog"><button>Close settings</button></form></dialog></body>

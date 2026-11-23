@@ -1,7 +1,7 @@
 # Third-party notices
 
 The application embeds the SplatWorks browser tools and their corresponding source
-under `frontend/solutions/`. Original component and dependency notices remain
+under `frontend/solutions/` and `frontend/splatworks/`. Original component and dependency notices remain
 beside their assets. `frontend/source-manifest.json` identifies the imported
 DrawSplat revision and asset hashes. The smaller tool imports are recorded in
 `frontend/standalone-manifest.json`; individual profiles include only their dependencies.
@@ -52,3 +52,20 @@ and component notices are documented in [Media engine sources](docs/MEDIA-SOURCE
 DejaVu Sans and its notice accompany the FFmpeg assets. Both apps also include the
 shared local subtitle engines (Transformers.js, ONNX Runtime and whisper.cpp);
 original notices and GGML runtime sources remain alongside their assets.
+
+
+The six office apps retain GPL-3.0-only notices and their original COPYING files.
+Their source, lockfiles, local fonts and importer notices accompany the snapshot.
+GridSplat and WriteSplat runtime package notices are in their `dependency-notices/`
+directories, including React, Chart.js, HyperFormula (GPL-3.0), ExcelJS, PapaParse,
+ProseMirror and docx. Package versions and distribution sources are listed in each
+`dependency-notices/packages.json`. Older npm distributions place notices in
+README and package metadata; those original files are preserved. Saxes 5.0.1's
+full [upstream license](https://github.com/lddubeau/saxes/blob/v5.0.1/LICENSE) is
+also preserved in `licenses/office/` and beside the GridSplat notices.
+
+LayoutSplat uses the bundled FFmpeg core for optional local media conversions;
+its source/build and GPL notices are in [Media engine sources](docs/MEDIA-SOURCES.md).
+The office font licenses remain beside the bundled fonts. Publication background
+images retain their original collection README/attribution material in
+`frontend/assets/`. Nothing is fetched from a source checkout at runtime.

@@ -75,9 +75,9 @@ test('two offline workspaces retain open PDFs and export a valid edited copy',as
   await expect(pdf.locator('#status')).toContainText('2 pages');
   await pdf.locator('#addTextButton').click();await pdf.locator('#annotationLayer').press('Enter');
   await pdf.locator('#textValue').fill('Desktop teacher directions');await pdf.locator('#textValue').press('Tab');
-  await page.getByRole('button',{name:'CipherSplat',exact:true}).click();
+  await page.locator('#appsMenu').evaluate(menu=>menu.open=true);await page.getByRole('button',{name:'CipherSplat',exact:true}).click();
   await expect(page.frameLocator('#tool-ciphersplat').locator('#runButton')).toBeVisible();
-  await page.getByRole('button',{name:'PDFsplat',exact:true}).click();
+  await page.locator('#appsMenu').evaluate(menu=>menu.open=true);await page.getByRole('button',{name:'PDFsplat',exact:true}).click();
   await expect(pdf.locator('.text-object')).toContainText('Desktop teacher directions');
   const download=page.waitForEvent('download');await pdf.locator('#saveAsSelect').selectOption('pdf');
   const file=await download;expect(file.suggestedFilename()).toBe('lesson-edited.pdf');
@@ -93,7 +93,7 @@ test('CipherSplat packages open in PDFsplat and reject modified bytes',async({pa
   await expect(cipher.locator('#resultTitle')).toContainText('Encryption complete');
   const file=await download;
   const bytes=await require('fs/promises').readFile(await file.path());expect(bytes.subarray(0,8).toString()).toBe('CSPCS4!!');
-  await page.getByRole('button',{name:'PDFsplat',exact:true}).click();const pdf=page.frameLocator('#tool-pdfsplat');
+  await page.locator('#appsMenu').evaluate(menu=>menu.open=true);await page.getByRole('button',{name:'PDFsplat',exact:true}).click();const pdf=page.frameLocator('#tool-pdfsplat');
   await editorReady(pdf);
   await pdf.locator('#vaultInput').setInputFiles({name:'handout.pdf.csplat',mimeType:'application/octet-stream',buffer:bytes});
   await pdf.locator('#vaultPassword').fill('desktop compatibility test password');await pdf.locator('#vaultRun').click();

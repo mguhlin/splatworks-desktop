@@ -1,0 +1,212 @@
+[
+  {
+    "package": "node_modules/@types/node",
+    "version": "25.9.4",
+    "license": null,
+    "source": "https://registry.npmjs.org/@types/node/-/node-25.9.4.tgz"
+  },
+  {
+    "package": "node_modules/core-util-is",
+    "version": "1.0.3",
+    "license": null,
+    "source": "https://registry.npmjs.org/core-util-is/-/core-util-is-1.0.3.tgz"
+  },
+  {
+    "package": "node_modules/docx",
+    "version": "9.7.1",
+    "license": null,
+    "source": "https://registry.npmjs.org/docx/-/docx-9.7.1.tgz"
+  },
+  {
+    "package": "node_modules/docx/node_modules/nanoid",
+    "version": "5.1.16",
+    "license": null,
+    "source": "https://registry.npmjs.org/nanoid/-/nanoid-5.1.16.tgz"
+  },
+  {
+    "package": "node_modules/hash.js",
+    "version": "1.1.7",
+    "license": null,
+    "source": "https://registry.npmjs.org/hash.js/-/hash.js-1.1.7.tgz"
+  },
+  {
+    "package": "node_modules/immediate",
+    "version": "3.0.6",
+    "license": null,
+    "source": "https://registry.npmjs.org/immediate/-/immediate-3.0.6.tgz"
+  },
+  {
+    "package": "node_modules/inherits",
+    "version": "2.0.4",
+    "license": null,
+    "source": "https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz"
+  },
+  {
+    "package": "node_modules/isarray",
+    "version": "1.0.0",
+    "license": null,
+    "source": "https://registry.npmjs.org/isarray/-/isarray-1.0.0.tgz"
+  },
+  {
+    "package": "node_modules/jszip",
+    "version": "3.10.1",
+    "license": null,
+    "source": "https://registry.npmjs.org/jszip/-/jszip-3.10.1.tgz"
+  },
+  {
+    "package": "node_modules/lie",
+    "version": "3.3.0",
+    "license": null,
+    "source": "https://registry.npmjs.org/lie/-/lie-3.3.0.tgz"
+  },
+  {
+    "package": "node_modules/minimalistic-assert",
+    "version": "1.0.1",
+    "license": null,
+    "source": "https://registry.npmjs.org/minimalistic-assert/-/minimalistic-assert-1.0.1.tgz"
+  },
+  {
+    "package": "node_modules/orderedmap",
+    "version": "2.1.1",
+    "license": null,
+    "source": "https://registry.npmjs.org/orderedmap/-/orderedmap-2.1.1.tgz"
+  },
+  {
+    "package": "node_modules/pako",
+    "version": "1.0.11",
+    "license": null,
+    "source": "https://registry.npmjs.org/pako/-/pako-1.0.11.tgz"
+  },
+  {
+    "package": "node_modules/process-nextick-args",
+    "version": "2.0.1",
+    "license": null,
+    "source": "https://registry.npmjs.org/process-nextick-args/-/process-nextick-args-2.0.1.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-commands",
+    "version": "1.7.2",
+    "license": "MIT",
+    "source": "https://registry.npmjs.org/prosemirror-commands/-/prosemirror-commands-1.7.2.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-history",
+    "version": "1.5.1",
+    "license": "MIT",
+    "source": "https://registry.npmjs.org/prosemirror-history/-/prosemirror-history-1.5.1.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-keymap",
+    "version": "1.2.3",
+    "license": null,
+    "source": "https://registry.npmjs.org/prosemirror-keymap/-/prosemirror-keymap-1.2.3.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-model",
+    "version": "1.25.12",
+    "license": "MIT",
+    "source": "https://registry.npmjs.org/prosemirror-model/-/prosemirror-model-1.25.12.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-schema-basic",
+    "version": "1.2.4",
+    "license": null,
+    "source": "https://registry.npmjs.org/prosemirror-schema-basic/-/prosemirror-schema-basic-1.2.4.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-schema-list",
+    "version": "1.5.1",
+    "license": null,
+    "source": "https://registry.npmjs.org/prosemirror-schema-list/-/prosemirror-schema-list-1.5.1.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-state",
+    "version": "1.4.4",
+    "license": null,
+    "source": "https://registry.npmjs.org/prosemirror-state/-/prosemirror-state-1.4.4.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-tables",
+    "version": "1.8.5",
+    "license": null,
+    "source": "https://registry.npmjs.org/prosemirror-tables/-/prosemirror-tables-1.8.5.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-transform",
+    "version": "1.12.0",
+    "license": null,
+    "source": "https://registry.npmjs.org/prosemirror-transform/-/prosemirror-transform-1.12.0.tgz"
+  },
+  {
+    "package": "node_modules/prosemirror-view",
+    "version": "1.42.8",
+    "license": "MIT",
+    "source": "https://registry.npmjs.org/prosemirror-view/-/prosemirror-view-1.42.8.tgz"
+  },
+  {
+    "package": "node_modules/readable-stream",
+    "version": "2.3.8",
+    "license": null,
+    "source": "https://registry.npmjs.org/readable-stream/-/readable-stream-2.3.8.tgz"
+  },
+  {
+    "package": "node_modules/rope-sequence",
+    "version": "1.3.4",
+    "license": null,
+    "source": "https://registry.npmjs.org/rope-sequence/-/rope-sequence-1.3.4.tgz"
+  },
+  {
+    "package": "node_modules/safe-buffer",
+    "version": "5.1.2",
+    "license": null,
+    "source": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.1.2.tgz"
+  },
+  {
+    "package": "node_modules/sax",
+    "version": "1.6.0",
+    "license": null,
+    "source": "https://registry.npmjs.org/sax/-/sax-1.6.0.tgz"
+  },
+  {
+    "package": "node_modules/setimmediate",
+    "version": "1.0.5",
+    "license": null,
+    "source": "https://registry.npmjs.org/setimmediate/-/setimmediate-1.0.5.tgz"
+  },
+  {
+    "package": "node_modules/string_decoder",
+    "version": "1.1.1",
+    "license": null,
+    "source": "https://registry.npmjs.org/string_decoder/-/string_decoder-1.1.1.tgz"
+  },
+  {
+    "package": "node_modules/undici-types",
+    "version": "7.24.6",
+    "license": null,
+    "source": "https://registry.npmjs.org/undici-types/-/undici-types-7.24.6.tgz"
+  },
+  {
+    "package": "node_modules/util-deprecate",
+    "version": "1.0.2",
+    "license": null,
+    "source": "https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz"
+  },
+  {
+    "package": "node_modules/w3c-keyname",
+    "version": "2.2.8",
+    "license": null,
+    "source": "https://registry.npmjs.org/w3c-keyname/-/w3c-keyname-2.2.8.tgz"
+  },
+  {
+    "package": "node_modules/xml",
+    "version": "1.0.1",
+    "license": null,
+    "source": "https://registry.npmjs.org/xml/-/xml-1.0.1.tgz"
+  },
+  {
+    "package": "node_modules/xml-js",
+    "version": "1.6.11",
+    "license": null,
+    "source": "https://registry.npmjs.org/xml-js/-/xml-js-1.6.11.tgz"
+  }
+]

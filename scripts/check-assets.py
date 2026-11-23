@@ -27,7 +27,8 @@ class Assets(HTMLParser):
             errors.append('Remote runtime asset: '+value); return
         target=web/unquote(url.path.lstrip('/')) if value.startswith('/') else self.file.parent/unquote(url.path)
         if not target.exists(): errors.append(f'Missing HTML asset in {self.file.relative_to(web)}: {value}')
-for rel in ['index.html','solutions/pdfsplat/index.html','solutions/CipherSplat/index.html','solutions/gifsplat/index.html','solutions/qrsplat/index.html','solutions/imagesplat/index.html','solutions/audiosplat/index.html','solutions/videosplat/index.html']:
+office=[tool['source']+'/index.html' for tool in json.loads((root/'tools.json').read_text()) if tool['source'].startswith('splatworks/')]
+for rel in office+['index.html','solutions/pdfsplat/index.html','solutions/CipherSplat/index.html','solutions/gifsplat/index.html','solutions/qrsplat/index.html','solutions/imagesplat/index.html','solutions/audiosplat/index.html','solutions/videosplat/index.html']:
     parser=Assets(web/rel);parser.feed((web/rel).read_text(encoding='utf-8'))
 for rel in ['vendor/pdf.worker.min.js','solutions/pdfsplat/vendor/ocr/eng.traineddata','solutions/pdfsplat/vendor/ocr/spa.traineddata','desktop/native-smoke.js']:
     if not (web/rel).is_file(): errors.append('Missing engine: '+rel)

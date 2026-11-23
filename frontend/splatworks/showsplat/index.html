@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#7c3aed">
+  <title>ShowSplat™ | SplatWorks™</title>
+  <meta name="description" content="ShowSplat™ is the SplatWorks™ slide deck and WebDeck authoring tool.">
+  <link rel="icon" href="showsplat_icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="showsplat_icon.png">
+  <link rel="stylesheet" href="styles.css?v=20261009-1">
+  <script src="../../assets/js/widget-i18n.js"></script>
+  <script src="locales.js?v=20261009-release"></script>
+  
+<link rel="stylesheet" href="../../assets/css/action-cards.css?v=1.2" />
+<script src="../../assets/js/action-cards.js?v=1.3" defer></script>
+<meta name="splatworks-app" content="showsplat"><link rel="stylesheet" href="/desktop/frame.css"><script src="/desktop/frame.js"></script></head>
+<body>
+  <button class="ds-apps-link ds-apps-floating" type="button" data-ds-app-launcher aria-label="Open DrawSplat apps">Apps ▦</button>
+<svg class="icon-sprite" aria-hidden="true">
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h13l1 1v15H5z"/><path d="M8 4v6h8V4"/><path d="M8 20v-6h8v6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M8 8h11v11H8z"/><path d="M5 16H4V4h12v1"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14"/><path d="M9 7V5h6v2"/><path d="M8 7l1 13h6l1-13"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M7 16l4-4 3 3 2-2 3 3"/><circle cx="9" cy="9" r="1.5"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="4" y="6" width="12" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></symbol>
+  <symbol id="i-audio" viewBox="0 0 24 24"><path d="M6 15H4V9h2l5-4v14z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6V4h16v2"/><path d="M12 4v16"/><path d="M8 20h8"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 7h11"/><path d="M9 12h11"/><path d="M9 17h11"/><path d="M4 7h1"/><path d="M4 12h1"/><path d="M4 17h1"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1"/><path d="M4 10h16"/><path d="M4 15h16"/><path d="M10 5v14"/><path d="M16 5v14"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10"/><path d="M8 10l4 4 4-4"/><path d="M5 20h14"/></symbol>
+  <symbol id="i-bold" viewBox="0 0 24 24"><path d="M8 5h6a4 4 0 0 1 0 8H8z"/><path d="M8 13h7a3.5 3.5 0 0 1 0 7H8z"/></symbol>
+  <symbol id="i-italic" viewBox="0 0 24 24"><path d="M10 5h8"/><path d="M6 19h8"/><path d="M14 5l-4 14"/></symbol>
+  <symbol id="i-underline" viewBox="0 0 24 24"><path d="M7 5v6a5 5 0 0 0 10 0V5"/><path d="M6 21h12"/></symbol>
+  <symbol id="i-align-left" viewBox="0 0 24 24"><path d="M5 6h14"/><path d="M5 10h9"/><path d="M5 14h14"/><path d="M5 18h9"/></symbol>
+  <symbol id="i-align-center" viewBox="0 0 24 24"><path d="M5 6h14"/><path d="M8 10h8"/><path d="M5 14h14"/><path d="M8 18h8"/></symbol>
+  <symbol id="i-align-right" viewBox="0 0 24 24"><path d="M5 6h14"/><path d="M10 10h9"/><path d="M5 14h14"/><path d="M10 18h9"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 0 0 16h2a2 2 0 0 0 1.5-3.3c-.8-.9-.2-2.7 1-2.7H18a4 4 0 0 0 0-8z"/><circle cx="8" cy="10" r="1"/><circle cx="11" cy="8" r="1"/><circle cx="14" cy="10" r="1"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-markdown" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M6 15V9l3 4 3-4v6"/><path d="M15 9v6"/><path d="M13 13l2 2 2-2"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5"/><path d="M20 12H9a5 5 0 0 0 0 10h3"/></symbol>
+</svg>
+
+<header class="app-header">
+  <a class="brand" href="../../index.html" aria-label="DrawSplat home">
+    <img class="brand-icon" src="showsplat_icon.png" alt="">
+    <span><strong>ShowSplat<sup>TM</sup></strong><small>SplatWorks<sup>TM</sup> WebDeck Studio</small></span>
+  </a>
+  <div class="quick-actions">
+    <button class="primary" data-action="new-deck"><svg><use href="#i-plus"/></svg> <span data-i18n="New">New</span></button>
+    <button data-action="save-deck"><svg><use href="#i-save"/></svg> <span data-i18n="Save">Save</span></button>
+    <button data-action="present-first"><svg><use href="#i-play"/></svg> <span data-i18n="Present">Present</span></button>
+    <select id="i18nSwitcher" class="lang-select" aria-label="Language / Idioma / Ngôn ngữ / اللغة / 语言 / زبان"></select>
+  </div>
+</header>
+
+<main class="show-app">
+  <nav class="menu-bar" aria-label="ShowSplat menus">
+    <details class="menu"><summary data-i18n="File">File</summary><div class="menu-panel">
+      <button data-action="new-deck" data-i18n="New deck">New deck</button>
+      <button data-action="save-deck" data-i18n="Save .showsplat.json">Save .showsplat.json</button>
+      <button data-action="save-drive" data-i18n="Save to Google Drive">Save to Google Drive</button>
+      <button data-action="open-deck" data-i18n="Open .showsplat.json">Open .showsplat.json</button>
+      <hr>
+      <details class="submenu"><summary data-i18n="Import">Import</summary><div>
+        <button data-action="import-webdeck" data-i18n="WebDeck v5 HTML (.html)">WebDeck v5 HTML (.html)</button>
+        <button data-action="open-markdown" data-i18n="Markdown (.md)">Markdown (.md)</button>
+        <button data-action="import-pdf" data-i18n="PDF (.pdf)">PDF (.pdf)</button>
+        <button data-action="import-odp" data-i18n="ODP (.odp)">ODP (.odp)</button>
+        <button data-action="import-pptx" data-i18n="PowerPoint (.pptx)">PowerPoint (.pptx)</button>
+      </div></details>
+      <details class="submenu"><summary data-i18n="Export">Export</summary><div>
+        <button data-action="export-webdeck" data-i18n="WebDeck v5 HTML">WebDeck v5 HTML</button>
+        <button data-action="export-markdown" data-i18n="Markdown (.md)">Markdown (.md)</button>
+        <button data-action="print-pdf" data-i18n="PDF (.pdf)">PDF (.pdf)</button>
+        <button data-action="export-odp" data-i18n="ODP (.odp)">ODP (.odp)</button>
+        <button data-action="export-pptx" data-i18n="PowerPoint (.pptx)">PowerPoint (.pptx)</button>
+      </div></details>
+    </div></details>
+    <details class="menu"><summary data-i18n="Edit">Edit</summary><div class="menu-panel">
+      <button data-action="undo" data-i18n="Undo">Undo</button>
+      <button data-action="redo" data-i18n="Redo">Redo</button>
+      <hr>
+      <button data-action="duplicate-slide" data-i18n="Duplicate slide">Duplicate slide</button>
+      <button data-action="delete-slide" data-i18n="Delete slide">Delete slide</button>
+      <button data-action="delete-selected-slides" data-i18n="Delete selected slides">Delete selected slides</button>
+      <button data-action="delete-object" data-i18n="Delete selected object(s)">Delete selected object(s)</button>
+      <button data-action="select-all-objects" data-i18n="Select all objects">Select all objects</button>
+      <hr>
+      <button data-action="bring-forward" data-i18n="Bring forward">Bring forward</button>
+      <button data-action="send-backward" data-i18n="Send backward">Send backward</button>
+      <hr>
+      <button data-action="align-left" data-i18n="Align left">Align left</button>
+      <button data-action="align-center-h" data-i18n="Align centers (horizontal)">Align centers (horizontal)</button>
+      <button data-action="align-right" data-i18n="Align right">Align right</button>
+      <button data-action="align-top" data-i18n="Align top">Align top</button>
+      <button data-action="align-middle-v" data-i18n="Align centers (vertical)">Align centers (vertical)</button>
+      <button data-action="align-bottom" data-i18n="Align bottom">Align bottom</button>
+      <button data-action="distribute-h" data-i18n="Distribute horizontally">Distribute horizontally</button>
+      <button data-action="distribute-v" data-i18n="Distribute vertically">Distribute vertically</button>
+      <hr>
+      <button data-action="hide-selected-slides" data-i18n="Hide selected slides">Hide selected slides</button>
+      <button data-action="show-selected-slides" data-i18n="Show selected slides">Show selected slides</button>
+      <button data-action="indent-selected-slides" data-i18n="Indent selected slides">Indent selected slides</button>
+      <button data-action="outdent-selected-slides" data-i18n="Outdent selected slides">Outdent selected slides</button>
+      <button data-action="collapse-selected-slides" data-i18n="Collapse selected slides">Collapse selected slides</button>
+      <button data-action="expand-selected-slides" data-i18n="Expand selected slides">Expand selected slides</button>
+    </div></details>
+    <details class="menu"><summary data-i18n="Insert">Insert</summary><div class="menu-panel">
+      <button data-action="add-text"><svg><use href="#i-text"/></svg> <span data-i18n="Text box">Text box</span></button>
+      <button data-action="add-list"><svg><use href="#i-list"/></svg> <span data-i18n="Bullet list">Bullet list</span></button>
+      <button data-action="add-table"><svg><use href="#i-table"/></svg> <span data-i18n="Table">Table</span></button>
+      <button data-action="add-link"><svg><use href="#i-link"/></svg> <span data-i18n="Hyperlink">Hyperlink</span></button>
+      <button data-action="add-slide-number" data-i18n="Slide number">Slide number</button>
+      <button data-action="add-header" data-i18n="Header">Header</button>
+      <hr>
+      <button data-action="insert-image-upload"><svg><use href="#i-image"/></svg> <span data-i18n="Image upload">Image upload</span></button>
+      <button data-action="insert-image-url" data-i18n="Image by URL">Image by URL</button>
+      <button data-action="insert-splatimage" data-i18n="Image from ImageSplat™">Image from ImageSplat™</button>
+      <button data-action="insert-concept" data-i18n="Image from Concept Studio">Image from Concept Studio</button>
+      <button data-action="insert-graph" data-i18n="Graph from DrawSplat or GridSplat">Graph from DrawSplat or GridSplat</button>
+      <hr>
+      <button data-action="insert-youtube"><svg><use href="#i-video"/></svg> <span data-i18n="YouTube video">YouTube video</span></button>
+      <button data-action="insert-video-url" data-i18n="MP4/WebM by URL">MP4/WebM by URL</button>
+      <button data-action="insert-video-upload" data-i18n="MP4/WebM upload">MP4/WebM upload</button>
+      <button data-action="insert-audio-url"><svg><use href="#i-audio"/></svg> <span data-i18n="Audio by URL">Audio by URL</span></button>
+      <button data-action="insert-audio-upload"><svg><use href="#i-audio"/></svg> <span data-i18n="Audio file on slide">Audio file on slide</span></button>
+      <button data-action="record-slide-audio"><svg><use href="#i-audio"/></svg> <span data-i18n="Record slide audio">Record slide audio</span></button>
+      <button data-action="set-global-audio"><svg><use href="#i-audio"/></svg> <span data-i18n="Song for whole deck">Song for whole deck</span></button>
+    </div></details>
+    <details class="menu"><summary data-i18n="Format">Format</summary><div class="menu-panel">
+      <button data-action="toggle-bold" data-i18n="Bold">Bold</button>
+      <button data-action="toggle-italic" data-i18n="Italic">Italic</button>
+      <button data-action="toggle-underline" data-i18n="Underline">Underline</button>
+      <button data-action="align-left" data-i18n="Align left">Align left</button>
+      <button data-action="align-center" data-i18n="Align center">Align center</button>
+      <button data-action="align-right" data-i18n="Align right">Align right</button>
+      <hr>
+      <button data-action="autofit-textbox" data-i18n="Autofit text box to text">Autofit text box to text</button>
+      <button data-action="fit-text-to-box" data-i18n="Fit text to text box">Fit text to text box</button>
+      <hr>
+      <button data-action="theme-gallery" data-i18n="Themes and master slide">Themes and master slide</button>
+      <button data-action="toggle-footer" data-i18n="Toggle information bar">Toggle information bar</button>
+    </div></details>
+    <details class="menu"><summary data-i18n="SlideShow">SlideShow</summary><div class="menu-panel">
+      <button data-action="present-first" data-i18n="Start from first slide">Start from first slide</button>
+      <button data-action="present-current" data-i18n="Start from current slide">Start from current slide</button>
+    </div></details>
+    <details class="menu"><summary data-i18n="View">View</summary><div class="menu-panel">
+      <button data-action="view-normal" data-i18n="Normal">Normal</button>
+      <button data-action="find-slides" data-i18n="Find slides">Find slides</button>
+      <button data-action="view-sorter" data-i18n="Slide Sorter">Slide Sorter</button>
+      <button data-action="view-notes" data-i18n="Notes">Notes</button>
+      <button data-action="theme-gallery" data-i18n="Master Slide">Master Slide</button>
+      <button data-action="set-selected-bg-light" data-i18n="Selected slides: light">Selected slides: light</button>
+      <button data-action="set-selected-bg-dark" data-i18n="Selected slides: dark">Selected slides: dark</button>
+      <button data-action="set-selected-bg-section" data-i18n="Selected slides: purple">Selected slides: purple</button>
+      <button data-action="toggle-sidebar" data-i18n="Toggle inspector">Toggle inspector</button>
+    </div></details>
+    <details class="menu templates-menu"><summary data-i18n="Templates">Templates</summary><div class="menu-panel">
+      <button data-template="title" data-i18n="Title slide">Title slide</button>
+      <button data-template="title-content" data-i18n="Title and content">Title and content</button>
+      <button data-template="section" data-i18n="Section break">Section break</button>
+      <button data-template="comparison" data-i18n="Comparison">Comparison</button>
+      <button data-template="media" data-i18n="Media focus">Media focus</button>
+      <button data-template="graph" data-i18n="Graph or data story">Graph or data story</button>
+      <button data-template="concept-map" data-i18n="Concept map explanation">Concept map explanation</button>
+      <button data-template="purple-title" data-i18n="Purple title slide">Purple title slide</button>
+      <button data-template="purple-steps" data-i18n="Purple process slide">Purple process slide</button>
+      <button data-template="quote" data-i18n="Quote">Quote</button>
+      <button data-template="table" data-i18n="Table slide">Table slide</button>
+      <button data-template="resources" data-i18n="Closing resources">Closing resources</button>
+      <button data-template="agenda" data-i18n="Agenda">Agenda</button>
+      <button data-template="two-column" data-i18n="Two columns">Two columns</button>
+      <button data-template="three-cards" data-i18n="Three cards">Three cards</button>
+      <button data-template="steps" data-i18n="Numbered steps">Numbered steps</button>
+      <button data-template="do-dont" data-i18n="Do / Do not">Do / Do not</button>
+      <button data-template="callout" data-i18n="Key callout">Key callout</button>
+      <button data-template="image-caption" data-i18n="Image and caption">Image and caption</button>
+      <button data-template="reflection" data-i18n="Reflection prompt">Reflection prompt</button>
+      <hr>
+      <button data-template="certificate" data-i18n="Certificate">Certificate</button>
+      <button data-template="name-tag" data-i18n="Name tag">Name tag</button>
+      <button data-template="flyer" data-i18n="Flyer">Flyer</button>
+      <button data-template="poster" data-i18n="Poster">Poster</button>
+      <button data-action="mail-merge">Mail merge (CSV &rarr; slides)&hellip;</button>
+    </div></details>
+    <details class="menu"><summary data-i18n="Help">Help</summary><div class="menu-panel">
+      <button data-action="show-help" data-i18n="ShowSplat help">ShowSplat help</button>
+      <button data-action="show-shortcuts" data-i18n="Keyboard shortcuts">Keyboard shortcuts</button>
+      <hr>
+      <a href="docs/ai-webdeck-format-instructions.json" target="_blank" rel="noopener">AI WebDeck JSON instructions</a>
+      <a href="../../pages/download.html" target="_blank" rel="noopener">Downloads</a>
+      <a href="../../legal/terms-privacy.html" target="_blank" rel="noopener">Terms &amp; Privacy</a>
+      <a href="../../legal/gdpr-compliance.html" target="_blank" rel="noopener">GDPR summary</a>
+    </div></details>
+  </nav>
+
+  <section class="toolbar" aria-label="Formatting toolbar">
+    <button title="Undo (Ctrl+Z)" data-i18n-title="Undo (Ctrl+Z)" data-action="undo" disabled><svg><use href="#i-undo"/></svg></button>
+    <button title="Redo (Ctrl+Y)" data-i18n-title="Redo (Ctrl+Y)" data-action="redo" disabled><svg><use href="#i-redo"/></svg></button>
+    <span class="divider"></span>
+    <button title="Add slide" data-i18n-title="Add slide" data-action="add-slide"><svg><use href="#i-plus"/></svg></button>
+    <button title="Duplicate slide" data-i18n-title="Duplicate slide" data-action="duplicate-slide"><svg><use href="#i-copy"/></svg></button>
+    <button title="Delete slide" data-i18n-title="Delete slide" data-action="delete-slide"><svg><use href="#i-trash"/></svg></button>
+    <span class="divider"></span>
+    <button title="Text box" data-i18n-title="Text box" data-action="add-text"><svg><use href="#i-text"/></svg></button>
+    <button title="Bullet list" data-i18n-title="Bullet list" data-action="add-list"><svg><use href="#i-list"/></svg></button>
+    <button title="Image" data-i18n-title="Image" data-action="insert-image-upload"><svg><use href="#i-image"/></svg></button>
+    <button title="Video" data-i18n-title="Video" data-action="insert-youtube"><svg><use href="#i-video"/></svg></button>
+    <button title="Table" data-i18n-title="Table" data-action="add-table"><svg><use href="#i-table"/></svg></button>
+    <button title="MarkdownSplat" data-i18n-title="MarkdownSplat" data-action="open-markdown"><svg><use href="#i-markdown"/></svg></button>
+    <span class="divider"></span>
+    <select id="fontFamily" title="Font family" data-i18n-title="Font family">
+      <option value="Inter, Arial, sans-serif">Inter</option>
+      <option value="Georgia, serif">Georgia</option>
+      <option value="Arial, sans-serif">Arial</option>
+      <option value="'Courier New', monospace">Mono</option>
+    </select>
+    <button title="Decrease font size" data-i18n-title="Decrease font size" data-action="decrease-font-size">A-</button>
+    <input id="fontSize" title="Font size" data-i18n-title="Font size" type="number" min="12" max="96" value="34">
+    <button title="Increase font size" data-i18n-title="Increase font size" data-action="increase-font-size">A+</button>
+    <button title="Bold" data-i18n-title="Bold" data-action="toggle-bold"><svg><use href="#i-bold"/></svg></button>
+    <button title="Italic" data-i18n-title="Italic" data-action="toggle-italic"><svg><use href="#i-italic"/></svg></button>
+    <button title="Underline" data-i18n-title="Underline" data-action="toggle-underline"><svg><use href="#i-underline"/></svg></button>
+    <button title="Align left" data-i18n-title="Align left" data-action="align-left"><svg><use href="#i-align-left"/></svg></button>
+    <button title="Align center" data-i18n-title="Align center" data-action="align-center"><svg><use href="#i-align-center"/></svg></button>
+    <button title="Align right" data-i18n-title="Align right" data-action="align-right"><svg><use href="#i-align-right"/></svg></button>
+    <button title="Autofit text box to text" data-i18n-title="Autofit text box to text" data-action="autofit-textbox">↔</button>
+    <button title="Fit text to text box" data-i18n-title="Fit text to text box" data-action="fit-text-to-box">Aa</button>
+    <label class="color-tool" title="Text color" data-i18n-title="Text color"><span>A</span><input id="textColor" type="color" value="#1f2937"></label>
+    <label class="color-tool" title="Fill color" data-i18n-title="Fill color"><svg><use href="#i-palette"/></svg><input id="fillColor" type="color" value="#ffffff"></label>
+    <span class="divider"></span>
+    <label class="zoom-tool" title="Slide zoom" data-i18n-title="Slide zoom">Zoom <input id="zoomSlider" type="range" min="0" max="100" value="50"><output id="zoomValue">100%</output></label>
+    <span class="divider"></span>
+    <button title="Present" data-i18n-title="Present" data-action="present-current"><svg><use href="#i-play"/></svg></button>
+    <button title="Export WebDeck" data-i18n-title="Export WebDeck" data-action="export-webdeck"><svg><use href="#i-download"/></svg></button>
+  </section>
+
+  <section class="workspace">
+    <aside class="slide-rail" aria-label="Slide thumbnails">
+      <div class="rail-title rail-heading"><span data-i18n="Slides">Slides</span><button type="button" data-action="find-slides" data-i18n="Find slides" title="Ctrl/⌘ + Shift + F">Find slides</button></div>
+      <div id="thumbnailList" class="thumbnail-list"></div>
+      <button class="rail-add" data-action="pick-template"><svg><use href="#i-plus"/></svg> <span data-i18n="Add slide">Add slide</span></button>
+    </aside>
+    <div id="railSplitter" class="rail-splitter" role="separator" aria-label="Resize slide thumbnails" aria-orientation="horizontal" tabindex="0"></div>
+
+    <section class="stage-wrap">
+      <div class="status-row">
+        <input id="deckTitle" class="deck-title-input" aria-label="Deck title">
+        <span id="statusText" data-i18n="Ready.">Ready.</span>
+      </div>
+      <div id="slideSorter" class="slide-sorter" hidden></div>
+      <div class="stage" id="stage">
+        <div class="slide-board">
+          <div id="slideCanvas" tabindex="-1" class="slide-canvas" aria-label="Current slide canvas"></div>
+        </div>
+      </div>
+    </section>
+
+    <aside id="inspector" class="inspector">
+      <div class="panel">
+        <h2 data-i18n="Notes">Notes</h2>
+        <textarea id="speakerNotes" aria-label="Speaker notes"></textarea>
+      </div>
+      <div class="panel">
+        <h2 data-i18n="Selection">Selection</h2>
+        <div id="selectionInfo" class="selection-info">No object selected.</div>
+        <div id="arrangePanel" class="arrange-panel" hidden>
+          <div class="arrange-label" data-i18n="Align">Align</div>
+          <div class="arrange-grid">
+            <button type="button" data-action="align-left" title="Align left edges">Left</button>
+            <button type="button" data-action="align-center-h" title="Align horizontal centers">Center</button>
+            <button type="button" data-action="align-right" title="Align right edges">Right</button>
+            <button type="button" data-action="align-top" title="Align top edges">Top</button>
+            <button type="button" data-action="align-middle-v" title="Align vertical centers">Middle</button>
+            <button type="button" data-action="align-bottom" title="Align bottom edges">Bottom</button>
+          </div>
+          <div class="arrange-label">Distribute (3+)</div>
+          <div class="arrange-grid arrange-grid-two">
+            <button type="button" data-action="distribute-h" title="Space evenly left to right">Horizontal</button>
+            <button type="button" data-action="distribute-v" title="Space evenly top to bottom">Vertical</button>
+          </div>
+        </div>
+        <label>Alt text <input id="altText" type="text"></label>
+        <label>Link URL <input id="linkUrl" type="url"></label>
+        <details class="advanced-position">
+          <summary>Advanced position</summary>
+          <div class="grid-two">
+          <label>X <input id="posX" type="number"></label>
+          <label>Y <input id="posY" type="number"></label>
+          <label>W <input id="posW" type="number"></label>
+          <label>H <input id="posH" type="number"></label>
+          </div>
+        </details>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<dialog id="templatePickerDialog" class="studio-dialog">
+  <form method="dialog">
+    <header><h2>Add a slide</h2><button value="close" aria-label="Close">x</button></header>
+    <p>Pick a starting layout. You can edit everything after it is added.</p>
+    <div class="template-picker-grid">
+      <button type="button" data-template="title-content">Title and content</button>
+      <button type="button" data-template="title">Title slide</button>
+      <button type="button" data-template="section">Section break</button>
+      <button type="button" data-template="agenda">Agenda</button>
+      <button type="button" data-template="comparison">Comparison</button>
+      <button type="button" data-template="two-column">Two columns</button>
+      <button type="button" data-template="three-cards">Three cards</button>
+      <button type="button" data-template="steps">Numbered steps</button>
+      <button type="button" data-template="purple-steps">Purple process slide</button>
+      <button type="button" data-template="do-dont">Do / Do not</button>
+      <button type="button" data-template="callout">Key callout</button>
+      <button type="button" data-template="quote">Quote</button>
+      <button type="button" data-template="media">Media focus</button>
+      <button type="button" data-template="image-caption">Image and caption</button>
+      <button type="button" data-template="graph">Graph or data story</button>
+      <button type="button" data-template="concept-map">Concept map explanation</button>
+      <button type="button" data-template="table">Table slide</button>
+      <button type="button" data-template="purple-title">Purple title slide</button>
+      <button type="button" data-template="reflection">Reflection prompt</button>
+      <button type="button" data-template="resources">Closing resources</button>
+      <button type="button" data-template="certificate">Certificate</button>
+      <button type="button" data-template="name-tag">Name tag</button>
+      <button type="button" data-template="flyer">Flyer</button>
+      <button type="button" data-template="poster">Poster</button>
+    </div>
+    <p class="template-picker-hint">Tip: put <code>{{Name}}</code>, <code>{{Award}}</code> and other placeholders in a slide, then use <strong>Templates &rsaquo; Mail merge</strong> to generate one slide per row of a CSV.</p>
+    <footer><button value="close">Cancel</button></footer>
+  </form>
+</dialog>
+
+<dialog id="markdownDialog" class="studio-dialog">
+  <form method="dialog">
+    <header><h2>MarkdownSplat</h2><button value="close" aria-label="Close">x</button></header>
+    <p>Use <code>---</code> between slides. Headings become slide titles; bullets become list items.</p>
+    <textarea id="markdownInput" spellcheck="false"></textarea>
+    <footer>
+      <button type="button" data-action="load-markdown-sample">Sample</button>
+      <button type="button" data-action="import-markdown">Build deck from Markdown</button>
+      <button type="button" data-action="copy-markdown">Copy current deck Markdown</button>
+      <button value="close">Done</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="slideSearchDialog" class="studio-dialog slide-search-dialog" aria-labelledby="slideSearchTitle">
+  <form method="dialog">
+    <header><h2 id="slideSearchTitle" data-i18n="Find slides">Find slides</h2><button value="close" aria-label="Close">×</button></header>
+    <p class="search-intro">Search the whole deck, including hidden slides and collapsed groups. Choose a result to open it in the editor.</p>
+    <div class="slide-search-controls"><div><label for="slideSearchInput">Search slides</label><input id="slideSearchInput" type="search" placeholder="Title, content, or speaker notes" autocomplete="off"></div><div><label for="slideSearchScope">Search in</label><select id="slideSearchScope"><option value="all">Everything</option><option value="title">Titles</option><option value="content">Slide content</option><option value="notes">Speaker notes</option></select></div></div>
+    <p id="slideSearchCount" class="search-count" role="status" aria-live="polite"></p>
+    <ol id="slideSearchResults" class="slide-search-results" aria-label="Matching slides"></ol>
+    <p id="slideSearchEmpty" class="search-empty" hidden>No slides match. Try fewer words or search Everything.</p>
+    <footer><span class="search-hint">Ctrl/⌘ + Shift + F opens this navigator. Escape closes it.</span><button value="close">Done</button></footer>
+  </form>
+</dialog>
+
+<dialog id="helpDialog" class="studio-dialog help-dialog">
+  <form method="dialog">
+    <header><h2>ShowSplat help</h2><button value="close" aria-label="Close">x</button></header>
+    <div class="help-grid">
+      <section>
+        <h3>Find a slide</h3>
+        <p>Use View > Find slides or Ctrl/Command + Shift + F to search titles, slide content, tables, and speaker notes. Hidden and collapsed slides remain searchable.</p>
+      </section>
+      <section>
+        <h3>Build a deck</h3>
+        <p>Add slides from the toolbar or Templates menu. Use the slide rail to pick, duplicate, delete, and reorder slides.</p>
+      </section>
+      <section>
+        <h3>Edit slide objects</h3>
+        <p>Select a text box, image, media item, or table on the canvas. Drag to move it, use the corner handles to resize it, and adjust details in the Selection panel.</p>
+      </section>
+      <section>
+        <h3>Use MarkdownSplat</h3>
+        <p>Open Insert > MarkdownSplat for outline-first decks. Separate slides with three dashes. Headings become slide titles and bullets become editable list items.</p>
+      </section>
+      <section>
+        <h3>Present</h3>
+        <p>Use SlideShow to start from the first or current slide. Presenter controls include navigation, notes, timer, and a pop-out notes window.</p>
+      </section>
+      <section>
+        <h3>Save and export</h3>
+        <p>Save Local keeps an editable browser copy. Save JSON creates the durable editable file. Export WebDeck for a single-file audience version.</p>
+      </section>
+      <section>
+        <h3>Import safely</h3>
+        <p>WebDeck and JSON keep the most editability. PDF import preserves appearance as slide images. PPTX and ODP import common text, images, shapes, and backgrounds as best-effort editable slides.</p>
+      </section>
+      <section>
+        <h3>Privacy</h3>
+        <p>ShowSplat runs in the browser. Local saves stay in this browser profile unless you export or import a file. Frontend WebDeck passwords are a classroom convenience, not encryption.</p>
+      </section>
+    </div>
+    <footer><button value="close">Done</button></footer>
+  </form>
+</dialog>
+
+<dialog id="shortcutsDialog" class="studio-dialog small-dialog help-dialog">
+  <form method="dialog">
+    <header><h2>Keyboard shortcuts</h2><button value="close" aria-label="Close">x</button></header>
+    <dl class="shortcut-list">
+      <div><dt>Ctrl / ⌘ + Shift + F</dt><dd>Find slides by title, content, or notes</dd></div>
+      <div><dt>Ctrl / ⌘ + Z</dt><dd>Undo the last change</dd></div>
+      <div><dt>Ctrl / ⌘ + Y (or Shift+Z)</dt><dd>Redo the change</dd></div>
+      <div><dt>N</dt><dd>Add a title/content slide</dd></div>
+      <div><dt>D</dt><dd>Duplicate the current slide</dd></div>
+      <div><dt>Delete / Backspace</dt><dd>Delete the selected object</dd></div>
+      <div><dt>Arrow keys</dt><dd>Nudge the selected object (Shift = larger step); with nothing selected, Up/Down move between slides</dd></div>
+      <div><dt>P</dt><dd>Present from the current slide</dd></div>
+      <div><dt>Escape</dt><dd>Close open menus</dd></div>
+    </dl>
+    <footer><button value="close">Done</button></footer>
+  </form>
+</dialog>
+
+<dialog id="themeDialog" class="studio-dialog small-dialog">
+  <form method="dialog">
+    <header><h2>Themes and master slide</h2><button value="close" aria-label="Close">x</button></header>
+    <div class="theme-grid">
+      <button type="button" data-theme="violet">Violet</button>
+      <button type="button" data-theme="sky">Sky</button>
+      <button type="button" data-theme="forest">Forest</button>
+      <button type="button" data-theme="slate">Slate</button>
+    </div>
+    <h3 class="dialog-subhead">Deck theme colors</h3>
+    <div class="color-grid">
+      <label>Accent <input id="themeAccentColor" type="color" value="#7c3aed"></label>
+      <label>Highlight <input id="themeHighlightColor" type="color" value="#ff9f2f"></label>
+      <label>Dark <input id="themeDarkColor" type="color" value="#1e1b4b"></label>
+      <label>Canvas <input id="themeCanvasColor" type="color" value="#ffffff"></label>
+    </div>
+    <button type="button" data-action="apply-theme-colors">Apply deck theme colors</button>
+    <h3 class="dialog-subhead">Selected slide colors</h3>
+    <div class="slide-palette" aria-label="Slide color palettes">
+      <button type="button" data-slide-palette="paper"><span>Paper</span></button>
+      <button type="button" data-slide-palette="lavender"><span>Lavender</span></button>
+      <button type="button" data-slide-palette="mint"><span>Mint</span></button>
+      <button type="button" data-slide-palette="sky"><span>Sky</span></button>
+      <button type="button" data-slide-palette="peach"><span>Peach</span></button>
+      <button type="button" data-slide-palette="charcoal"><span>Charcoal</span></button>
+    </div>
+    <div class="color-grid">
+      <label>Slide <input id="slideBgColor" type="color" value="#ffffff"></label>
+      <label>Bar <input id="slideBarColor" type="color" value="#1f2937"></label>
+      <label>Text <input id="slideDefaultTextColor" type="color" value="#1f2937"></label>
+    </div>
+    <button type="button" data-action="apply-slide-colors">Apply colors to selected slides</button>
+    <label>Footer text <input id="footerText" type="text"></label>
+    <footer><button type="button" data-action="apply-footer">Apply footer</button><button value="close">Done</button></footer>
+  </form>
+</dialog>
+
+<input id="imageFileInput" type="file" accept="image/png,image/jpeg,image/gif,image/svg+xml" hidden>
+<input id="videoFileInput" type="file" accept="video/mp4,video/webm" hidden>
+<input id="audioFileInput" type="file" accept="audio/mpeg,audio/mp3,audio/ogg,audio/wav,audio/webm" hidden>
+<input id="globalAudioFileInput" type="file" accept="audio/mpeg,audio/mp3,audio/ogg,audio/wav,audio/webm" hidden>
+<input id="deckFileInput" type="file" accept="application/json,text/html,application/pdf,.json,.showsplat.json,.html,.htm,.md,.markdown,.pdf,.pptx,.odp,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.oasis.opendocument.presentation" hidden>
+<input id="csvFileInput" type="file" accept="text/csv,.csv" hidden>
+
+<script src="../../vendor/jszip.min.js"></script>
+<script src="../../vendor/pdf.min.js"></script>
+<script src="webdeck-framework-embed.js?v=20261009-release"></script>
+<script src="slide-search.js?v=20261009-1"></script>
+<script type="module" src="app.js?v=storage-recovery-1"></script>
+  
+</body>
+</html>

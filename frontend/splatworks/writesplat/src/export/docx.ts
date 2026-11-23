@@ -1,0 +1,259 @@
+import {
+  AlignmentType,
+  Tab, TabStopType, LineRuleType, type IParagraphPropertiesOptions,
+  Document,
+  ExternalHyperlink,
+  LevelFormat,
+  type ParagraphChild,
+  HeadingLevel,
+  HighlightColor,
+  Packer,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  UnderlineType,
+} from 'docx';
+
+export async function htmlToDocxBlob(title: string, html: string): Promise<Blob> {
+  const host = document.createElement('div');
+  host.innerHTML = html;
+  const children = Array.from(host.childNodes).flatMap(nodeToDocx);
+
+  const doc = new Document({
+    creator: 'WriteSplatTM',
+    title,
+    styles:{default:{document:{run:{font:'Arial',size:24}}}},
+    numbering:{config:[{reference:'writesplat-numbering',levels:[{level:0,format:LevelFormat.DECIMAL,text:'%1.',alignment:AlignmentType.LEFT}]}]},
+    sections: [
+      {
+        children: children.length > 0 ? children : [new Paragraph('')],
+      },
+    ],
+  });
+
+  return Packer.toBlob(doc);
+}
+
+function nodeToDocx(node: ChildNode): Array<Paragraph | Table> {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = node.textContent?.trim();
+    return text ? [new Paragraph({ children: [new TextRun(text)] })] : [];
+  }
+
+  if (!(node instanceof HTMLElement)) {
+    return [];
+  }
+
+  const tag = node.tagName.toLowerCase();
+
+  if (tag === 'h1') {
+    return [new Paragraph({ ...paragraphProperties(node), heading: HeadingLevel.HEADING_1, children: inlineRuns(node) })];
+  }
+
+  if (tag === 'h2') {
+    return [new Paragraph({ ...paragraphProperties(node), heading: HeadingLevel.HEADING_2, children: inlineRuns(node) })];
+  }
+
+  if (tag === 'h3') {
+    return [new Paragraph({ ...paragraphProperties(node), heading: HeadingLevel.HEADING_3, children: inlineRuns(node) })];
+  }
+
+  if (tag === 'h4') {
+    return [new Paragraph({ ...paragraphProperties(node), heading: HeadingLevel.HEADING_4, children: inlineRuns(node) })];
+  }
+
+  if (tag === 'h5') {
+    return [new Paragraph({ ...paragraphProperties(node), heading: HeadingLevel.HEADING_5, children: inlineRuns(node) })];
+  }
+
+  if (tag === 'h6') {
+    return [new Paragraph({ ...paragraphProperties(node), heading: HeadingLevel.HEADING_6, children: inlineRuns(node) })];
+  }
+
+  if (tag === 'hr') {
+    return [new Paragraph({ children: [new TextRun('---')] })];
+  }
+
+  if (tag === 'ul' || tag === 'ol') {
+    return Array.from(node.children).map(
+      (child) =>
+        new Paragraph({
+          ...paragraphProperties((child as HTMLElement).querySelector('p') || child as HTMLElement),
+          bullet: tag === 'ul' ? { level: 0 } : undefined,
+          numbering: tag === 'ol' ? { reference: 'writesplat-numbering', level: 0 } : undefined,
+          children: inlineRuns(child as HTMLElement),
+        }),
+    );
+  }
+
+  if (tag === 'table') {
+    return [tableToDocx(node)];
+  }
+
+  if (tag === 'img') {
+    return [new Paragraph({ children: [new TextRun(`[Image: ${node.getAttribute('alt') || 'embedded image'}]`)] })];
+  }
+
+  return [new Paragraph({ ...paragraphProperties(node), children: inlineRuns(node) })];
+}
+
+function tableToDocx(table: HTMLElement): Table {
+  return new Table({
+    rows: Array.from(table.querySelectorAll('tr')).map(
+      (row) =>
+        new TableRow({
+          children: Array.from(row.children).map(
+            (cell) =>
+              new TableCell({
+                children: [new Paragraph({ children: inlineRuns(cell as HTMLElement) })],
+              }),
+          ),
+        }),
+    ),
+  });
+}
+
+function paragraphProperties(element:HTMLElement):IParagraphPropertiesOptions {
+ const s=element.style,points=(value:string)=>{const n=parseFloat(value);return Number.isFinite(n)?n*(value.endsWith('px')?.75:1):undefined;},twips=(value:string,fallback=0)=>Math.round((points(value)??fallback)*20);
+ const first=points(s.textIndent)||0,line=s.lineHeight||'1.45',relative=!/pt|px/.test(line);let tabs:number[]=[];try{const raw=JSON.parse(element.getAttribute('data-writer-tabs')||'[]');if(Array.isArray(raw))tabs=raw.filter(n=>typeof n==='number'&&Number.isFinite(n)&&n>0&&n<=468).slice(0,32);}catch{}
+ return {alignment:docxAlignment(element),indent:{left:twips(s.marginLeft),right:twips(s.marginRight),...(first<0?{hanging:Math.round(-first*20)}:{firstLine:Math.round(first*20)})},spacing:{before:twips(s.marginTop),after:twips(s.marginBottom,12),line:relative?Math.round(Number(line)*240):twips(line),lineRule:relative?LineRuleType.AUTO:LineRuleType.EXACT},tabStops:tabs.map(position=>({type:TabStopType.LEFT,position:Math.round(position*20)})),run:{font:normalizeFontFamily(s.fontFamily)||undefined,size:cssPxToHalfPoints(s.fontSize)||undefined}};
+}
+
+function inlineRuns(element: HTMLElement): ParagraphChild[] {
+  const runs = Array.from(element.childNodes).flatMap((node) => inlineNodeRuns(node));
+  return runs.length > 0 ? runs : [new TextRun('')];
+}
+
+function inlineNodeRuns(node: ChildNode, marks: Partial<TextRunOptions> = {}): ParagraphChild[] {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return (node.textContent??'').split('\t').flatMap((text,index)=>[...(index?[new TextRun({children:[new Tab()],...marks})]:[]),new TextRun({text,...marks})]);
+  }
+
+  if (!(node instanceof HTMLElement)) {
+    return [];
+  }
+
+  const tag = node.tagName.toLowerCase();
+  const nextMarks = { ...marks };
+
+  if(tag==='a'){
+    const link=node.getAttribute('href') || '';
+    if(/^(https?:|mailto:)/i.test(link))return [new ExternalHyperlink({link,children:Array.from(node.childNodes).flatMap(child=>inlineNodeRuns(child,nextMarks))})];
+  }
+
+  if (tag === 'strong') {
+    nextMarks.bold = true;
+  }
+
+  if (tag === 'em') {
+    nextMarks.italics = true;
+  }
+
+  if (tag === 'u') {
+    nextMarks.underline = { type: UnderlineType.SINGLE };
+  }
+
+  if (tag === 's') {
+    nextMarks.strike = true;
+  }
+
+  if (tag === 'span') {
+    const backgroundColor = normalizeCssColor(node.style.backgroundColor);
+    const color = normalizeCssColor(node.style.color);
+    const fontFamily = normalizeFontFamily(node.style.fontFamily);
+    const fontSize = cssPxToHalfPoints(node.style.fontSize);
+
+    if (backgroundColor) {
+      nextMarks.highlight = docxHighlightColor(backgroundColor);
+    }
+
+    if (color) {
+      nextMarks.color = color.replace('#', '');
+    }
+
+    if (fontFamily) {
+      nextMarks.font = fontFamily;
+    }
+
+    if (fontSize) {
+      nextMarks.size = fontSize;
+    }
+  }
+
+  if (tag === 'br') {
+    return [new TextRun({ text: '', break: 1 })];
+  }
+
+  return Array.from(node.childNodes).flatMap((child) => inlineNodeRuns(child, nextMarks));
+}
+
+interface TextRunOptions {
+  bold?: boolean;
+  color?: string;
+  font?: string;
+  highlight?: (typeof HighlightColor)[keyof typeof HighlightColor];
+  italics?: boolean;
+  size?: number;
+  underline?: { type: typeof UnderlineType.SINGLE };
+  strike?: boolean;
+}
+
+function docxAlignment(element: HTMLElement): (typeof AlignmentType)[keyof typeof AlignmentType] | undefined {
+  const alignments: Record<string, (typeof AlignmentType)[keyof typeof AlignmentType]> = {
+    center: AlignmentType.CENTER,
+    justify: AlignmentType.JUSTIFIED,
+    left: AlignmentType.LEFT,
+    right: AlignmentType.RIGHT,
+  };
+  return alignments[element.style.textAlign];
+}
+
+function docxHighlightColor(value: string): (typeof HighlightColor)[keyof typeof HighlightColor] {
+  const colors: Record<string, (typeof HighlightColor)[keyof typeof HighlightColor]> = {
+    '#dbeafe': HighlightColor.BLUE,
+    '#dcfce7': HighlightColor.GREEN,
+    '#fee2e2': HighlightColor.RED,
+    '#fef3c7': HighlightColor.YELLOW,
+  };
+  return colors[value.toLowerCase()] ?? HighlightColor.YELLOW;
+}
+
+function normalizeCssColor(value: string): string {
+  if (!value) {
+    return '';
+  }
+
+  const host = document.createElement('span');
+  host.style.color = value;
+  document.body.appendChild(host);
+  const rgb = getComputedStyle(host).color;
+  host.remove();
+  const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/u);
+
+  if (!match) {
+    return value;
+  }
+
+  return `#${[match[1], match[2], match[3]]
+    .map((channel) => Number(channel).toString(16).padStart(2, '0'))
+    .join('')}`;
+}
+
+function normalizeFontFamily(value: string): string {
+  return value
+    .split(',')[0]
+    ?.replace(/["']/g, '')
+    .trim();
+}
+
+function cssPxToHalfPoints(value: string): number | undefined {
+  const match = value.match(/^(\d+(?:\.\d+)?)px$/u);
+
+  if (!match) {
+    return undefined;
+  }
+
+  return Math.round(Number(match[1]) * 1.5);
+}

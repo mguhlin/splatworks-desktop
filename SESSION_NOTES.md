@@ -95,3 +95,21 @@ This machine has Go 1.27.4 and Wails 2.17.1, but lacks the GTK/WebKit developmen
 headers and pkg-config needed for local native rebuilding. Source/browser checks
 ran here; native builds and installed-package tests ran in CI. The downloaded
 Linux loopback runtimes ran here. Preserve these distinctions.
+
+## Expanded core-app candidate
+
+The working candidate imports DrawSplat `7506f1b` and adds ListSplat, GridSplat,
+WriteSplat, ShowSplat, LayoutSplat and PlanSplat alongside PDFsplat and CipherSplat.
+The Apps chooser retains mounted documents, and the suite uses the SplatWorks icon.
+Native project saves protect newer edits, cancellation, import replacement and
+unfinished planner forms. Cross-app office files move in memory; desktop document
+storage and service workers are disabled. Chart/image data-URL exports now use
+native destination dialogs. ShowSplat Present explicitly exports WebDeck HTML.
+Cloud connections and printing use the browser routes described in docs/OFFICE.md.
+
+Local validation passed 130 Chromium/WebKit checks, including all six project
+save/reopen/browser-interoperability workflows and the new office native-smoke
+loop. Snapshot/asset verification passed 1580 hashes; five Python packaging tests
+and Go transfer race tests passed. Native platform CI, packaged artifacts and
+published downloads must pass before advancing the website beyond rc.11.
+Signing, notarization and physical-device approval remain open.

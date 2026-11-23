@@ -28,7 +28,7 @@ func TestBundledOriginPolicy(t *testing.T) {
 	}
 }
 
-func TestCoreBundleExcludesStandaloneMediaEngines(t *testing.T) {
+func TestCoreBundleExcludesStandaloneMediaApps(t *testing.T) {
 	data, err := bundled.ReadFile("frontend/app.json")
 	if err != nil {
 		t.Fatal(err)
@@ -43,7 +43,6 @@ func TestCoreBundleExcludesStandaloneMediaEngines(t *testing.T) {
 	for _, path := range []string{
 		"frontend/solutions/audiosplat/index.html",
 		"frontend/solutions/videosplat/index.html",
-		"frontend/solutions/mediasplat/ffmpeg/ffmpeg-core.part-01",
 	} {
 		if file, err := bundled.Open(path); err == nil {
 			file.Close()

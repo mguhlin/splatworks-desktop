@@ -43,7 +43,7 @@ jobs:
       - name: Read paired browser revision
         id: browser
         shell: bash
-        run: python3 -c 'import json;print("revision="+json.load(open("frontend/standalone-manifest.json"))["revision"])' >> "$GITHUB_OUTPUT"
+        run: python3 -c 'import json;print("revision="+json.load(open("frontend/source-manifest.json"))["revision"])' >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           repository: mguhlin/drawsplat
@@ -124,7 +124,7 @@ jobs:
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#v}"
-          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="1.0.0-rc.11"; fi
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then version="1.0.0-rc.12"; fi
           args=()
           if [[ "$RUNNER_OS" == "Linux" ]]; then args+=(-tags webkit2_41); fi
           wails build -platform '${{ matrix.target }}' "${args[@]}" -ldflags "-X main.version=$version"
@@ -147,7 +147,7 @@ jobs:
           WEBKIT_DISABLE_DMABUF_RENDERER: '1'
         run: |
           mkdir -p output/native
-          sudo -E unshare --net -- bash -c 'ip link set lo up; xvfb-run -a dbus-run-session -- timeout 240 ./build/bin/SplatWorks-Desktop --smoke-test "$PWD/output/native"'
+          sudo -E unshare --net -- bash -c 'ip link set lo up; xvfb-run -a dbus-run-session -- timeout 480 ./build/bin/SplatWorks-Desktop --smoke-test "$PWD/output/native"'
           sudo chown -R "$(id -u):$(id -g)" output
       - name: Windows native smoke test
         if: runner.os == 'Windows'
@@ -155,7 +155,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force output/native | Out-Null
           $app = Start-Process -FilePath './build/bin/SplatWorks-Desktop.exe' -ArgumentList '--smoke-test', "$pwd/output/native" -PassThru
-          if (-not $app.WaitForExit(240000)) { $app.Kill(); throw 'Native smoke test timed out' }
+          if (-not $app.WaitForExit(480000)) { $app.Kill(); throw 'Native smoke test timed out' }
           if ($app.ExitCode -ne 0) { throw "Native smoke test failed ($($app.ExitCode))" }
       - name: Mac native smoke test
         if: runner.os == 'macOS'
@@ -165,7 +165,7 @@ jobs:
           python3 - <<'PY'
           import pathlib,subprocess
           binary=next(pathlib.Path('build/bin').glob('*.app/Contents/MacOS/*'))
-          subprocess.run([str(binary),'--smoke-test',str(pathlib.Path('output/native').resolve())],check=True,timeout=240)
+          subprocess.run([str(binary),'--smoke-test',str(pathlib.Path('output/native').resolve())],check=True,timeout=480)
           PY
       - name: Verify native report
         shell: bash

@@ -10,7 +10,7 @@
   const saved=[];const save=desktop.saveBlob;
   desktop.saveBlob=async(blob,name,details)=>{const ok=await save(blob,name,details);saved.push({blob,name,ok});return ok;};
   const report=async(passed,error)=>app.CompleteSmoke(JSON.stringify({passed,checks,error:error?String(error.message)+'\n'+String(error.stack||''):null,errors,userAgent:navigator.userAgent},null,2));
-  const deadline=setTimeout(()=>void report(false,Error('Native smoke deadline exceeded')),210000);
+  const deadline=setTimeout(()=>void report(false,Error('Native smoke deadline exceeded')),420000);
   try {
     await wait(()=>desktop.frames.get('pdfsplat')?.contentWindow?.PDFLib,'PDF library');
     const pdf=desktop.frames.get('pdfsplat').contentWindow;
@@ -106,6 +106,40 @@
     pdf.document.getElementById('ocrApply').click();
     await wait(()=>pdf.document.querySelectorAll('.ocr-text').length>=2,'editable OCR text');
     check(pdf.document.querySelectorAll('.ocr-text').length>=2,'reviewed OCR becomes editable text');
+    // All six office engines use real native project saves and reopen in memory.
+    for(const id of ['listsplat','gridsplat','writesplat','showsplat','layoutsplat','plansplat']){
+      desktop.selectTool(id);
+      await wait(()=>desktop.frames.get(id)?.contentWindow?.SplatDesktop&&desktop.frames.get(id)?.contentWindow?.document?.readyState==='complete',id+' startup');
+      const office=desktop.frames.get(id).contentWindow,dom=office.document;
+      if(id==='layoutsplat')await wait(()=>office.LayoutSplat,'LayoutSplat model');
+      if(id==='plansplat')await wait(()=>office.PlanSplat,'PlanSplat model');
+      const fields={listsplat:'[data-project-title]',writesplat:'#docTitle',showsplat:'#deckTitle',layoutsplat:'#publicationTitle'};
+      if(fields[id]){
+        await wait(()=>dom.querySelector(fields[id]),id+' title field');
+        const input=dom.querySelector(fields[id]);input.value='Native '+id;input.dispatchEvent(new office.Event('input',{bubbles:true}));input.dispatchEvent(new office.Event('change',{bubbles:true}));
+      }else if(id==='plansplat'){
+        const input=dom.getElementById('quickTitle');input.value='Native plansplat';dom.querySelector('#quickAdd button').click();
+        await wait(()=>Object.values(office.PlanSplat.getPlanner().tasks).some(task=>task.title==='Native plansplat'),'planner task');
+      }else{
+        const fixture={version:1,metadata:{title:'Native gridsplat'},sheets:[{id:'sheet-1',name:'Sheet 1',cells:[['Native gridsplat','7'],['Total','=B1*2']]}],charts:[],pictureGraphs:[]};
+        await desktop.openWorkspaceFile(id,new office.File([JSON.stringify(fixture)],'native.gridsplat.json',{type:'application/json'}));
+        await wait(()=>dom.querySelector('[data-testid="cell-B2"]')?.textContent.includes('14'),'spreadsheet formula');
+      }
+      await wait(()=>desktop.dirty.some(name=>name.toLowerCase()===id),id+' edit tracking');
+      const previous=saved.length;check(desktop.command(id,'save'),id+' native Save command registered');
+      await wait(()=>saved.length>previous&&!desktop.busy,id+' native project save');
+      const project=saved.at(-1);check(project.ok&&project.blob.size>50,id+' project written through Go');
+      const bytes=await project.blob.arrayBuffer();
+      if(id==='layoutsplat'){
+        const zip=await office.JSZip.loadAsync(bytes);check((await zip.file('publication.json').async('string')).includes('Native layoutsplat'),'LayoutSplat ZIP contains publication model');
+      }else check((await project.blob.text()).includes('Native '+id),id+' project preserves edited content');
+      check(!desktop.dirty.some(name=>name.toLowerCase()===id),id+' save clears matching edits');
+      await desktop.openWorkspaceFile(id,new office.File([bytes],project.name));
+      if(id==='gridsplat')await wait(()=>dom.querySelector('[data-testid="cell-B2"]')?.textContent.includes('14'),'reopened spreadsheet formula');
+      else if(id==='plansplat')check(Object.values(office.PlanSplat.getPlanner().tasks).some(task=>task.title==='Native plansplat'),'reopened planner retains task');
+      else check(dom.querySelector(fields[id]).value==='Native '+id,id+' reopened project retains title');
+      check(!Object.keys(office.localStorage).some(key=>/autosave|recovery|draft|showsplat.deck|plansplat.timer/.test(key)),id+' avoids persistent document drafts');
+    }
     clearTimeout(deadline);await report(true);
   } catch(error) { clearTimeout(deadline);await report(false,error); }
 })();

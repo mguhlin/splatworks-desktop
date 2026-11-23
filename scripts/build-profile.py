@@ -44,7 +44,7 @@ if a.profile=='imagesplat':
 (web/'tools.json').write_text(json.dumps([tool],indent=2)+'\n')
 if a.profile=='imagesplat':info={**info,'bundledModels':True}
 (web/'app.json').write_text(json.dumps(info,indent=2)+'\n')
-page=web/'index.html';page.write_text(page.read_text().replace('href="/solutions/pdfsplat/pdfsplat.png"','href="/'+info['icon']+'"'))
+page=web/'index.html';page.write_text(page.read_text().replace('href="/assets/brand/SplatWorks_logo.png"','href="/'+info['icon']+'"'))
 config=json.loads((root/'wails.json').read_text());config.update(name=info['slug'],outputfilename=info['binary']);config['info'].update(productName=info['name'],productVersion=a.version.split('-')[0],comments=info['description']);(stage/'wails.json').write_text(json.dumps(config,indent=2)+'\n')
 icon=root/'frontend'/info['icon']
 if not icon.is_file():raise SystemExit('Missing generated profile icon: '+str(icon))

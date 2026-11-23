@@ -1,0 +1,214 @@
+import type { FindQuery, FindRule, ListSplatRecord, ListSplatTable, SortKey } from './types';
+
+export type SortDirection = 'asc' | 'desc';
+
+export interface FindOptions {
+  query: string;
+  fieldId: string;
+}
+
+export interface ReplaceOptions {
+  fieldIds: string[];
+  find: string;
+  replacement: string;
+  recordIds?: string[];
+  caseSensitive?: boolean;
+  wholeWord?: boolean;
+}
+
+export interface ReplacePreviewItem {
+  recordId: string;
+  fieldId: string;
+  before: string;
+  after: string;
+}
+
+function cellText(value: unknown): string {
+  return value == null ? '' : String(value);
+}
+
+export function findRecords(table: ListSplatTable, options: FindOptions): ListSplatRecord[] {
+  const query = options.query.trim();
+  if (!query) {
+    return table.records;
+  }
+
+  const normalizedQuery = query.toLowerCase();
+  return table.records.filter((record) => {
+    const fieldIds = options.fieldId === 'all' ? table.fields.map((field) => field.id) : [options.fieldId];
+    return fieldIds.some((fieldId) => cellText(record.values[fieldId]).toLowerCase().includes(normalizedQuery));
+  });
+}
+
+export function sortRecords(table: ListSplatTable, fieldId: string, direction: SortDirection): ListSplatTable {
+  const multiplier = direction === 'asc' ? 1 : -1;
+  return {
+    ...table,
+    records: [...table.records].sort((left, right) => {
+      const leftText = cellText(left.values[fieldId]);
+      const rightText = cellText(right.values[fieldId]);
+      const leftNumber = Number(leftText);
+      const rightNumber = Number(rightText);
+      if (!Number.isNaN(leftNumber) && !Number.isNaN(rightNumber)) {
+        return (leftNumber - rightNumber) * multiplier;
+      }
+      return leftText.localeCompare(rightText, undefined, { numeric: true, sensitivity: 'base' }) * multiplier;
+    }),
+  };
+}
+
+function compareValues(leftText: string, rightText: string): number {
+  const leftNumber = Number(leftText);
+  const rightNumber = Number(rightText);
+  if (leftText !== '' && rightText !== '' && !Number.isNaN(leftNumber) && !Number.isNaN(rightNumber)) {
+    return leftNumber - rightNumber;
+  }
+  return leftText.localeCompare(rightText, undefined, { numeric: true, sensitivity: 'base' });
+}
+
+// Non-destructive multi-key sort used by the views. Empty cells sort last.
+export function sortRecordsByKeys(records: ListSplatRecord[], keys: SortKey[]): ListSplatRecord[] {
+  if (!keys.length) {
+    return records;
+  }
+  return [...records].sort((left, right) => {
+    for (const key of keys) {
+      const leftText = cellText(left.values[key.fieldId]).trim();
+      const rightText = cellText(right.values[key.fieldId]).trim();
+      if (leftText === '' && rightText !== '') return 1;
+      if (leftText !== '' && rightText === '') return -1;
+      const result = compareValues(leftText, rightText) * (key.direction === 'asc' ? 1 : -1);
+      if (result !== 0) return result;
+    }
+    return 0;
+  });
+}
+
+export function matchesRule(record: ListSplatRecord, rule: FindRule): boolean {
+  const cell = cellText(record.values[rule.fieldId]);
+  const cellLower = cell.trim().toLowerCase();
+  const needle = rule.value.trim().toLowerCase();
+  const cellNumber = Number(cell);
+  const valueNumber = Number(rule.value);
+  const numeric = cell.trim() !== '' && rule.value.trim() !== '' && !Number.isNaN(cellNumber) && !Number.isNaN(valueNumber);
+  switch (rule.operator) {
+    case 'contains':
+      return cellLower.includes(needle);
+    case 'equals':
+      return numeric ? cellNumber === valueNumber : cellLower === needle;
+    case 'startsWith':
+      return cellLower.startsWith(needle);
+    case 'endsWith':
+      return cellLower.endsWith(needle);
+    case 'greaterThan':
+      return numeric ? cellNumber > valueNumber : cellLower > needle;
+    case 'lessThan':
+      return numeric ? cellNumber < valueNumber : cellLower < needle;
+    case 'between': {
+      const low = Number(rule.value);
+      const high = Number(rule.value2);
+      if (!Number.isNaN(low) && !Number.isNaN(high) && !Number.isNaN(cellNumber)) {
+        return cellNumber >= Math.min(low, high) && cellNumber <= Math.max(low, high);
+      }
+      return cellLower >= needle && cellLower <= (rule.value2 ?? '').trim().toLowerCase();
+    }
+    case 'isEmpty':
+      return cell.trim() === '';
+    case 'isNotEmpty':
+      return cell.trim() !== '';
+    default:
+      return true;
+  }
+}
+
+export function filterAdvanced(records: ListSplatRecord[], find: FindQuery | null): ListSplatRecord[] {
+  if (!find || find.rules.length === 0) {
+    return records;
+  }
+  return records.filter((record) =>
+    find.match === 'all'
+      ? find.rules.every((rule) => matchesRule(record, rule))
+      : find.rules.some((rule) => matchesRule(record, rule)),
+  );
+}
+
+export function findDuplicateRecords(table: ListSplatTable, fieldId: string): ListSplatRecord[] {
+  const counts = new Map<string, number>();
+  table.records.forEach((record) => {
+    const key = cellText(record.values[fieldId]).trim().toLowerCase();
+    if (key) {
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  });
+  return table.records.filter((record) => {
+    const key = cellText(record.values[fieldId]).trim().toLowerCase();
+    return key ? (counts.get(key) ?? 0) > 1 : false;
+  });
+}
+
+export function findMissingRecords(table: ListSplatTable, fieldId: string): ListSplatRecord[] {
+  return table.records.filter((record) => !cellText(record.values[fieldId]).trim());
+}
+
+export function previewReplaceValues(table: ListSplatTable, options: ReplaceOptions): ReplacePreviewItem[] {
+  if (!options.find) {
+    return [];
+  }
+
+  const flags = options.caseSensitive ? 'g' : 'gi';
+  const escapedFind = options.find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const source = options.wholeWord ? `\\b${escapedFind}\\b` : escapedFind;
+  const pattern = new RegExp(source, flags);
+  const allowedRecordIds = new Set(options.recordIds ?? table.records.map((record) => record.id));
+  const preview: ReplacePreviewItem[] = [];
+
+  table.records.forEach((record) => {
+    if (!allowedRecordIds.has(record.id)) {
+      return;
+    }
+    options.fieldIds.forEach((fieldId) => {
+      const before = cellText(record.values[fieldId]);
+      const after = before.replace(pattern, options.replacement);
+      if (after !== before) {
+        preview.push({ recordId: record.id, fieldId, before, after });
+      }
+    });
+  });
+
+  return preview;
+}
+
+export function replaceValues(table: ListSplatTable, options: ReplaceOptions): { table: ListSplatTable; count: number } {
+  if (!options.find) {
+    return { table, count: 0 };
+  }
+
+  const flags = options.caseSensitive ? 'g' : 'gi';
+  const escapedFind = options.find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const source = options.wholeWord ? `\\b${escapedFind}\\b` : escapedFind;
+  const pattern = new RegExp(source, flags);
+  const allowedRecordIds = new Set(options.recordIds ?? table.records.map((record) => record.id));
+  let count = 0;
+
+  const records = table.records.map((record) => {
+    if (!allowedRecordIds.has(record.id)) {
+      return record;
+    }
+    let changed = false;
+    const values = { ...record.values };
+    options.fieldIds.forEach((fieldId) => {
+      const original = cellText(values[fieldId]);
+      const next = original.replace(pattern, () => {
+        count += 1;
+        return options.replacement;
+      });
+      if (next !== original) {
+        changed = true;
+        values[fieldId] = next;
+      }
+    });
+    return changed ? { ...record, updatedAt: new Date().toISOString(), values } : record;
+  });
+
+  return { table: { ...table, records }, count };
+}
