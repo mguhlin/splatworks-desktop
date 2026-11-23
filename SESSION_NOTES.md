@@ -3,6 +3,24 @@
 The PDF/Cipher suite and all six standalone apps have published, verified release
 candidates. Stable publisher signing and physical-device qualification remain open.
 
+## CipherSplat workspace update
+
+The current work imports the committed CipherSplat 1.1.0 browser port of CipherEnc.
+It preserves CipherSplat branding and CS4/legacy formats while adding automatic
+input detection, local OpenPGP key import/fingerprints, verified compressed file
+saves, safe ZIP/PDF restoration, and static in-app Help. Native saves retain
+cancelled/failed results for retry; mode changes, Clear and input replacement
+protect unsaved work. Empty directories use a narrow save-session capability
+inside the private restoration stage. No automatic recovery copies are created.
+
+Local verification passed 102 Chromium/WebKit checks, Go transfer race tests/vet,
+five Python packaging tests and all snapshot/runtime-asset checks. The browser
+port passed 57 Chromium/Firefox/WebKit checks, independent CipherEnc fixtures,
+direct-file offline checks and automated WCAG A/AA scans of all three pages.
+Publisher signing and physical-device testing remain open. The next release
+candidates are core `v1.0.0-rc.11` and standalone `tools-v1.0.0-rc.5`; verify their
+published artifacts before replacing the recorded candidates below.
+
 ## Published candidates
 
 | Distribution | Release | Build source | Automated delivery |

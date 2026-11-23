@@ -18,19 +18,20 @@
   check(desktop.native,'native Go bridge available');check(doc.title.length>0,'standalone tool document loaded');check(!!win.crypto.subtle,'Web Crypto available offline');
   if(id==='ciphersplat'){
    await wait(()=>typeof win.runRequested==='function','cipher startup');
-   $('password').value='synthetic standalone password';win.setEntries([{file:new win.File(['Standalone Unicode: español 日本語'],'sample.txt'),path:'sample.txt'}]);
-   await win.runRequested();check(!$('errorMessage').textContent,'Argon2id file encryption succeeds');await warning();await win.downloadResult();
+   $('password').value='synthetic standalone password';await win.setEntries([{file:new win.File(['Standalone Unicode: español 日本語'],'sample.txt'),path:'sample.txt'}]);
+   check(!$('errorMessage').textContent,'Argon2id file encryption succeeds');
    const encrypted=saved.find(s=>s.name==='sample.txt.csplat');check(encrypted?.ok,'encrypted file saved through Go');check(await encrypted.blob.slice(0,8).text()==='CSPCS4!!','CS4 format preserved');
    $('password').value='synthetic standalone password';const unlocked=await win.decryptFilesChunked(new win.File([await encrypted.blob.arrayBuffer()],'sample.csplat'));
-   check(await unlocked.files[0].blob.text()==='Standalone Unicode: español 日本語','file decrypt restores exact Unicode bytes');
+   const archive=await win.CipherSplatArchives.unpack(unlocked.files[0].blob);
+   check(await archive.files[0].blob.text()==='Standalone Unicode: español 日本語','file decrypt restores exact Unicode bytes');
    const bad=new Uint8Array(await encrypted.blob.arrayBuffer());bad[bad.length-1]^=1;let rejected=false;try{await win.decryptFilesChunked(new win.File([bad],'bad.csplat'));}catch{rejected=true;}check(rejected,'tampered file fails authentication');
    $('password').value='wrong';rejected=false;try{await win.decryptFilesChunked(new win.File([await encrypted.blob.arrayBuffer()],'wrong.csplat'));}catch{rejected=true;}check(rejected,'wrong password rejected');$('password').value='synthetic standalone password';
    const keys=await win.openpgp.generateKey({type:'ecc',curve:'p256',userIDs:[{name:'Synthetic test'}],passphrase:'test key passphrase',format:'armored'});
-   win.selectMode($('textTab'));win.setCryptoMethod('openpgp');win.setOperation('encrypt');$('textInput').value='Standalone OpenPGP round trip';$('pgpKeyInput').value=keys.publicKey;await win.runRequested();await win.downloadResult();
+   win.detectTextIntent();win.setCryptoMethod('openpgp');win.setOperation('encrypt');$('textInput').value='Standalone OpenPGP round trip';$('pgpKeyInput').value=keys.publicKey;await win.runRequested();await win.downloadResult();
    const pgp=saved.find(s=>s.name==='encrypted-message.asc');check(pgp?.ok,'OpenPGP encryption exported');
    win.setOperation('decrypt');$('textInput').value=await pgp.blob.text();$('pgpKeyInput').value=keys.privateKey;$('pgpPassphrase').value='test key passphrase';await win.runRequested();await win.downloadResult();
    check(await saved.find(s=>s.name==='decrypted-message.txt').blob.text()==='Standalone OpenPGP round trip','OpenPGP decrypt restores plaintext');
-   check(await desktop.saveFolder([{path:'nested/sample.txt',blob:unlocked.files[0].blob},{path:'nested/empty.txt',blob:new Blob([])}]),'native nested folder restoration');
+   check(await desktop.saveFolder([{path:'nested/sample.txt',blob:archive.files[0].blob},{path:'nested/empty.txt',blob:new Blob([])}],undefined,['nested/empty-directory']),'native nested folder restoration');
   }else if(id==='gifsplat'){
    importFiles('frameInput',[await png('red','red.png'),await png('blue','blue.png')]);await wait(()=>doc.querySelectorAll('.frame-row').length===2,'import GIF frames');check(true,'two local image frames imported');await warning();
    set('delayInput','200');$('generateBtn').click();await wait(()=>!$('downloadBtn').disabled&&!desktop.busy,'GIF encoding');check(!!doc.querySelector('#previewWrap img'),'generated animation preview');$('downloadBtn').click();await wait(()=>saved.length===1,'GIF save');

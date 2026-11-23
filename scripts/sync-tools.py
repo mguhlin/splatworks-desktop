@@ -46,8 +46,9 @@ for name in ['LICENSE', 'NOTICE.md']:
 for name in ['pdfsplat-save-as.md', 'pdfsplat-ocr.md', 'pdfsplat-odt-toolbar.md']:
     copy_file('docs/' + name)
 
-for tool in registry:
-    page = dest / tool['source'] / 'index.html'
+pages = [dest / tool['source'] / 'index.html' for tool in registry]
+pages += list((dest / 'solutions/CipherSplat').glob('*.html'))
+for page in dict.fromkeys(pages):
     text = page.read_text(encoding='utf-8')
     text = re.sub(r'<!-- splat-privacy:start -->.*?<!-- splat-privacy:end -->', '', text)
     text = re.sub(r'\s*<meta http-equiv="Content-Security-Policy"[^>]*>', '', text)
@@ -57,6 +58,13 @@ for tool in registry:
     text = text.replace('</head>', '<link rel="stylesheet" href="/desktop/frame.css"><script src="/desktop/frame.js"></script></head>')
     text = re.sub(r'<link rel="stylesheet" href="../../assets/css/(?:tool-launcher|launcher-trigger)\.css[^\"]*">', '', text)
     text = re.sub(r'<a class="offline-download"[^>]*>.*?</a>', '', text)
+    if page.parent.name == 'CipherSplat':
+        text = text.replace('· Browser version', '· Desktop workspace').replace('CipherSplat browser encryption.', 'CipherSplat desktop encryption.')
+    if page.parent.name == 'CipherSplat' and page.name in ['index.html','openpgp.html']:
+        help_text = (source / 'solutions/CipherSplat/help.html').read_text(encoding='utf-8')
+        main = re.search(r'<main\b.*?</main>', help_text, re.S).group(0)
+        main = main.replace('<h1>', '<h1 id="helpPageTitle">', 1)
+        text = text.replace('</body>', '<dialog id="workspaceHelp" aria-labelledby="helpPageTitle"><div class="help-close"><button id="closeWorkspaceHelp" type="button">Close help</button></div>' + main + '</dialog></body>')
     page.write_text(text, encoding='utf-8')
 
 boot = dest / 'solutions/pdfsplat/src/boot.js'

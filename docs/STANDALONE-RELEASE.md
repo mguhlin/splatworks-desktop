@@ -1,5 +1,7 @@
 1.0 release candidates for GIFsplat, CipherSplat, QRSplat, ImageSplat, AudioSplat and VideoSplat.
 
+CipherSplat adopts the streamlined CipherEnc workspace while retaining its name and file compatibility. It adds automatic input detection, local OpenPGP key import and fingerprints, compressed and verified file encryption, native automatic saves, safe restoration including empty directories, and Help that preserves open work. PDFSplat opens new compressed CipherSplat PDF packages and verifies its own protected PDFs before saving.
+
 - Improve CipherSplat's password-strength label contrast on the credential panel.
 - Fix recorder-dialog initialization and protect unsaved recordings when dismissing the dialog.
 - Harden portable audio imports, decode replacement sources independently, and reject external media URLs or invalid mixer state before replacing open work.

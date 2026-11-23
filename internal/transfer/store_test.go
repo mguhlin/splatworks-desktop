@@ -214,3 +214,43 @@ func TestChunkBoundsAndShutdownCleanup(t *testing.T) {
 		t.Fatal("plaintext temporary output remains after shutdown")
 	}
 }
+
+func TestDirectoryCapability(t *testing.T) {
+	s := New()
+	defer s.Close()
+	parent := t.TempDir()
+	id, err := s.BeginFolder(parent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"../outside", "/absolute", "a/../b", "CON", "a\\b"} {
+		if s.Directory(id, name) == nil {
+			t.Fatalf("accepted %q", name)
+		}
+	}
+	if err = s.Directory(id, "nested/empty"); err != nil {
+		t.Fatal(err)
+	}
+	name, err := s.Commit(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(filepath.Join(parent, name, "nested", "empty"))
+	if err != nil || !info.IsDir() {
+		t.Fatalf("empty directory lost: %v", err)
+	}
+	if s.Directory(id, "late") == nil {
+		t.Fatal("accepted consumed token")
+	}
+	file, err := s.BeginFile(filepath.Join(parent, "file"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Directory(file, "dir") == nil {
+		t.Fatal("file token granted directory access")
+	}
+	s.Abort(file)
+	if s.Directory(file, "dir") == nil {
+		t.Fatal("accepted aborted token")
+	}
+}

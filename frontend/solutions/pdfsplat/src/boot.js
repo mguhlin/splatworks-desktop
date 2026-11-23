@@ -19,7 +19,7 @@
     } else {
       /* Desktop shell supplies the installed tool switcher. */
     }
-    await load('./app.bundle.js?v=thumbnail-refresh-1');
+    await load('./app.bundle.js?v=cipher-workspace-1');
   } catch (error) {
     const message = document.createElement('p');
     message.setAttribute('role', 'alert');

@@ -48,7 +48,7 @@ test('standalone ImageSplat exports exact artwork and performs background remova
 });
 
 test('standalone CipherSplat keeps its CS4 file format and uses the shared native save',async({page})=>{
- const{frame,errors,external}=await start(page,'ciphersplat');await frame.locator('#password').fill('standalone format test');await frame.locator('#fileInput').setInputFiles({name:'sample.txt',mimeType:'text/plain',buffer:Buffer.from('Unicode español 日本語')});await frame.locator('#runButton').click();await expect(frame.locator('#resultTitle')).toContainText('Encryption complete');await frame.locator('#downloadResult').click();const data=await output(page,'sample.txt.csplat');expect(data.subarray(0,8).toString()).toBe('CSPCS4!!');expect(errors).toEqual([]);expect(external).toEqual([]);
+ const{frame,errors,external}=await start(page,'ciphersplat');await frame.locator('#password').fill('standalone format test');await frame.locator('#fileInput').setInputFiles({name:'sample.txt',mimeType:'text/plain',buffer:Buffer.from('Unicode español 日本語')});await expect(frame.locator('#resultTitle')).toContainText('Encryption complete');const data=await output(page,'sample.txt.csplat');expect(data.subarray(0,8).toString()).toBe('CSPCS4!!');expect(errors).toEqual([]);expect(external).toEqual([]);
 });
 
 test('ImageSplat crop undo restores canvas dimensions and image layers',async({page})=>{

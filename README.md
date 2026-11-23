@@ -61,7 +61,7 @@ the desktop interface.
 
 ## Smaller standalone apps
 
-[Download GIFsplat, CipherSplat, QRSplat, ImageSplat, AudioSplat and VideoSplat](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v1.0.0-rc.4). Each has its own executable, installer and icon, with native saves and unsaved-work protection. The GIF, QR and image editions omit PDF/OCR engines. These are 1.0 release candidates pending developer signing and physical validation. See [standalone scope and build instructions](docs/STANDALONE.md).
+[Download GIFsplat, CipherSplat, QRSplat, ImageSplat, AudioSplat and VideoSplat](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v1.0.0-rc.5). Each has its own executable, installer and icon, with native saves and unsaved-work protection. The GIF, QR and image editions omit PDF/OCR engines. These are 1.0 release candidates pending developer signing and physical validation. See [standalone scope and build instructions](docs/STANDALONE.md).
 
 See the [1.0 release contract](docs/1.0.md) for feature scope and stable-publication requirements.
 

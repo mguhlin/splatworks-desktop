@@ -1,5 +1,7 @@
 SplatWorks Desktop 1.0 release candidate: preserve painted PDF thumbnails while inserting, duplicating and reordering pages, and improve CipherSplat password-strength label contrast. The refreshed browser-tool snapshot also adds editable web/file links and internal PDF page destinations, with native-save round-trip checks. Stable publisher signing and physical-device validation remain required.
 
+CipherSplat adopts the streamlined CipherEnc workspace while retaining its name and file compatibility. It adds automatic input detection, local OpenPGP key import and fingerprints, compressed and verified file encryption, native automatic saves, safe restoration including empty directories, and Help that preserves open work. PDFSplat opens new compressed CipherSplat PDF packages and verifies its own protected PDFs before saving.
+
 SplatWorks Desktop: PDFsplat and CipherSplat for Linux, Windows, and Mac.
 Automated engineering and packaging checks cover the supported build platforms.
 Stable release tags require developer signing and physical-device approval.

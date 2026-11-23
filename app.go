@@ -95,8 +95,9 @@ func (a *App) BeginFolderRestore() (string, error) {
 func (a *App) AppendSave(id, name, data string, first bool) error {
 	return a.saves.Append(id, name, data, first)
 }
-func (a *App) FinishSave(id string) (string, error) { return a.saves.Commit(id) }
-func (a *App) CancelSave(id string)                 { a.saves.Abort(id) }
+func (a *App) AppendSaveDirectory(id, name string) error { return a.saves.Directory(id, name) }
+func (a *App) FinishSave(id string) (string, error)      { return a.saves.Commit(id) }
+func (a *App) CancelSave(id string)                      { a.saves.Abort(id) }
 func (a *App) OpenExternal(raw string) error {
 	u, err := url.Parse(raw)
 	if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil {

@@ -125,6 +125,26 @@ func (s *Store) BeginFolder(parent string) (string, error) {
 	return id, nil
 }
 
+// Directory creates only a relative directory inside an active, user-selected
+// private restoration stage. It cannot grant access to any renderer-supplied path.
+func (s *Store) Directory(id, name string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p, ok := s.items[id]
+	if !ok {
+		return errors.New("save session expired")
+	}
+	if !p.folder || !SafeRelative(name) {
+		return errors.New("unsafe or unsupported restoration directory")
+	}
+	root, err := os.OpenRoot(p.temp)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+	return root.MkdirAll(filepath.FromSlash(name), 0700)
+}
+
 func (s *Store) Append(id, name, encoded string, first bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

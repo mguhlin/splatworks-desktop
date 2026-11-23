@@ -18,12 +18,13 @@ source+='\nlet desktopSavedState = "";\nfunction desktopDocumentState(){return J
 await writeFile(pdf,source);
 const cipher=resolve(root,'solutions/CipherSplat/app.js');
 source=await readFile(cipher,'utf8');
-source=replaceOnce(source,'async function downloadResult(){','async function downloadResult(){if(globalThis.SplatDesktop){try{const details={tool:"ciphersplat",stamp:desktopCipherStamp(),complete:true};const ok=resultFiles.length?await SplatDesktop.saveFolder(resultFiles,details):await SplatDesktop.saveBlob(resultBlob,resultName,details);if(!ok)els.error.textContent="Save cancelled. Your result is still available.";}catch(error){els.error.textContent="Save failed: "+error.message;}return;}');
+source=replaceOnce(source,'async function downloadResult(forceZIP=false){','async function downloadResult(forceZIP=false){if(globalThis.SplatDesktop){try{const details={tool:"ciphersplat",stamp:desktopCipherStamp(),complete:true};const ok=resultFiles.length||resultDirectories.length?await SplatDesktop.saveFolder(resultFiles,details,resultDirectories):await SplatDesktop.saveBlob(resultBlob,resultName,details);if(!ok)els.error.textContent="Save cancelled. Your result is still available.";else {els.error.textContent="";document.getElementById("statusCopy").textContent="Saved successfully. Your result remains available for another copy.";}}catch(error){els.error.textContent="Save failed: "+error.message;}return;}');
+source=replaceOnce(source,'function setEntries(entries){return autoSelectEntries(entries)}','async function setEntries(entries){if(globalThis.SplatDesktop&&!await SplatDesktop.confirmReplace("ciphersplat"))return;return autoSelectEntries(entries)}');
 source=replaceOnce(source,'function resetResult(){','function resetResult(){desktopCipherGeneration++;');
 // Generation counters prevent saving an earlier crypto result from clearing a
 // newer unsaved result; no secret or plaintext is written to preferences.
 source='let desktopCipherGeneration=0,desktopCipherTextRevision=0,desktopCipherSaved="";\n'+source;
-source+='\nels.text.addEventListener("input",()=>{desktopCipherTextRevision++;});\nfunction desktopCipherStamp(){return JSON.stringify({generation:desktopCipherGeneration,textRevision:desktopCipherTextRevision,hasResult:!!resultBlob||!!resultFiles.length});}\nglobalThis.SplatDesktop?.registerWorkspace("ciphersplat",{isDirty:()=>!!(els.text.value||resultBlob||resultFiles.length)&&desktopCipherStamp()!==desktopCipherSaved,stamp:desktopCipherStamp,markSaved:stamp=>{desktopCipherSaved=stamp;}});\n';
+source+='\nels.text.addEventListener("input",()=>{desktopCipherTextRevision++;});\nfunction desktopCipherStamp(){return JSON.stringify({generation:desktopCipherGeneration,textRevision:desktopCipherTextRevision,hasResult:!!resultBlob||!!resultFiles.length});}\nglobalThis.SplatDesktop?.registerWorkspace("ciphersplat",{isDirty:()=>!!(els.text.value||selectedEntries.length||resultBlob||resultFiles.length||resultDirectories.length)&&desktopCipherStamp()!==desktopCipherSaved,stamp:desktopCipherStamp,markSaved:stamp=>{desktopCipherSaved=stamp;}});\n';
 await writeFile(cipher,source);
 
 function walk(node,ancestors,visit){
@@ -32,9 +33,10 @@ function walk(node,ancestors,visit){
   const next=node.type?[...ancestors,node]:ancestors;
   for(const [key,value] of Object.entries(node)){if(key==='start'||key==='end')continue;if(Array.isArray(value)){for(const item of value)walk(item,next,visit);}else if(value&&typeof value==='object')walk(value,next,visit);}
 }
-for(const path of [cipher,...(await readdir(resolve(root,'solutions/pdfsplat/src'))).filter(n=>n.endsWith('.js')&&!['webdeck-runtime.js','boot.js','ocr-worker.js'].includes(n)).map(n=>resolve(root,'solutions/pdfsplat/src',n))]){
+const cipherHelpers=['browser.js','restore.js','pgp-ui.js'].map(n=>resolve(root,'solutions/CipherSplat',n));
+for(const path of [cipher,...cipherHelpers,...(await readdir(resolve(root,'solutions/pdfsplat/src'))).filter(n=>n.endsWith('.js')&&!['webdeck-runtime.js','boot.js','ocr-worker.js'].includes(n)).map(n=>resolve(root,'solutions/pdfsplat/src',n))]){
   source=await readFile(path,'utf8');
-  const ast=parse(source,{ecmaVersion:'latest',sourceType:path===cipher?'script':'module'}),edits=[],functions=new Set();
+  const ast=parse(source,{ecmaVersion:'latest',sourceType:path===cipher||cipherHelpers.includes(path)?'script':'module'}),edits=[],functions=new Set();
   walk(ast,[],(node,ancestors)=>{
     if(node.async&&node.body?.type==='BlockStatement')functions.add(node);
     // Mozilla's documented mitigation for CVE-2024-4367. Apply it to every
@@ -62,7 +64,11 @@ for(const path of [cipher,...(await readdir(resolve(root,'solutions/pdfsplat/src
     edits.push([fn.body.end-1,fn.body.end-1,'}finally{__desktopDone?.();}']);
   }
   for(const [start,end,value] of edits.sort((a,b)=>b[0]-a[0]))source=source.slice(0,start)+value+source.slice(end);
-  parse(source,{ecmaVersion:'latest',sourceType:path===cipher?'script':'module'});
+  parse(source,{ecmaVersion:'latest',sourceType:path===cipher||cipherHelpers.includes(path)?'script':'module'});
   await writeFile(path,source);
 }
+const browser=resolve(root,'solutions/CipherSplat/browser.js');
+source=await readFile(browser,'utf8');
+source+='\ndocument.addEventListener("DOMContentLoaded",()=>document.getElementById("closeWorkspaceHelp").addEventListener("click",()=>document.getElementById("workspaceHelp").close()));\n';
+await writeFile(browser,source);
 console.log('Adapted desktop save completion, unsaved work, and async operation tracking.');

@@ -88,9 +88,10 @@ test('two offline workspaces retain open PDFs and export a valid edited copy',as
 test('CipherSplat packages open in PDFsplat and reject modified bytes',async({page})=>{
   await page.goto('/#ciphersplat');const cipher=page.frameLocator('#tool-ciphersplat');
   await cipher.locator('#password').fill('desktop compatibility test password');
+  const download=page.waitForEvent('download');
   await cipher.locator('#fileInput').setInputFiles({name:'handout.pdf',mimeType:'application/pdf',buffer:await sourcePDF()});
-  await cipher.locator('#runButton').click();await expect(cipher.locator('#resultTitle')).toContainText('Encryption complete');
-  const download=page.waitForEvent('download');await cipher.locator('#downloadResult').click();const file=await download;
+  await expect(cipher.locator('#resultTitle')).toContainText('Encryption complete');
+  const file=await download;
   const bytes=await require('fs/promises').readFile(await file.path());expect(bytes.subarray(0,8).toString()).toBe('CSPCS4!!');
   await page.getByRole('button',{name:'PDFsplat',exact:true}).click();const pdf=page.frameLocator('#tool-pdfsplat');
   await editorReady(pdf);
@@ -110,15 +111,16 @@ test('desktop adapter streams saves and folder paths through native capabilities
     window.__writes=[];window.__commits=0;
     window.go={main:{App:{Version:async()=> 'test',SmokeEnabled:async()=>false,
       BeginSave:async name=>{window.__name=name;return 'save-token'},
-      BeginFolderRestore:async()=> 'folder-token',AppendSave:async(...args)=>window.__writes.push(args),
+      BeginFolderRestore:async()=> 'folder-token',AppendSaveDirectory:async(id,path)=>{window.__directory=path},AppendSave:async(...args)=>window.__writes.push(args),
       FinishSave:async()=>{window.__commits++;return 'saved-output'},CancelSave:async()=>{},OpenExternal:async()=>{},ToggleFullscreen:async()=>{}}}};
   });
   await page.goto('/');await expect(page.locator('#desktopVersion')).toHaveText('vtest');
   await page.evaluate(async()=>{
     const bytes=new Uint8Array(2*1024*1024+17);bytes.fill(65);await SplatDesktop.saveBlob(new Blob([bytes]),'large.pdf');
-    await SplatDesktop.saveFolder([{path:'classroom/empty.txt',blob:new Blob([])},{path:'classroom/notes.txt',blob:new Blob(['notes'])}]);
+    await SplatDesktop.saveFolder([{path:'classroom/empty.txt',blob:new Blob([])},{path:'classroom/notes.txt',blob:new Blob(['notes'])}],undefined,['classroom/empty-directory']);
   });
   const result=await page.evaluate(()=>({name:__name,writes:__writes.map(([token,path,data,first])=>({token,path,size:atob(data).length,first})),commits:__commits}));
+  expect(await page.evaluate(()=>__directory)).toBe('classroom/empty-directory');
   expect(result.name).toBe('large.pdf');expect(result.writes.map(x=>x.size)).toEqual([1048576,1048576,17,0,5]);
   expect(result.writes[3]).toMatchObject({token:'folder-token',path:'classroom/empty.txt',first:true});expect(result.commits).toBe(2);
 });

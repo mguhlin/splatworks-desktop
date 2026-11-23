@@ -66,13 +66,14 @@
       } catch(error) { await backend.CancelSave(id);throw error; }
     });
   }
-  async function saveFolder(files,details) {
+  async function saveFolder(files,details,directories=[]) {
     if (!backend) throw Error('Native folder restoration requires the desktop window.');
     return enqueue(async () => {
       say('Choose where to restore the folder…');
       const id=await backend.BeginFolderRestore();
       if (!id) { say('Folder restoration cancelled.');return false; }
       try {
+        for (const path of directories) await backend.AppendSaveDirectory(id,path);
         for (const item of files) { say('Restoring '+item.path+'…');await append(id,item.blob,item.path); }
         const folder=await backend.FinishSave(id);saved(details);say('Restored '+files.length+' file(s) into '+folder);return true;
       } catch(error) { await backend.CancelSave(id);throw error; }
@@ -99,7 +100,16 @@
   async function openLink(raw) {
     const url=new URL(raw,location.href);
     const tool=tools.find(t=>url.origin===location.origin&&url.pathname.startsWith(t.path));
-    if (tool) { selectTool(tool.id,url.hash);return; }
+    if (tool) {
+      selectTool(tool.id,url.hash);
+      if(tool.id==='ciphersplat'){
+        const frame=frames.get(tool.id);if(!frame.contentWindow?.CipherSplatWorkspace)await new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+        const workspace=frame.contentWindow.CipherSplatWorkspace;
+        if(url.pathname.endsWith('/help.html'))workspace?.showHelp();
+        else await workspace?.switchMode(url.pathname.endsWith('/openpgp.html')?'openpgp':'password');
+      }
+      return;
+    }
     if (url.origin===location.origin && (/\/docs\//.test(url.pathname)||/LICENSE|NOTICE/.test(url.pathname))) { help.showModal();return; }
     if (url.protocol==='https:') {
       if (backend) await backend.OpenExternal(url.href);else window.open(url.href,'_blank','noopener');
@@ -107,16 +117,17 @@
       await openLink('https://splatworks.org'+url.pathname+url.search+url.hash);
     }
   }
+  const showHelp=()=>{const workspace=active==='ciphersplat'&&frames.get(active)?.contentWindow?.CipherSplatWorkspace;if(workspace)workspace.showHelp();else help.showModal();};
   const bridge={get onlineEnabled(){return online;},registerCommands:(id,actions)=>commands.set(id,actions),command:(id,name)=>{const action=commands.get(id)?.[name];if(!action)return false;void action();return true;},saveBlob,saveFolder,selectTool,selectIndex:index=>{if(tools[index])selectTool(tools[index].id);},openLink,beginOperation,confirmReplace,requestClose,changed,
     toolId:path=>tools.find(tool=>path.startsWith(tool.path))?.id,
     get profile(){return info;},
     registerWorkspace:(id,workspace)=>{workspaces.set(id,workspace);changed(id);},
     get dirty(){return dirtyTools();},get busy(){return operations>0;},
-    help:()=>help.showModal(),status:say,fullscreen:()=>backend?.ToggleFullscreen(),get native(){return !!backend},get active(){return active},get frames(){return frames}};
+    help:showHelp,status:say,fullscreen:()=>backend?.ToggleFullscreen(),get native(){return !!backend},get active(){return active},get frames(){return frames}};
   window.SplatDesktop=bridge;
   document.getElementById('settingsButton').onclick=()=>document.getElementById('settingsDialog').showModal();
   document.getElementById('optionalOnline').onchange=async event=>{const input=event.target;input.disabled=true;try{await backend.SetOnlineEnabled(input.checked);online=input.checked;document.getElementById('onlineStatus').textContent=online?'Optional online connections enabled.':'Optional online connections off.';}catch(error){online=!!await backend?.OnlineEnabled?.();input.checked=online;document.getElementById('onlineStatus').textContent=error.message;}finally{input.disabled=!backend;}};
-  document.getElementById('helpButton').onclick=()=>help.showModal();
+  document.getElementById('helpButton').onclick=showHelp;
   document.addEventListener('click',event=>{
     const a=event.target.closest('a[href]');if(!a)return;
     if(a.hash==='#pdfsplat'&&a.origin===location.origin){event.preventDefault();selectTool('pdfsplat');return;}
@@ -124,7 +135,7 @@
   });
   document.addEventListener('keydown',event=>{
     if((event.ctrlKey||event.metaKey)&&!event.altKey&&!event.shiftKey&&['s','o'].includes(event.key.toLowerCase())&&!document.querySelector('dialog[open]')){if(bridge.command(active,event.key.toLowerCase()==='s'?'save':'open'))event.preventDefault();}
-    if(event.key==='F1'){event.preventDefault();help.showModal();}
+    if(event.key==='F1'){event.preventDefault();showHelp();}
     if((event.ctrlKey||event.metaKey)&&event.key==='1'){event.preventDefault();bridge.selectIndex(0);}
     if((event.ctrlKey||event.metaKey)&&event.key==='2'){event.preventDefault();bridge.selectIndex(1);}
   });

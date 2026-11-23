@@ -52,16 +52,15 @@
     await wait(()=>typeof desktop.frames.get('ciphersplat')?.contentWindow?.runRequested==='function','CipherSplat startup');
     const cipher=desktop.frames.get('ciphersplat').contentWindow;
     cipher.document.getElementById('password').value='synthetic smoke test password';
-    cipher.setEntries([{file:new cipher.File([await edited.blob.arrayBuffer()],'desktop-lesson.pdf',{type:'application/pdf'}),path:'desktop-lesson.pdf'}]);
-    await cipher.runRequested();
+    await cipher.setEntries([{file:new cipher.File([await edited.blob.arrayBuffer()],'desktop-lesson.pdf',{type:'application/pdf'}),path:'desktop-lesson.pdf'}]);
     check(!cipher.document.getElementById('errorMessage').textContent,'CipherSplat encrypts with bundled Argon2id worker');
-    await cipher.downloadResult();
     await wait(()=>saved.some(item=>item.name==='desktop-lesson.pdf.csplat'),'native encrypted package save');
     const encrypted=saved.find(item=>item.name==='desktop-lesson.pdf.csplat');
     check(await encrypted.blob.slice(0,8).text()==='CSPCS4!!','CipherSplat preserves the CS4 package format');
     cipher.document.getElementById('password').value='synthetic smoke test password';
     const unlocked=await cipher.decryptFilesChunked(new cipher.File([await encrypted.blob.arrayBuffer()],'desktop.csplat'));
-    const originalBytes=new Uint8Array(await edited.blob.arrayBuffer()),restoredBytes=new Uint8Array(await unlocked.files[0].blob.arrayBuffer());
+    const archive=await cipher.CipherSplatArchives.unpack(unlocked.files[0].blob);
+    const originalBytes=new Uint8Array(await edited.blob.arrayBuffer()),restoredBytes=new Uint8Array(await archive.files[0].blob.arrayBuffer());
     check(restoredBytes.length===originalBytes.length&&restoredBytes.every((value,index)=>value===originalBytes[index]),'CS4 decrypt restores the original PDF bytes');
     const tampered=new Uint8Array(await encrypted.blob.arrayBuffer());tampered[tampered.length-1]^=1;
     let rejected=false;try{await cipher.decryptFilesChunked(new cipher.File([tampered],'bad.csplat'));}catch{rejected=true;}
@@ -73,12 +72,12 @@
     for(const bytes of [new Uint8Array(await encrypted.blob.slice(0,-1).arrayBuffer()),new cipher.Uint8Array([...(new Uint8Array(await encrypted.blob.arrayBuffer())),1])]){
       let refused=false;try{await cipher.decryptFilesChunked(new cipher.File([bytes],'invalid.csplat'));}catch{refused=true;}check(refused,'truncated or appended CS4 records are rejected');
     }
-    check(await desktop.saveFolder([{path:'classroom/lesson.pdf',blob:unlocked.files[0].blob},{path:'classroom/empty.txt',blob:new Blob([])}]),'native folder restoration preserves nested paths and empty files');
+    check(await desktop.saveFolder([{path:'classroom/lesson.pdf',blob:archive.files[0].blob},{path:'classroom/empty.txt',blob:new Blob([])}],undefined,['classroom/empty-directory']),'native folder restoration preserves nested paths and empty files');
     const textBytes=new cipher.TextEncoder().encode('Private note: español 日本語');
     const textPackage=await cipher.encryptData(textBytes,'text','note.txt',[]);const textOpen=await cipher.decryptData(textPackage);
     check(new cipher.TextDecoder().decode(textOpen.data)==='Private note: español 日本語','Unicode text vault round trip preserves exact plaintext');
     const keys=await cipher.openpgp.generateKey({type:'ecc',curve:'p256',userIDs:[{name:'Synthetic desktop test'}],passphrase:'synthetic key passphrase',format:'armored'});
-    cipher.selectMode(cipher.document.getElementById('textTab'));cipher.setCryptoMethod('openpgp');cipher.setOperation('encrypt');
+    cipher.detectTextIntent();cipher.setCryptoMethod('openpgp');cipher.setOperation('encrypt');
     cipher.document.getElementById('textInput').value='OpenPGP desktop round trip';cipher.document.getElementById('pgpKeyInput').value=keys.publicKey;
     await cipher.runRequested();await cipher.downloadResult();
     const pgp=saved.find(item=>item.name==='encrypted-message.asc');check(!!pgp&&pgp.ok,'OpenPGP text encryption saves through native output');
