@@ -1,81 +1,86 @@
 # SplatWorks Desktop development handoff
 
-The fourteen-app Home chooser and media integration are implemented for the next
-candidate. The verified public baseline remains `v1.0.0-rc.14` until the new
-candidate's native workflow and public package checks finish. Standalone packages
-remain `tools-v1.0.0-rc.5`.
-
-Home starts without loading an editor, places all fourteen apps around the central
-SplatWorks logo, and retains mounted workspaces on return. GIFsplat, QRSplat,
-ImageSplat, AudioSplat, VideoSplat and MediaSplat join the existing eight apps.
-ImageSplat includes the pinned Fast model/runtime in `core-assets-manifest.json`.
-Media imports/builds stay isolated from the browser checkout; MediaSplat native
-adapters use awaited saves, output drafts, close/replacement warnings and explicit
-256 MiB input / 512 MiB output limits. The shared native smoke now exercises all
-fourteen apps and actual exports. Build-runner checks do not qualify physical
-file pickers, accessibility, recording or hardware codecs.
-
-## Previous public baseline
+The fourteen-app suite is published as `v1.0.0-rc.15`, source `a8f75bd`.
+The six smaller standalone packages remain `tools-v1.0.0-rc.5`, source `ef4bf55`.
+Stable publisher signing and physical-device qualification remain open.
 
 ## Published candidates
 
-| Distribution | Release | Build source | Automated delivery |
-| --- | --- | --- | --- |
-| Eight-app suite | [v1.0.0-rc.14](https://github.com/mguhlin/splatworks-desktop/releases/tag/v1.0.0-rc.14) | `4d6e709` | [Successful workflow](https://github.com/mguhlin/splatworks-desktop/actions/runs/45242637093) |
-| Six standalone apps | [tools-v1.0.0-rc.5](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v1.0.0-rc.5) | `ef4bf55` | [Successful workflow](https://github.com/mguhlin/splatworks-desktop/actions/runs/45225214790) |
+| Distribution | Release | Verified workflow |
+| --- | --- | --- |
+| Fourteen-app suite | [v1.0.0-rc.15](https://github.com/mguhlin/splatworks-desktop/releases/tag/v1.0.0-rc.15) | [Release checks and delivery](https://github.com/mguhlin/splatworks-desktop/actions/runs/45268392420) |
+| Six standalone apps | [tools-v1.0.0-rc.5](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v1.0.0-rc.5) | [Release checks and delivery](https://github.com/mguhlin/splatworks-desktop/actions/runs/45225214790) |
 
-Combined apps: ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat,
-PDFsplat and CipherSplat. Standalones: GIFsplat, CipherSplat, QRSplat, ImageSplat,
-AudioSplat and VideoSplat. The Mac packages are universal; native execution ran
-on Intel build runners, not Apple-silicon hardware.
+Home starts without loading an editor. All fourteen app choices surround the
+central SplatWorks logo; a compact grid fits small screens. Home and app switching
+retain mounted workspaces, unsaved state and active operations. Deep links can
+open a specific tool. Single-app profiles still open their own editor directly.
 
-## Core integration
+The suite includes ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat,
+PlanSplat, PDFsplat, CipherSplat, GIFsplat, QRSplat, ImageSplat, AudioSplat,
+VideoSplat and MediaSplat. ImageSplat bundles the pinned Fast model and runtime.
+MediaSplat has native output/ZIP saves, independent output drafts, replacement
+and close warnings, retryable cancelled/failed saves, and snapshot tracking that
+preserves newer settings and subtitle-file changes. Input media is limited to
+256 MiB in total and output to 512 MiB. Audio/Video retain portable project saves.
+Speech models are optional explicit downloads or local files; online connections
+default off. No automatic document, credential or recovery persistence is allowed.
 
-The suite imports committed DrawSplat `ccaad8a`. The Apps chooser retains mounted
-documents and the app uses the SplatWorks icon. Native project saves protect
-newer edits, cancelled/failed writes, import replacement and unfinished planner
-forms. Known cross-app office formats move in memory. Desktop drafts and service
-workers do not persist document content. Chart/image data-URL exports use native
-destination dialogs. Suite Help preserves edited work.
+## Source ownership and rebuilds
 
-ShowSplat Present explicitly saves WebDeck HTML for presentation in a browser.
-Printing uses exported HTML/PDF in a browser; cloud-account workflows use browser
-editions. Grid project files preserve sheet data, formulas and formatting; chart
-appearance needs a separate image export. See `docs/OFFICE.md` for support limits.
-Browser editions retain their browser saving and offline behavior. PlanSplat's
-worker caches the new shared adapter for offline reloads.
+Browser apps live in the sibling `drawsplat_github` repository. Keep adapters here.
+The registry and bundled `frontend/tools.json` must stay identical with unique IDs.
 
-The importer now selects committed source inputs and excludes developer caches.
-An ignored Python bytecode entry caused the rc.12 integrity gate to fail before
-publication. Superseded candidates were cancelled; no failed candidate's packages
-were promoted on the website. Keep source/browser changes upstream, commit them,
-and import an explicit checkout with `scripts/sync-tools.py`.
+- `scripts/sync-tools.py` imports committed office/PDF/Cipher inputs, retaining
+  snapshot ownership separately from small/media apps. Office snapshot: `ccaad8a`.
+- `scripts/sync-small-tools.py` imports GIF/QR/Image and embedded helpers.
+- `scripts/sync-media-tools.py` builds Audio/Video/Media in isolation from the
+  explicit browser checkout; `adapt-media-tools.mjs`, `adapt-mediasplat.mjs` and
+  `scripts/media/` apply desktop boundaries. Media snapshot: `eed7b56`.
+- `scripts/prepare-core-assets.py` verifies the pinned AI model and bundles its
+  runtime, licenses and `core-assets-manifest.json`. Never fetch app code at runtime.
+- `scripts/check-assets.py` checks all four manifests, 1790 hashes, local engines,
+  entry points and icons. Import committed files only; ignored developer caches
+  previously caused an integrity failure before publication.
+
+Office project saving/reopening, in-memory file handoffs, native chart/image
+exports and Help remain qualified. Grid projects preserve sheet data, formulas
+and formatting; save chart appearance as an image. ShowSplat explicitly saves
+WebDeck HTML for browser presentation. Print exported HTML/PDF in a browser;
+cloud-account workflows use browser editions. See `docs/OFFICE.md`.
 
 ## Evidence
 
-- 134 Chromium/WebKit checks passed in release CI, including all six office
-  project saves, reopen/browser interoperability, cancellation, late results,
-  unsaved decisions, no persistent drafts, exports, navigation and Help.
-- All three native platforms passed 58 smoke checks with real Go writes, plus
-  Windows install/upgrade/uninstall, Linux install/removal, Mac archive/disk-image
-  and universal-architecture checks. Linux native execution ran without networking.
-- All 1579 snapshot/runtime hashes passed. Five Python packaging tests and Go
-  transfer race tests passed. Every core manifest path exists in Git.
-- All 14 distribution files matched the public GitHub sizes and SHA-256 digests.
-  Public sidecars, the WebView2 manifest and Linux archive were fetched directly;
-  Windows/Mac package bytes came from CI and matched their public release digests.
-- The downloaded Linux runtime served its production security policy and passed
-  64 Chromium/WebKit office, PDF, CipherSplat and lifecycle checks. This loopback
-  verification uses browser automation; native webviews were exercised in CI.
-- The six standalone packages retain their earlier qualification: all 84 files
-  matched official metadata/checksums and all platforms passed native/package CI.
+- The exact candidate passed 150 Chromium/WebKit checks. One initial five-second
+  CipherSplat cancellation assertion timed out; ten local WebKit repetitions and
+  the full same-source CI rerun passed. Native encryption checks also passed.
+- Each platform passed 157 native checks with actual Go output files and all
+  fourteen engines. Linux native execution ran with networking disabled.
+- Windows install/upgrade/uninstall, Linux install/removal and Mac archive/DMG
+  integrity and universal-architecture checks passed. Mac native execution used
+  Intel build runners; Apple-silicon physical qualification remains open.
+- Go transfer race tests, policy tests, vulnerability scanning and five Python
+  packaging tests passed in CI. Snapshot and engine hashes passed.
+- All fourteen release files match public GitHub sizes/digests and SHA-256 sidecars.
+  Linux/Windows package bytes came from the tagged CI artifacts; public sidecars
+  and both Mac distributions were downloaded directly. Mac hashes also match
+  checksum records read from its qualified CI artifact.
+- The downloaded Linux binary served the production security policy and passed
+  another 80 Chromium/WebKit office/PDF/Cipher/home/media interface checks.
+  These use loopback browser automation; native webviews were exercised in CI.
+- Standalones retain their earlier qualification: 84 files verified against
+  public metadata/checksums, with all native/platform checks passing.
 
-Ignored evidence is under `output/native-proof/`, `output/pre-release/` and
-`output/public/`; the public verification receipt is
-`output/public/v1.0.0-rc.14-verified.json`. Public downloads and the short guide are
-maintained in the sibling checkout's `data/desktop-apps.json` and
-`docs/desktop-apps.md`. School privacy/agreement resources are at
-https://splatworks.org/schools/ . Preserve the user's unrelated untracked
+Ignored receipts are under `output/native-proof/rc15/`, `output/pre-release/` and
+`output/public/v1.0.0-rc.15-verified.json`. The local runtime used isolated WebKit
+libraries in `output/toolchain/host-runtime/` for the loopback check. Go 1.27.4
+and Wails 2.17.1 are available; pkg-config and GTK/WebKit development headers are
+absent, so native compilation and package installation ran in CI.
+
+The website catalogue and short guide live in `data/desktop-apps.json` and
+`docs/desktop-apps.md` in the sibling checkout. Both explain the Home chooser,
+fourteen apps and further desktop work. School privacy/agreement resources stay
+at https://splatworks.org/schools/ . Preserve the user's unrelated untracked
 `pages/audit_instructions.md` in that checkout.
 
 ## CipherSplat and PDF compatibility
@@ -89,16 +94,12 @@ during page edits, and local English/Spanish OCR. Covers are not secure redactio
 
 ## Qualification boundaries
 
-| Gate | Result and limits |
-| --- | --- |
-| Task/design/accessibility | Automated editing, save/reopen, cancellation and keyboard paths PASS; real screen-reader, native-picker and touch qualification NOT_RUN. |
-| Privacy/education applicability | Exercised local processing, explicit saving and connection controls PASS; institution-specific deployment review is separate. |
-| Security boundaries | Native capability, lifecycle and integrity checks PASS; not a complete security audit. |
-| Recoverable delivery | Candidate builds, native/platform checks, package integrity and publication PASS; publisher signing and physical approval NOT_RUN. |
+Automated editing, native saves, lifecycle, package integrity and delivery checks
+PASS. Actual file pickers, screen readers, touch, capture/recording permissions,
+representative physical devices, publisher signing and notarization remain
+NOT_RUN. The security checks are scoped evidence, not a complete security audit;
+school deployment still requires institution-specific review.
 
 Decision: CONDITIONAL for unsigned evaluation candidates. Do not publish stable
-releases or set physical-approval flags without the evidence in `docs/SIGNING.md`
-and `docs/VALIDATION.md`. Never persist documents, credentials or recovery copies
-automatically. Go 1.27.4 and Wails 2.17.1 are installed here; GTK/WebKit development
-headers and pkg-config are absent. Source/browser and downloaded loopback checks
-ran here; native builds and installation/archive checks ran in CI.
+releases or set physical-approval flags without evidence from `docs/SIGNING.md`
+and `docs/VALIDATION.md`. Never promote a candidate merely by dropping its suffix.
