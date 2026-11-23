@@ -1,10 +1,12 @@
 This preview fixes VideoSplat recording permissions in the combined desktop app
 and gives its fourteen apps a consistent interface.
 
+- Recording and cropping use MP4 when the system webview supports it instead of WebM, with matching file names.
+- Linux packages install the GStreamer recording plugins required by WebKit.
 - Linux camera/microphone requests now receive a native consent dialog instead of being silently denied. Device information remains unavailable until consent is granted.
 - VideoSplat can open the recorder before optional device setup, so choosing a recording mode does not require a camera and microphone together. Denied access has clear retry and system-settings guidance.
 - Office apps share GridSplat's purple, orange, white and lavender palette. Tool apps share AudioSplat's DrawSplat™ Tools label and rainbow band. Each app retains its controls, icons, layouts and document colors.
-- Native Linux checks exercise denied access, retry, synthetic camera/microphone capture, actual WebM encoding and saving. Physical devices, OS privacy settings and screen-sharing support still require platform qualification.
+- Native Linux checks exercise denied access, retry, synthetic camera/microphone capture, actual video encoding and saving. Physical devices, OS privacy settings and screen-sharing support still require platform qualification.
 
 SplatWorks Desktop now brings fourteen apps together for Windows, Mac, and Linux:
 **ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat, PDFsplat,

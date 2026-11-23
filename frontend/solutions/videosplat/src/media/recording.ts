@@ -39,3 +39,7 @@ export function recordingResult(recorder: MediaRecorder, mimeType: string): Prom
   void result.catch(() => {});
   return result;
 }
+
+export function supportedCaptureType(includeAudio=true) {
+  return supportedRecordingType(includeAudio) || (typeof MediaRecorder!=="undefined" ? ['video/mp4',includeAudio ? 'video/mp4;codecs=avc1.420033,mp4a.40.2' : 'video/mp4;codecs=avc1.420033'].find(type=>MediaRecorder.isTypeSupported(type)) : undefined);
+}

@@ -3,7 +3,7 @@ window.SplatMediaSmokeRunner=async function(id){
  const desktop=SplatDesktop,app=go.main.App,checks=[],errors=[],saved=[];
  const wait=async(fn,label)=>{const at=Date.now();while(!fn()){if(Date.now()-at>120000)throw Error('Timed out: '+label);await new Promise(r=>setTimeout(r,75));}};
  const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
- const report=async(passed,error)=>({passed,profile:id,checks,errors,error:error?String(error.stack||error):null});
+ const report=async(passed,error)=>({passed,profile:id,checks,errors,error:error?String(error.message||error)+'\n'+String(error.stack||''):null});
  const deadline=setTimeout(()=>void report(false,Error('Media smoke deadline')),210000);
  const original=desktop.saveBlob;desktop.saveBlob=async(blob,name,details)=>{const ok=await original(blob,name,details);saved.push({blob,name,ok});return ok;};
  try{
@@ -23,16 +23,18 @@ window.SplatMediaSmokeRunner=async function(id){
     try{const stream=await win.navigator.mediaDevices.getUserMedia({video:true,audio:true});stream.getTracks().forEach(track=>track.stop());}catch(reason){denied=reason.name==='NotAllowedError';}
     check(denied,'native denied device permission produces a recoverable rejection');
     await app.SetSmokeMediaAllowed(true);
-    let stream;
+    await wait(()=>win.SplatMediaSmoke,'bundled recorder test API');
+    let recording;
     try{
-     stream=await Promise.race([win.navigator.mediaDevices.getUserMedia({video:true,audio:true}),new Promise((_,reject)=>setTimeout(()=>reject(Error('Native device permission timed out')),20000))]);
+     recording=await win.SplatMediaSmoke.capture({mode:'camera',microphone:true,systemAudio:false,width:80,height:60,frameRate:30,countdownSeconds:0},doc.createElement('canvas'));
+     const stream=recording.previewStream;
      check(stream.getVideoTracks().some(track=>track.readyState==='live')&&stream.getAudioTracks().some(track=>track.readyState==='live'),'native permission retry opens synthetic camera and microphone');
-     const mime=['video/webm;codecs=vp8,opus','video/webm'].find(type=>win.MediaRecorder?.isTypeSupported(type));check(!!mime,'native recording encoder is available');
-     const recorder=new win.MediaRecorder(stream,{mimeType:mime}),parts=[];
-     const result=new Promise((resolve,reject)=>{recorder.ondataavailable=event=>{if(event.data.size)parts.push(event.data)};recorder.onstop=()=>resolve(new Blob(parts,{type:mime}));recorder.onerror=()=>reject(Error('Native MediaRecorder failed'));});
-     recorder.start(100);await new Promise(resolve=>setTimeout(resolve,1000));recorder.stop();const blob=await result;
-     check(blob.size>100,'native camera and microphone produce an actual WebM recording');check(await desktop.saveBlob(blob,'native-camera.webm'),'native recording saves through Go');
-    }finally{stream?.getTracks().forEach(track=>track.stop());}
+     check(recording.state==='recording','native recording encoder is available');
+     await new Promise(resolve=>setTimeout(resolve,3000));const blob=await Promise.race([recording.stop(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Native recording did not finish')),20000))]);recording=undefined;
+     const preview=doc.createElement('video'),url=win.URL.createObjectURL(blob);preview.muted=true;preview.preload='auto';preview.style.cssText='position:fixed;width:1px;height:1px;opacity:0';doc.body.append(preview);preview.src=url;void preview.play().catch(()=>{});
+     try{preview.load();await wait(()=>preview.readyState>=2||preview.error,'recorded video decode');check(!preview.error&&preview.videoWidth>0,'native recording contains decodable video frames');}finally{preview.pause();preview.removeAttribute('src');preview.load();preview.remove();win.URL.revokeObjectURL(url);}
+     check(blob.size>100,'native camera and microphone produce an actual recording');check(await desktop.saveBlob(blob,'native-camera.'+(blob.type.startsWith('video/mp4')?'mp4':'webm')),'native recording saves through Go');
+    }finally{recording?.cancel();}
    }
    await wait(()=>doc.querySelector('.splash-choice button:nth-child(2)'),'video editor ready');doc.querySelector('.splash-choice button:nth-child(2)').click();
    doc.querySelector('[aria-label="Record video"]').click();await wait(()=>doc.querySelector('#recorder-title'),'recorder dialog opens');check(!errors.length,'recorder dialog opens without hook errors');doc.querySelector('[aria-label="Close recorder"]').click();await wait(()=>!doc.querySelector('#recorder-title'),'recorder dialog closes');

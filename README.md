@@ -20,8 +20,9 @@ checksums. Stable releases require developer signing and physical-device
 validation approval; see [Signing](docs/SIGNING.md) and [Validation](docs/VALIDATION.md).
 
 - **Linux x86-64 (Debian 13 / Ubuntu 24.04 or newer):** use the `.deb`, or extract the `.tar.gz` and
-  run `SplatWorks-Desktop`. Requires GTK 3 and WebKitGTK 4.1. The Debian package
-  declares these dependencies so the package manager can install them.
+  run `SplatWorks-Desktop`. Requires GTK 3, WebKitGTK 4.1, and the GStreamer good/bad/ugly/libav plugin packages
+  for recording. The Debian package declares these dependencies so the package
+  manager can install them.
 - **Windows 11 x86-64:** run the `-setup.exe` installer. It installs for the current
   user, creates shortcuts and an uninstall entry, and includes Microsoft's full
   WebView2 runtime installer for machines that need it, including offline setup.

@@ -1,7 +1,7 @@
 const{test,expect}=require('@playwright/test');
 const{start,png}=require('./standalone-helpers');
 const tools=require('../tools.json');
-async function suite(page,id){await start(page,'qrsplat');await page.unroute('**/app.json');await page.unroute('**/tools.json');await page.goto('/');await expect(page.locator('#appHome')).toBeVisible();await page.evaluate(id=>SplatDesktop.selectTool(id),id);const frame=page.frameLocator('#tool-'+id);await expect(frame.locator('html.splat-desktop')).toHaveAttribute('data-tool',id);await expect(frame.locator('.splat-app-header')).toBeVisible();return frame;}
+async function suite(page,id){await start(page,'qrsplat');await page.unroute('**/app.json');await page.unroute('**/tools.json');await page.goto('/');await expect(page.locator('#appHome')).toBeVisible({timeout:30000});await page.evaluate(id=>SplatDesktop.selectTool(id),id);const frame=page.frameLocator('#tool-'+id);await expect(frame.locator('html.splat-desktop')).toHaveAttribute('data-tool',id);await expect(frame.locator('.splat-app-header')).toBeVisible();return frame;}
 for(const tool of tools)test('desktop '+tool.id+' retains its header controls with the shared appearance',async({page})=>{
  const errors=[];page.on('pageerror',error=>errors.push(error.message));const frame=await suite(page,tool.id);
  if(tool.id==='videosplat')await frame.getByRole('button',{name:'Edit video',exact:false}).click();

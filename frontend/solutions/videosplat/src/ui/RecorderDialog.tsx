@@ -189,7 +189,7 @@ export function RecorderDialog({ initialMicrophoneDeviceId = "", permissionsPrep
       const warning = await recordingWarning(blob, active.durationSeconds ?? elapsed).catch(() => "The saved recording could not be verified. Download the original recording before closing this window.");
       if (warning) setError(warning);
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const file = new File([blob], `VideoSplat-recording-${stamp}.webm`, { type: blob.type });
+      const file = new File([blob], `VideoSplat-recording-${stamp}.${blob.type.startsWith("video/mp4") ? "mp4" : "webm"}`, { type: blob.type });
       const url = URL.createObjectURL(file);
       setRecording(file);retain("recording");
       setRecordingUrl(url);
@@ -301,7 +301,7 @@ export function RecorderDialog({ initialMicrophoneDeviceId = "", permissionsPrep
     try {
       const blob = await cropRecording(recording, crop, setCropProgress, controller.signal);
       controller.signal.throwIfAborted();
-      const file = new File([blob], recording.name.replace(/\.webm$/i, "-clipsplat.webm"), { type: blob.type });
+      const file = new File([blob], recording.name.replace(/\.(webm|mp4)$/i, "-clipsplat."+(blob.type.startsWith("video/mp4") ? "mp4" : "webm")), { type: blob.type });
       const id = await saveTransfer(file, instagramFormat === "original" ? "reel" : instagramFormat, recording);
       const url = new URL("../clipsplat/", location.href);
       url.searchParams.set("videosplat-transfer", id);
@@ -334,7 +334,7 @@ export function RecorderDialog({ initialMicrophoneDeviceId = "", permissionsPrep
       controller.signal.throwIfAborted();
       const cropped = new File(
         [blob],
-        recording.name.replace(/\.webm$/i, "-cropped.webm"),
+        recording.name.replace(/\.(webm|mp4)$/i, "-cropped."+(blob.type.startsWith("video/mp4") ? "mp4" : "webm")),
         { type: blob.type },
       );
       await addRecording(cropped, "Cropped recording saved locally and added to the timeline");
@@ -502,7 +502,7 @@ export function RecorderDialog({ initialMicrophoneDeviceId = "", permissionsPrep
       <button className="primary wide" disabled={starting || !encoderAvailable || (mode === "camera" ? !cameraAvailable : !screenAvailable)} onClick={begin}>{starting ? (counting ? "Get ready…" : "Starting…") : "Start recording"}</button>
     </fieldset>}
     {!screenAvailable && <p>Screen sharing is unavailable in this browser. Use the camera or import a video recorded on your device.</p>}
-    {!encoderAvailable && <p role="alert">This browser cannot encode WebM recordings. You can still import and edit videos; use Chrome or Firefox on a computer to record and export.</p>}
+    {!encoderAvailable && <p role="alert">Recording is unavailable with this system's installed media codecs. You can still import and edit videos.</p>}
     {starting && <p role="status">{startupMessage}</p>}
     {(state === "recording" || state === "paused") && <div className="recorder-actions">
       <button onClick={() => { if (state === "recording") { session.current?.pause(); setState("paused"); } else { session.current?.resume(); setState("recording"); } }}>{state === "recording" ? "Pause" : "Resume"}</button>

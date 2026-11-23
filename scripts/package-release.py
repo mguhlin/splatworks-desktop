@@ -66,7 +66,8 @@ else:
     # The epoch lets stable releases upgrade legacy rc packages whose raw
     # hyphenated versions sorted after 1.0.0. Tilde sorts new previews first.
     deb_version=('1:' if appinfo['id']=='desktop' else '')+a.version.replace('-', '~', 1)
-    (deb/'DEBIAN/control').write_text(f'Package: {slug}\nVersion: {deb_version}\nArchitecture: amd64\nMaintainer: Miguel Guhlin <drawsplat@gmail.com>\nDepends: libgtk-3-0 (>= 3.24) | libgtk-3-0t64, libwebkit2gtk-4.1-0\nSection: utils\nPriority: optional\nHomepage: https://github.com/mguhlin/splatworks-desktop\nDescription: {appname} local desktop tools\n {appinfo["description"]}\n')
+    media_dependencies=', gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly, gstreamer1.0-libav' if appinfo['id']=='desktop' else ''
+    (deb/'DEBIAN/control').write_text(f'Package: {slug}\nVersion: {deb_version}\nArchitecture: amd64\nMaintainer: Miguel Guhlin <drawsplat@gmail.com>\nDepends: libgtk-3-0 (>= 3.24) | libgtk-3-0t64, libwebkit2gtk-4.1-0{media_dependencies}\nSection: utils\nPriority: optional\nHomepage: https://github.com/mguhlin/splatworks-desktop\nDescription: {appname} local desktop tools\n {appinfo["description"]}\n')
     app=deb/'opt'/slug;shutil.copytree(stage,app)
     bindir=deb/'usr/bin';bindir.mkdir(parents=True);(bindir/slug).symlink_to('/opt/'+slug+'/'+binary)
     desktop=deb/'usr/share/applications';desktop.mkdir(parents=True)

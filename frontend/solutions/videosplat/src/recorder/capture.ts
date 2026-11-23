@@ -1,8 +1,8 @@
 import { recordingResult } from "../media/recording";
 import { createChromaRenderer, type ChromaSettings } from "../render/chroma";
 import { FilesetResolver, ImageSegmenter, type ImageSegmenterResult } from "@mediapipe/tasks-vision";
-import { supportedRecordingType } from "../media/recording";
-export { supportedRecordingType } from "../media/recording";
+import { supportedCaptureType as supportedRecordingType } from "../media/recording";
+export { supportedCaptureType as supportedRecordingType } from "../media/recording";
 
 export type CaptureMode = "screen" | "camera" | "screen-camera";
 export type DisplaySurfacePreference = "browser" | "window" | "monitor";
@@ -175,7 +175,7 @@ export async function startCapture(
 ): Promise<CaptureSession> {
   if (!navigator.mediaDevices || !("MediaRecorder" in window))
     throw new Error("This browser does not support local screen and camera recording.");
-  if (!supportedRecordingType()) throw new Error("This browser cannot create a WebM recording.");
+  if (!supportedRecordingType(options.microphone || options.systemAudio)) throw new Error("This system cannot encode the selected recording tracks.");
 
   const wantsScreen = options.mode !== "camera";
   const wantsCamera = options.mode !== "screen";

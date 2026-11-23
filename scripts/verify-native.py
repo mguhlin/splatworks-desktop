@@ -67,7 +67,7 @@ if report.get('profile'):
     print(f'Native {profile} report and actual export files verified: {root}');sys.exit()
 assert len(report['checks'])>=130,report
 if sys.platform.startswith('linux'):
-    camera=(root/'native-camera.webm').read_bytes();assert camera[:4]==b'\x1aE\xdf\xa3' and len(camera)>100
+    camera=next(root.glob('native-camera.*')).read_bytes();assert len(camera)>100 and (camera[:4]==b'\x1aE\xdf\xa3' or camera[4:8]==b'ftyp')
     assert any('native permission retry opens synthetic camera' in check for check in report['checks'])
 import wave,struct,xml.etree.ElementTree as ET
 for tool in ['gifsplat','qrsplat','imagesplat','audiosplat','videosplat','mediasplat']:
