@@ -226,3 +226,17 @@ edit('solutions/videosplat/src/ui/App.tsx',text=>'import {useLayoutEffect} from 
 edit('solutions/videosplat/src/ui/ExportDialog.tsx',text=>text.replace('Saved to your Downloads folder','Saved to your chosen destination'));
 
 edit('solutions/audiosplat/src/main.ts',text=>text.replace('typeof source.id !== "string" ||', 'typeof source.id !== "string" || !source.id || typeof source.name!=="string" || typeof source.mimeType!=="string" || !Number.isInteger(source.channels) || source.channels<1 || source.channels>32 || !Number.isFinite(source.sampleRate) || source.sampleRate<8000 || source.sampleRate>192000 ||'));
+// Device setup is optional; a screen-only recording must not require a webcam.
+edit('solutions/videosplat/src/ui/App.tsx',text=>{
+ text=replace(text,'    setRequestingSplashPermissions(true);','    const desktopEnd=desktop.beginOperation();\n    setRequestingSplashPermissions(true);');
+ text=replace(text,'      setRequestingSplashPermissions(false);','      setRequestingSplashPermissions(false);desktopEnd();');
+ text=replace(text,'<li>Grant camera and microphone permission below.</li>','<li>Allow camera and microphone access, or choose a recording mode first.</li>');
+ text=replace(text,'<li>Select the exact microphone, then continue to the recorder.</li>','<li>Select your microphone, then continue. Screen-only recording does not need a camera.</li>');
+ text=replace(text,'          <div className="launch-splash-actions">\n            {!splashRecordingReady',`          <div className="launch-splash-actions">
+            {!splashRecordingReady && <button className="primary" disabled={requestingSplashPermissions} onClick={()=>{finishSplash();setDialog("recorder");setStatus("Choose a recording source. Device access is requested when you start.");}}>Choose recording mode first</button>}
+            {!splashRecordingReady`);
+ text=replace(text,'<button className="splash-back" onClick={() => {','<button className="splash-back" disabled={requestingSplashPermissions} onClick={() => {');
+ text=text.replace('Screen sharing is selected securely by your browser when each recording starts.','Choose camera, screen, and microphone options in the recorder. Availability depends on this computer.');
+ return text;
+});
+edit('solutions/videosplat/src/recorder/capture.ts',text=>replace(text,'Recording permission was not granted. VideoSplat only asks after you press Start recording.', 'Camera or microphone access was blocked. Choose Allow in the desktop permission prompt, or enable access for SplatWorks Desktop in your system privacy settings, then retry. You can also choose a recording mode and turn off devices you do not need.'));

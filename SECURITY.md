@@ -60,3 +60,13 @@ writer. Playback/import still decodes untrusted media using the platform codecs
 and bundled processing engines. Portable video projects validate the manifest and
 all embedded media sizes before replacing the session data. Large sources and
 codec limitations remain application constraints.
+
+## Desktop media permissions
+
+The Linux WebKitGTK adapter handles camera/microphone requests only while the
+main webview uses the bundled `wails://wails/` origin. Production requests use a
+native, deny-by-default dialog. Device information is released only after device
+consent in that webview session. Other permission classes retain their platform
+handling; remote top-level origins are denied. No device is opened at startup.
+The explicit command-line smoke session uses synthetic WebKit devices and guarded
+allow/deny controls. Production renderers cannot enable those test controls.

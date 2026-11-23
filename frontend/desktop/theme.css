@@ -1,0 +1,83 @@
+/* Shared desktop chrome, anchored to GridSplat and AudioSplat. Document styles stay owned by each editor. */
+:root.splat-desktop{
+ color-scheme:light;
+ --splat-surface:#fff;--splat-page:#fff;--splat-purple:#7c3aed;--splat-purple-dark:#5b21b6;--splat-violet:#a855f7;--splat-orange:#faa634;--splat-ink:#1f2937;--splat-muted:#6b7280;--splat-border:#ddd6fe;--splat-pale:#faf7ff;
+ --color-page:#fff;--color-surface:#fff;--color-surface-strong:#faf7ff;--color-text:#1f2937;--color-muted:#6b7280;--color-primary:#7c3aed;--color-primary-dark:#5b21b6;--color-secondary:#a855f7;--color-accent:#faa634;--color-border:#ddd6fe;--color-header:#f5f0ff;
+ --bg:#fff;--panel:#fff;--panel-2:#faf7ff;--surface:#fff;--soft:#faf7ff;--pale:#f5f0ff;--cream:#faf7ff;--ink:#1f2937;--text:#1f2937;--text-primary:#1f2937;--muted:#6b7280;--line:#ddd6fe;--border:#ddd6fe;--accent:#7c3aed;--primary:#7c3aed;--primary-dark:#5b21b6;--purple:#7c3aed;--purple-dark:#5b21b6;--purple-2:#a855f7;--violet:#a855f7;
+ --font-body:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+ color:var(--splat-ink);background:var(--splat-surface);
+}
+.splat-desktop body{background:var(--splat-surface);color:var(--splat-ink);font-family:var(--font-body)}
+.splat-desktop :is(button,select,input,textarea,summary){font-family:var(--font-body)}
+.splat-desktop :is(button,select,input,textarea,summary,a):focus-visible{outline:3px solid var(--splat-orange)!important;outline-offset:3px}
+.splat-desktop :is(input[type=checkbox],input[type=radio],input[type=range]){accent-color:var(--splat-purple)}
+.splat-desktop :is(.desktop-project-bar,.menu-bar,.menubar,.toolbar,.tool-strip,.ribbon,.statusbar,.app-footer,.formula-bar,.tabs-bar){background:var(--splat-pale)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important}
+.splat-desktop :is(.menu-panel,.menu-popover,.dropdown-menu,.dialog,.modal-content,dialog){background:var(--splat-surface)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important;border-radius:12px}
+.splat-desktop :is(.menu-panel,.menu-popover,.dropdown-menu,.dialog,.modal-content,dialog) :is(h1,h2,h3,label){color:var(--splat-ink)}
+.splat-desktop :is(.desktop-project-bar,.menu-bar,.menubar,.toolbar,.tool-strip,.ribbon,.menu-panel,.menu-popover,.dropdown-menu,.dialog,dialog,.splat-app-header) :is(button,summary):not([style*="background"]):not([data-color]):not(.swatch):not(.color-swatch):not(.danger):not(.record):not(.primary):not(.btn-primary):not([aria-pressed=true]){background:var(--splat-surface)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important;border-radius:8px}
+.splat-desktop :is(.desktop-project-bar,.menu-bar,.menubar,.toolbar,.tool-strip,.ribbon,.menu-panel,.dialog,dialog,.splat-app-header) button:hover:not(:disabled):not([style*="background"]):not([data-color]):not(.danger):not(.record){border-color:var(--splat-purple)!important}
+.splat-desktop :is(.primary,.btn-primary,.run-button,.download-all):not([style*="background"]){background:var(--splat-purple)!important;color:#fff!important;border-color:var(--splat-purple)!important;border-radius:8px}
+.splat-desktop :is(.toolbar,.tool-strip,.ribbon,.menu-bar) button[aria-pressed=true]{background:var(--splat-purple)!important;color:#fff!important;border-color:var(--splat-purple-dark)!important}
+.splat-desktop :is(input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]),select,textarea):not([style*="color"]){background:var(--splat-surface);color:var(--splat-ink);border-color:var(--splat-border);border-radius:8px}
+.splat-desktop .splat-app-header{border-color:var(--splat-border)!important}
+.splat-desktop[data-family=office] .splat-app-header{background:linear-gradient(90deg,#7c3aed,#a855f7)!important;color:#fff!important}
+.splat-desktop[data-family=office] .splat-app-header :is(h1,h2,.app-title,.brand-title){color:inherit}
+/* A band inside the existing header avoids adding rows to each editor's workspace grid. */
+.splat-desktop[data-family=tool] .splat-app-header{position:relative;background:var(--splat-surface)!important;color:var(--splat-ink)!important;padding-top:28px!important;flex-wrap:wrap;height:auto;min-height:64px}
+.splat-desktop[data-family=tool]:not([data-spectrum]) .splat-app-header::before,
+.splat-desktop[data-family=tool] .launch-splash::before{content:"";position:absolute;inset:0 0 auto;height:12px;background:linear-gradient(90deg,#7c3aed 0 32%,#a855f7 32% 52%,#f97316 52% 64%,#ef4444 64% 76%,#6d28d9 76% 88%,#22c55e 88% 96%,#facc15 96%);pointer-events:none}
+.splat-desktop .spectrum{height:12px;background:linear-gradient(90deg,#7c3aed 0 32%,#a855f7 32% 52%,#f97316 52% 64%,#ef4444 64% 76%,#6d28d9 76% 88%,#22c55e 88% 96%,#facc15 96%)}
+.splat-desktop[data-family=tool] .splat-app-header :is(h1,.brand strong,.brand-name){color:var(--splat-purple)!important}
+.splat-tools-label{display:block;margin:0 0 4px;color:var(--splat-violet)!important;font:900 12px/1.4 var(--font-body);letter-spacing:.08em;text-transform:uppercase}
+.splat-desktop[data-family=tool] .splat-app-header>.splat-tools-label{flex-basis:100%;width:100%}
+/* Video/audio/media panels adopt the light chrome; footage, waveforms and stage canvases keep their own colors. */
+.splat-desktop[data-tool=videosplat] :is(.topbar,.toolbar,.statusbar,.media-panel,.inspector,.timeline,.timeline-head,.track-head,.empty-state,.panel-heading,.panel-title,.tabs,.export-options,.shortcuts){background:var(--splat-surface)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important}
+.splat-desktop[data-tool=videosplat] :is(.inspector>label,.media-name,.dialog h3,.project-name,.timeline-head,.track-head,.time-display){color:var(--splat-ink)!important}
+.splat-desktop[data-tool=videosplat] :is(.inspector select,.inspector input,.topbar input,.export-dialog select){background:var(--splat-surface)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important}
+.splat-desktop[data-tool=videosplat] .launch-splash{background:#faf7ff!important;color:var(--splat-ink)!important}
+.splat-desktop[data-tool=videosplat] .launch-splash-glow{display:none}
+.splat-desktop[data-tool=videosplat] .launch-splash :is(h1,b){color:var(--splat-purple)!important}
+.splat-desktop[data-tool=videosplat] .launch-splash :is(p,small){color:var(--splat-muted)}
+.splat-desktop[data-tool=videosplat] :is(.splash-choice,.splash-recording-steps){background:var(--splat-surface)!important;border-color:var(--splat-border)!important;color:var(--splat-ink)!important}
+.splat-desktop[data-tool=videosplat] .splash-recording-steps ol{color:var(--splat-muted)!important}
+.splat-desktop[data-tool=mediasplat] :is(.app-shell,.hero,.workspace,.trust,.tool-tabs,.drop-zone,.file-row,.settings,.action-bar,.results,.results article,fieldset,.mode-cards label){background:var(--splat-surface)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important}
+.splat-desktop[data-tool=mediasplat] :is(.tool-tabs button,.segmented button,.mode-cards .selected){background:var(--splat-pale)!important;color:var(--splat-purple-dark)!important;border-color:var(--splat-border)!important}
+.splat-desktop :is(.splash-permission-error,.error[role=alert]){color:#9f1239!important;background:#fff1f2!important;border-color:#e8a6b5!important}
+@media(forced-colors:active){.splat-tools-label{color:CanvasText!important}.splat-desktop :is(button,input,select,textarea,dialog){border-color:ButtonText!important}}
+
+:root.splat-desktop:has(body.dark){--splat-surface:#1e1b4b;--splat-page:#17123f;--splat-ink:#f5f3ff;--splat-muted:#c4b5fd;--splat-pale:#2e2368;--splat-border:#4c1d95}
+.splat-desktop body{background:var(--splat-page)}
+.splat-desktop[data-tool=videosplat] .splash-recording-steps :is(strong,label){color:var(--splat-ink)!important}
+.splat-desktop[data-tool=videosplat] .launch-splash>span{color:var(--splat-purple-dark)!important}
+.splat-desktop[data-family=tool] .splat-app-header::before{width:100vw;left:calc((100% - 100vw)/2);right:auto}
+.splat-desktop[data-tool=videosplat] .app-shell{grid-template-rows:minmax(108px,auto) 46px minmax(0,1fr) 30px}
+.splat-desktop[data-tool=videosplat] :is(.timeline-controls,.timeline-tracks,.timeline-header,.timeline-head,.track-label,.transport,.panel-head){background:var(--splat-pale)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important}
+.splat-desktop[data-tool=videosplat] .track-lane{background:repeating-linear-gradient(90deg,#faf7ff 0 calc(10% - 1px),#ddd6fe calc(10% - 1px) 10%)!important}
+.splat-desktop[data-tool=videosplat] :is(.panel-head h2,.panel-heading,.empty-small strong,.track-label strong,.timeline-controls>span){color:var(--splat-ink)!important}
+.splat-desktop[data-family=tool] :is(.media-panel,.inspector,.timeline-controls,.track-label,.transport,.control-panel,.settings,.tool-tabs,.launch-splash) button:not([style*="background"]):not([style*="--color"]):not([style*="--swatch"]):not([data-color]):not(.swatch):not(.color-swatch):not(.danger):not(.record):not(.primary):not(.btn-primary):not(.privacy-badge){background:var(--splat-surface)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important;border-radius:8px}
+.splat-desktop[data-tool=ciphersplat] :is(.step-number,.step-badge,.step-index){background:var(--splat-purple)!important}
+.splat-desktop[data-tool=ciphersplat] :is(a,.mini-action,.control-panel h2){color:var(--splat-purple-dark)}
+@media(max-width:580px){.splat-desktop[data-tool=videosplat] .app-shell{grid-template-rows:auto auto minmax(600px,1fr) auto}}
+.splat-desktop .splat-app-header .splat-tools-label{display:block!important}
+.splat-desktop[data-tool=pdfsplat] .topbar .brand{display:grid;grid-template-columns:28px auto;grid-template-rows:auto auto;column-gap:8px;align-items:center}
+.splat-desktop[data-tool=pdfsplat] .topbar .brand img{grid-row:1/3}
+.splat-desktop[data-tool=pdfsplat] .topbar .brand .splat-tools-label{grid-column:2;grid-row:1;margin:0;font-size:10px}
+.splat-desktop[data-tool=pdfsplat] .topbar .brand strong{grid-column:2;grid-row:2}
+.splat-desktop[data-tool=mediasplat] .hero{padding-block:24px;text-align:left}
+.splat-desktop[data-tool=mediasplat] .hero h1{background:none!important;-webkit-text-fill-color:var(--splat-ink)!important;color:var(--splat-ink)!important;font-size:30px;line-height:1.2;letter-spacing:-.4px}
+.splat-desktop[data-tool=mediasplat] :is(.hero p,.splat-app-header small,.tool-tabs small,.drop-zone p,.drop-zone small,.file-name small,.hint){color:var(--splat-muted)!important}
+.splat-desktop[data-tool=mediasplat] :is(.hero .eyebrow,.splat-app-header .privacy,.drop-zone .link-button){color:var(--splat-purple-dark)!important}
+.splat-desktop[data-tool=videosplat] .privacy-badge{background:#f0fdf4!important;color:#166534!important;border-color:#86efac!important}
+.splat-desktop[data-tool=videosplat] .trust-card{background:#f0fdf4!important;color:#166534!important;border-color:#86efac!important}
+.splat-desktop[data-tool=videosplat] .trust-card :is(p,strong,h3){color:#166534!important}
+.splat-desktop[data-tool=videosplat] :is(.timeline-toolbar,.timeline-corner){background:var(--splat-pale)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important}
+.splat-desktop[data-tool=videosplat] :is(.panel-heading h2,.track-label input,.timeline-toolbar button,.timeline-toolbar select,.timeline-toolbar span,.timeline-toolbar label){color:var(--splat-ink)!important}
+.splat-desktop[data-tool=videosplat] :is(.timeline-toolbar button,.timeline-toolbar select,.track-label input){background:var(--splat-surface)!important;border-color:var(--splat-border)!important}
+@media(max-height:740px){.splat-desktop[data-tool=videosplat] .workspace{grid-template-rows:minmax(140px,1fr) minmax(170px,28vh)}}
+.splat-desktop[data-spectrum] .splat-app-header{padding-top:14px!important}
+
+.splat-desktop[data-tool=videosplat] :is(.timeline-tools,.timeline-edit-tools,.track-add-row>div,.track-add-row>span){background:var(--splat-pale)!important;color:var(--splat-ink)!important;border-color:var(--splat-border)!important}
+.splat-desktop[data-tool=videosplat] :is(.timeline-tools>span,.timeline-tools output){color:var(--splat-ink)!important}
+
+.splat-desktop .splat-tools-label{color:var(--splat-purple)!important}
+.splat-desktop[data-tool=videosplat] .track-add-row button{background:var(--splat-surface);color:var(--splat-purple);border-color:var(--splat-border)}

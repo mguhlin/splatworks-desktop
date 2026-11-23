@@ -46,6 +46,15 @@ replacing unsaved work and waits for operations before closing. No automatic
 recovery copies are written. Ctrl/Cmd+Home returns to the chooser. Ctrl/Cmd+1 through Ctrl/Cmd+9 switch apps; Ctrl/Cmd+S
 saves and Ctrl/Cmd+O opens a file in the active app.
 
+The office apps use GridSplat's purple, orange and light surfaces. Tool headers use
+AudioSplat's DrawSplat™ Tools label and rainbow band. Each app keeps its own controls,
+icons and workspace layout; document and canvas colors remain editable.
+
+In VideoSplat, choose a recording mode first or set up your camera and microphone.
+Linux device requests show a native Allow/Don't allow prompt. If access is blocked,
+check system privacy settings and retry. Recording capabilities depend on the
+platform webview and available devices.
+
 Office projects use their existing portable formats. GridSplat saves spreadsheet
 data, formulas and cell formatting; export chart and picture-graph images
 separately to keep their appearance. ShowSplat exports WebDeck HTML for presenting

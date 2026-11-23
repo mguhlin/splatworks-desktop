@@ -22,7 +22,7 @@ import (
 //go:embed frontend/index.html frontend/app.json frontend/tools.json frontend/LICENSE frontend/NOTICE.md frontend/source-manifest.json frontend/standalone-manifest.json frontend/media-manifest.json frontend/core-assets-manifest.json all:frontend/assets all:frontend/desktop all:frontend/docs all:frontend/scripts all:frontend/vendor all:frontend/splatworks all:frontend/solutions/mediasplat all:frontend/solutions/audiosplat all:frontend/solutions/videosplat all:frontend/solutions/shared/subtitles all:frontend/solutions/pdfsplat all:frontend/solutions/CipherSplat all:frontend/solutions/gifsplat all:frontend/solutions/qrsplat all:frontend/solutions/imagesplat all:frontend/solutions/fontsplat all:frontend/solutions/backdropsplat
 var bundled embed.FS
 
-var version = "1.0.0-rc.15"
+var version = "1.0.0-rc.16"
 
 func main() {
 	serve := flag.Bool("serve", false, "serve the bundled tools in a browser on loopback (no native file APIs)")

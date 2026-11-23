@@ -150,7 +150,7 @@ const createBackgroundCompositor = async (background: ImageBitmap) => {
 export function captureErrorMessage(error: unknown) {
   if (error instanceof DOMException) {
     if (error.name === "NotAllowedError")
-      return "Recording permission was not granted. VideoSplat only asks after you press Start recording.";
+      return "Camera or microphone access was blocked. Choose Allow in the desktop permission prompt, or enable access for SplatWorks Desktop in your system privacy settings, then retry. You can also choose a recording mode and turn off devices you do not need.";
     if (error.name === "NotFoundError")
       return "The requested camera or microphone was not found.";
     if (error.name === "NotReadableError")

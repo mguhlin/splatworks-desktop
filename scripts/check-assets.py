@@ -33,7 +33,7 @@ for tool in json.loads((root/'tools.json').read_text()):
 office=[tool['source']+'/index.html' for tool in json.loads((root/'tools.json').read_text()) if tool['source'].startswith('splatworks/')]
 for rel in office+['index.html','solutions/pdfsplat/index.html','solutions/CipherSplat/index.html','solutions/gifsplat/index.html','solutions/qrsplat/index.html','solutions/imagesplat/index.html','solutions/audiosplat/index.html','solutions/videosplat/index.html','solutions/mediasplat/index.html']:
     parser=Assets(web/rel);parser.feed((web/rel).read_text(encoding='utf-8'))
-for rel in ['vendor/pdf.worker.min.js','solutions/pdfsplat/vendor/ocr/eng.traineddata','solutions/pdfsplat/vendor/ocr/spa.traineddata','desktop/native-smoke.js']:
+for rel in ['vendor/pdf.worker.min.js','solutions/pdfsplat/vendor/ocr/eng.traineddata','solutions/pdfsplat/vendor/ocr/spa.traineddata','desktop/native-smoke.js','desktop/theme.js','desktop/theme.css']:
     if not (web/rel).is_file(): errors.append('Missing engine: '+rel)
 for file in (web/'solutions/pdfsplat/src').glob('*.js'):
     text=file.read_text(encoding='utf-8')

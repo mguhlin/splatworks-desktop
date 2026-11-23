@@ -18,6 +18,22 @@ window.SplatMediaSmokeRunner=async function(id){
    doc.querySelector('[data-action="export"][data-format="wav"]').click();await wait(()=>saved.some(s=>s.name.endsWith('.wav'))&&!desktop.busy,'WAV mix native save');const wav=saved.find(s=>s.name.endsWith('.wav'));check(wav.ok,'WAV mix saved through native writer');check(await wav.blob.slice(0,4).text()==='RIFF','WAV export has RIFF header');
    doc.querySelector('[data-action="export"][data-format="mp3"]').click();await wait(()=>saved.some(s=>s.name.endsWith('.mp3'))&&!desktop.busy,'MP3 native save');check(saved.find(s=>s.name.endsWith('.mp3')).blob.size>100,'bundled MP3 encoder produces output');
   }else if(id==='videosplat'){
+   if(await app.Platform?.()==='linux'){
+    await app.SetSmokeMediaAllowed(false);let denied=false;
+    try{const stream=await win.navigator.mediaDevices.getUserMedia({video:true,audio:true});stream.getTracks().forEach(track=>track.stop());}catch(reason){denied=reason.name==='NotAllowedError';}
+    check(denied,'native denied device permission produces a recoverable rejection');
+    await app.SetSmokeMediaAllowed(true);
+    let stream;
+    try{
+     stream=await Promise.race([win.navigator.mediaDevices.getUserMedia({video:true,audio:true}),new Promise((_,reject)=>setTimeout(()=>reject(Error('Native device permission timed out')),20000))]);
+     check(stream.getVideoTracks().some(track=>track.readyState==='live')&&stream.getAudioTracks().some(track=>track.readyState==='live'),'native permission retry opens synthetic camera and microphone');
+     const mime=['video/webm;codecs=vp8,opus','video/webm'].find(type=>win.MediaRecorder?.isTypeSupported(type));check(!!mime,'native recording encoder is available');
+     const recorder=new win.MediaRecorder(stream,{mimeType:mime}),parts=[];
+     const result=new Promise((resolve,reject)=>{recorder.ondataavailable=event=>{if(event.data.size)parts.push(event.data)};recorder.onstop=()=>resolve(new Blob(parts,{type:mime}));recorder.onerror=()=>reject(Error('Native MediaRecorder failed'));});
+     recorder.start(100);await new Promise(resolve=>setTimeout(resolve,1000));recorder.stop();const blob=await result;
+     check(blob.size>100,'native camera and microphone produce an actual WebM recording');check(await desktop.saveBlob(blob,'native-camera.webm'),'native recording saves through Go');
+    }finally{stream?.getTracks().forEach(track=>track.stop());}
+   }
    await wait(()=>doc.querySelector('.splash-choice button:nth-child(2)'),'video editor ready');doc.querySelector('.splash-choice button:nth-child(2)').click();
    doc.querySelector('[aria-label="Record video"]').click();await wait(()=>doc.querySelector('#recorder-title'),'recorder dialog opens');check(!errors.length,'recorder dialog opens without hook errors');doc.querySelector('[aria-label="Close recorder"]').click();await wait(()=>!doc.querySelector('#recorder-title'),'recorder dialog closes');
    const canvas=doc.createElement('canvas');canvas.width=80;canvas.height=60;canvas.getContext('2d').fillStyle='red';canvas.getContext('2d').fillRect(0,0,80,60);const png=await new Promise(r=>canvas.toBlob(r,'image/png'));

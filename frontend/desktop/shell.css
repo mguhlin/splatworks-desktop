@@ -15,3 +15,6 @@
 
 @media(min-width:741px){.home-center{height:210px}}
 @media(min-width:741px) and (max-width:1100px),(min-width:741px) and (max-height:740px){.home-center{height:160px}}
+
+/* GridSplat palette for the common desktop frame. */
+:root{color:#1f2937;background:#fff}.desktop-bar{background:linear-gradient(90deg,#7c3aed,#a855f7);border-color:#5b21b6}.local-label{color:#fff}.desktop-footer{background:#faf7ff;border-color:#ddd6fe;color:#5b21b6}#homeButton[aria-current]{border-color:#faa634;color:#fff}#appsMenu nav{background:#fff;border-color:#ddd6fe}#appsMenu nav button{color:#1f2937}#appsMenu nav button:hover{background:#faf7ff}#appsMenu nav button[aria-current=page]{background:#f5f0ff;color:#5b21b6;border-color:#7c3aed}.home-app{border-color:#ddd6fe}.home-app:hover{background:#faf7ff;border-color:#7c3aed}:focus-visible{outline-color:#faa634}dialog{border-color:#ddd6fe}dialog button{background:#7c3aed}#keepWorking{background:#f5f0ff;color:#5b21b6}

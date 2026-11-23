@@ -48,3 +48,10 @@ func TestRegisteredWorkspacesAreBundled(t *testing.T) {
 		}
 	}
 }
+
+func TestSyntheticMediaPolicyCannotChangeInProduction(t *testing.T) {
+	app := NewApp("test")
+	if err := app.SetSmokeMediaAllowed(true); err == nil {
+		t.Fatal("production renderer changed native media permission policy")
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 	"strings"
 	"sync"
 
@@ -28,8 +29,9 @@ type App struct {
 }
 
 func NewApp(v string) *App                 { return &App{version: v, saves: transfer.New(), online: newOnlineGate()} }
-func (a *App) startup(ctx context.Context) { a.ctx = ctx }
+func (a *App) startup(ctx context.Context) { a.ctx = ctx; initializeNativeMedia(a.smokeDir != "") }
 func (a *App) shutdown(context.Context)    { a.saves.Close(); a.online.set(false) }
+func (a *App) Platform() string            { return goruntime.GOOS }
 func (a *App) Version() string             { return a.version }
 func (a *App) SmokeEnabled() bool          { return a.smokeDir != "" }
 
@@ -139,4 +141,13 @@ func (a *App) CompleteSmoke(report string) error {
 		runtime.Quit(a.ctx)
 	})
 	return outErr
+}
+
+// Test-only switch: production renderers cannot change native media permission policy.
+func (a *App) SetSmokeMediaAllowed(allowed bool) error {
+	if a.smokeDir == "" {
+		return errors.New("synthetic media controls require an explicit smoke-test session")
+	}
+	configureSyntheticMediaPermission(allowed)
+	return nil
 }

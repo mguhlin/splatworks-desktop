@@ -33,6 +33,7 @@
   },true);
   window.open=(url)=>{if(url)void desktop.openLink(new URL(url,location.href).href);return null;};
   document.addEventListener('DOMContentLoaded',()=>{
+    const theme=document.createElement('script');theme.src='/desktop/theme.js';document.head.append(theme);
     const id=desktop.toolId(location.pathname);
     if(id==='ciphersplat')desktop.registerCommands(id,{open:()=>document.getElementById('chooseFiles')?.click(),save:()=>{const result=document.getElementById('resultPanel');if(result&&!result.classList.contains('hidden'))document.getElementById('downloadResult')?.click();else desktop.status('Encrypt or unlock something before saving a result.');}});
     for(const type of ['input','change','click'])document.addEventListener(type,()=>queueMicrotask(()=>desktop.changed(id)));

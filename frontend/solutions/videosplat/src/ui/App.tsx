@@ -1005,6 +1005,7 @@ export function App() {
   };
 
   const setUpRecording = async () => {
+    const desktopEnd=desktop.beginOperation();
     setRequestingSplashPermissions(true);
     setSplashPermissionStatus(undefined);
     try {
@@ -1029,7 +1030,7 @@ export function App() {
     } catch (error) {
       setSplashPermissionStatus(captureErrorMessage(error));
     } finally {
-      setRequestingSplashPermissions(false);
+      setRequestingSplashPermissions(false);desktopEnd();
     }
   };
 
@@ -1060,8 +1061,8 @@ export function App() {
             <strong>Getting ready to record</strong>
             <ol>
               <li>Connect your headset and choose it as your computer input.</li>
-              <li>Grant camera and microphone permission below.</li>
-              <li>Select the exact microphone, then continue to the recorder.</li>
+              <li>Allow camera and microphone access, or choose a recording mode first.</li>
+              <li>Select your microphone, then continue. Screen-only recording does not need a camera.</li>
             </ol>
             {splashRecordingReady && (
               <label>
@@ -1078,6 +1079,7 @@ export function App() {
             )}
           </div>
           <div className="launch-splash-actions">
+            {!splashRecordingReady && <button className="primary" disabled={requestingSplashPermissions} onClick={()=>{finishSplash();setDialog("recorder");setStatus("Choose a recording source. Device access is requested when you start.");}}>Choose recording mode first</button>}
             {!splashRecordingReady ? (
               <button className="splash-record" onClick={setUpRecording} disabled={requestingSplashPermissions}>
                 {requestingSplashPermissions ? "Requesting permission…" : "Set up recording permissions"}
@@ -1089,12 +1091,12 @@ export function App() {
                 setStatus("Recording setup ready with the selected microphone");
               }}>Continue with selected microphone</button>
             )}
-            <button className="splash-back" onClick={() => {
+            <button className="splash-back" disabled={requestingSplashPermissions} onClick={() => {
               setSplashMode(undefined);
               setSplashPermissionStatus(undefined);
             }}>← Back</button>
           </div>
-          <small>Screen sharing is selected securely by your browser when each recording starts.</small>
+          <small>Choose camera, screen, and microphone options in the recorder. Availability depends on this computer.</small>
           </>}
           <div className="splash-language" ref={splashLanguage} />
           {splashPermissionStatus && <p className={splashRecordingReady ? "splash-permission-ready" : "splash-permission-error"} role={splashRecordingReady ? "status" : "alert"}>{splashPermissionStatus}</p>}

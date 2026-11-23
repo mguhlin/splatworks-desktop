@@ -48,3 +48,11 @@ of saving the timeline. Verify optional model-download refusal when connections
 are off and local GGML transcription without networking.
 
 For the combined suite, start on Home and check all fourteen choices with a keyboard and screen reader. Return Home with unsaved work and verify that reopening an app retains it. In MediaSplat, trim, split and join representative files, save individual outputs and ZIPs, cancel or fail a save and retry, then generate and review captions with a locally available speech model. Verify close warnings for unsaved outputs and transcripts.
+
+For recording, use the exact published desktop candidate on each physical target.
+Test Allow, Don't allow, retry, unavailable/in-use devices, microphone selection,
+camera-only, screen-only and combined capture where supported. Confirm tracks stop
+on cancellation and that a saved recording contains the chosen audio/video.
+Synthetic Linux media tests do not qualify physical devices or screen sharing.
+Review each app's shared appearance at 1360×900 and 800×600, including header
+controls, menus, keyboard focus, document colors and WriteSplat's theme switch.

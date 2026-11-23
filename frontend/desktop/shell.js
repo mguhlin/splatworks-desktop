@@ -93,6 +93,7 @@
     document.getElementById('appHome').hidden=true;document.getElementById('homeButton').removeAttribute('aria-current');
     if (!frames.has(id)) {
       const frame=document.createElement('iframe');frame.title=tool.name+' workspace';frame.id='tool-'+id;
+      if(['videosplat','audiosplat','qrsplat','pdfsplat'].includes(id))frame.allow='camera \'self\'; microphone \'self\'; display-capture \'self\'';
       // Mounted workspaces retain their open documents while switching apps.
       if(tool.source?.startsWith('splatworks/'))frame.inert=true;
       frame.src=tool.path+(hash||'');frames.set(id,frame);document.getElementById('workspaces').append(frame);
