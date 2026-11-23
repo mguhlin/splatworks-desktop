@@ -4,6 +4,12 @@
   const desktop=window.parent!==window?(window.parent.SplatDesktop||window.parent.SplatWorkspace):null;
   if(!desktop)return;
   window.SplatDesktop=desktop;
+  // Password/text handlers depend on browser.js, which loads after app.js.
+  // Keep early typing out of this workspace until both scripts have initialized.
+  if(desktop.toolId(location.pathname)==='ciphersplat'){
+    document.documentElement.inert=true;
+    document.addEventListener('DOMContentLoaded',()=>{document.documentElement.inert=false;},{once:true});
+  }
   window.SplatPrivacy={getState:()=>({optionalConnections:desktop.onlineEnabled})};
   const fetchOriginal=window.fetch.bind(window);
   window.fetch=(input,init)=>{const url=new URL(typeof input==='string'||input instanceof URL?input:input.url,location.href);if(url.origin===location.origin||['data:','blob:'].includes(url.protocol))return fetchOriginal(input,init);if(!desktop.onlineEnabled)return Promise.reject(Error('Optional online connections are off. Enable them in Settings.'));return fetchOriginal('/desktop/remote?url='+encodeURIComponent(url.href),{...init,credentials:'omit',referrerPolicy:'no-referrer'});};

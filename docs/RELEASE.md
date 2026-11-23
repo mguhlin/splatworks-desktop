@@ -5,6 +5,7 @@ and gives its fourteen apps a consistent interface.
 - Linux packages install the GStreamer recording plugins required by WebKit.
 - Linux camera/microphone requests now receive a native consent dialog instead of being silently denied. Device information remains unavailable until consent is granted.
 - VideoSplat can open the recorder before optional device setup, so choosing a recording mode does not require a camera and microphone together. Denied access has clear retry and system-settings guidance.
+- CipherSplat waits for its input handlers before accepting typing, preventing a startup race that could leave the action button disabled.
 - Office apps share GridSplat's purple, orange, white and lavender palette. Tool apps share AudioSplat's DrawSplat™ Tools label and rainbow band. Each app retains its controls, icons, layouts and document colors.
 - Native Linux checks exercise denied access, retry, synthetic camera/microphone capture, actual video encoding and saving. Physical devices, OS privacy settings and screen-sharing support still require platform qualification.
 
