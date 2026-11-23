@@ -1,9 +1,9 @@
 /* Explicit --smoke-test only; all inputs are synthetic. No physical-device claims. */
-(async()=>{
- const desktop=SplatDesktop,app=go.main.App,id=desktop.profile.id,checks=[],errors=[],saved=[];
+window.SplatMediaSmokeRunner=async function(id){
+ const desktop=SplatDesktop,app=go.main.App,checks=[],errors=[],saved=[];
  const wait=async(fn,label)=>{const at=Date.now();while(!fn()){if(Date.now()-at>120000)throw Error('Timed out: '+label);await new Promise(r=>setTimeout(r,75));}};
  const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
- const report=async(passed,error)=>app.CompleteSmoke(JSON.stringify({passed,profile:id,checks,errors,error:error?String(error.stack||error):null}));
+ const report=async(passed,error)=>({passed,profile:id,checks,errors,error:error?String(error.stack||error):null});
  const deadline=setTimeout(()=>void report(false,Error('Media smoke deadline')),210000);
  const original=desktop.saveBlob;desktop.saveBlob=async(blob,name,details)=>{const ok=await original(blob,name,details);saved.push({blob,name,ok});return ok;};
  try{
@@ -24,13 +24,14 @@
    input('input[accept^="video/"]',[new win.File([png],'native-frame.png',{type:'image/png'})]);await wait(()=>doc.querySelectorAll('.timeline-clip').length===1&&!desktop.busy,'image timeline import');check(true,'local image decoded and placed on timeline');
    await wait(()=>win.SplatMediaSmoke,'bundled encoder test API');const video=await win.SplatMediaSmoke.encode();check(video.size>100,'bundled FFmpeg encodes actual MP4 offline');check(await desktop.saveBlob(video,'native.mp4'),'MP4 saved through native writer');check(await video.slice(4,8).text()==='ftyp','MP4 has ISO base media header');
   }else throw Error('Unknown media profile '+id);
-  check(desktop.dirty.length===1,'imported work is marked unsaved');const closing=desktop.requestClose();await wait(()=>document.getElementById('leaveDialog').open,'close warning');document.getElementById('keepWorking').click();check(!await closing,'keep working preserves unsaved workspace');
+  check(desktop.dirty.some(name=>name.toLowerCase()===id),'imported work is marked unsaved');const closing=desktop.requestClose();await wait(()=>document.getElementById('leaveDialog').open,'close warning');document.getElementById('keepWorking').click();check(!await closing,'keep working preserves unsaved workspace');
   desktop.command(id,'save');await wait(()=>saved.some(s=>s.name.endsWith('.'+id+'.json'))&&!desktop.busy,'portable native save');
   const project=saved.find(s=>s.name.endsWith('.'+id+'.json'));check(project.ok,'portable project written through Go');const data=JSON.parse(await project.blob.text());
   if(id==='audiosplat'){check(data.project.app==='AudioSplat','AudioSplat project format preserved');check(data.sources[0].dataUrl.startsWith('data:audio/'),'source audio embedded in portable project');}
   else{check(data.schema==='videosplat-project','VideoSplat project schema preserved');check(data.embeddedMedia[data.assets[0].id].startsWith('data:image/png;base64,'),'source image embedded in portable project');}
-  check(!desktop.dirty.length,'completed native project write clears matching edits');
+  check(!desktop.dirty.some(name=>name.toLowerCase()===id),'completed native project write clears matching edits');
   input(id==='audiosplat'?'#project-input':'input[accept^=".json"]',[new win.File([await project.blob.arrayBuffer()],'reopen.'+id+'.json',{type:'application/json'})]);await wait(()=>!desktop.busy,'project reopen');check(doc.querySelectorAll(id==='audiosplat'?'.clip':'.timeline-clip').length===1,'portable project reopens its editable timeline');
-  const databases=await win.indexedDB.databases();check(!databases.some(db=>['audiosplat','videosplat-local','splat-transcription-progress-v1'].includes(db.name)),'no automatic media or transcript recovery database');check(!errors.length,'no JavaScript errors');clearTimeout(deadline);await report(true);
- }catch(error){clearTimeout(deadline);await report(false,error);}
-})();
+  const databases=await win.indexedDB.databases();check(!databases.some(db=>['audiosplat','videosplat-local','splat-transcription-progress-v1'].includes(db.name)),'no automatic media or transcript recovery database');check(!errors.length,'no JavaScript errors');clearTimeout(deadline);return await report(true);
+ }catch(error){clearTimeout(deadline);return await report(false,error);} finally{desktop.saveBlob=original;}
+};
+if(SplatDesktop.profile.id!=='desktop')void window.SplatMediaSmokeRunner(SplatDesktop.profile.id).then(result=>go.main.App.CompleteSmoke(JSON.stringify(result)));

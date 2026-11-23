@@ -1,6 +1,6 @@
 # Standalone desktop applications
 
-The PDF/Cipher suite and the standalone tools live in this repository. Each tool gets its own executable, icon, Mac bundle identifier, Windows installer registration, and Linux package name. The shared Go code provides native saves, safe folder restoration, operation tracking, unsaved-work warnings and restricted navigation. Browser sources remain in `mguhlin/drawsplat`.
+The combined fourteen-app suite and the standalone tools live in this repository. Each tool gets its own executable, icon, Mac bundle identifier, Windows installer registration, and Linux package name. The shared Go code provides native saves, safe folder restoration, operation tracking, unsaved-work warnings and restricted navigation. Browser sources remain in `mguhlin/drawsplat`.
 
 | App | Main workflow | Offline scope |
 | --- | --- | --- |
@@ -23,9 +23,9 @@ cd output/profiles/gifsplat
 python3 scripts/package-release.py --platform linux --version 1.0.0-rc.5
 ```
 
-Profile names are `gifsplat`, `ciphersplat`, `qrsplat`, `imagesplat`, `audiosplat` and `videosplat`. Use `--platform windows/amd64` or `--platform darwin/universal` on the corresponding build host. Windows packaging requires `scripts/prepare-windows.ps1`. Mac packaging requires ad hoc or developer signing before archiving. `--prepare-only` stages a profile for inspection. The staged tree contains one tool, its local dependencies, license notices and shared desktop assets. PDF/OCR engines are omitted from the standalone profiles. The default photo model is included only in ImageSplat; the FFmpeg transcoder is included only in VideoSplat.
+Profile names are `gifsplat`, `ciphersplat`, `qrsplat`, `imagesplat`, `audiosplat` and `videosplat`. Use `--platform windows/amd64` or `--platform darwin/universal` on the corresponding build host. Windows packaging requires `scripts/prepare-windows.ps1`. Mac packaging requires ad hoc or developer signing before archiving. `--prepare-only` stages a profile for inspection. The staged tree contains one tool, its local dependencies, license notices and shared desktop assets. PDF/OCR engines are omitted from the standalone profiles. Among the independent profiles, the default photo model is included in ImageSplat and the FFmpeg transcoder in VideoSplat. Both engines are also bundled in the combined application.
 
-Import updates explicitly with `python3 scripts/sync-small-tools.py ../drawsplat_github`. Review desktop adapters and the snapshot manifests, run browser/native checks, then commit. `scripts/sync-tools.py` imports the PDF/Cipher suite separately; importing either set must preserve the other.
+Import updates explicitly with `python3 scripts/sync-small-tools.py ../drawsplat_github`. Review desktop adapters and the snapshot manifests, run browser/native checks, then commit. `scripts/sync-tools.py` imports the office/PDF/Cipher sources separately; importing either set must preserve the other.
 
 ## Automated distribution
 

@@ -1,0 +1,108 @@
+import {desktop,changed,loaded,stamp,save,commands,confirmReplace,retain,release,draftStamp,discardDrafts} from "../desktop";
+import { AboutInfo } from "./AboutInfo";
+import { ProcessingProgress } from "./ProcessingProgress";
+import { SubtitleGenerationDialog, SubtitleGenerator } from '@splat/local-subtitles';
+import { cuesToSrt } from '@splat/local-subtitles/core';
+import { defaultSubtitles } from "../captions/subtitles";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { acceptedMedia, inspectMedia, type MediaInfo } from "../media/metadata";
+import { burnSubtitles, cancelProcessing, joinMedia, splitMedia, type ResultFile } from "../media/processor";
+import { durationRanges, equalRanges, formatTime, safeStem, sizeRanges, type ProcessingMode, type TimeRange } from "../media/commands";
+import { createZip } from "../media/archive";
+
+type Tool = "trim" | "split" | "join" | "subtitles" | "transcribe";
+interface Selected { id: string; file: File; info: MediaInfo }
+const formatBytes = (bytes: number) => bytes < 1024 ** 2 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+const secondsLabel = (seconds?: number) => seconds === undefined ? "Duration unavailable until processing" : formatTime(seconds);
+
+export function App() {
+  const [tool, setTool] = useState<Tool>("trim"); const [items, setItems] = useState<Selected[]>([]); const [mode, setMode] = useState<ProcessingMode>("fast");
+  const [start, setStart] = useState(0); const [end, setEnd] = useState(10); const [splitBy, setSplitBy] = useState<"count" | "duration" | "size" | "ranges">("count"); const [count, setCount] = useState(2); const [hours, setHours] = useState(0); const [minutes, setMinutes] = useState(5); const [seconds, setSeconds] = useState(0); const [targetSize, setTargetSize] = useState(100); const [sizeUnit, setSizeUnit] = useState<"MB" | "GB">("MB"); const [ranges, setRanges] = useState<TimeRange[]>([{ start: 0, end: 10 }, { start: 10, end: 20 }]);
+  const [busy, setBusy] = useState(false); const [progress, setProgress] = useState(0); const [status, setStatus] = useState("Ready — files stay on this device"); const [error, setError] = useState(""); const [results, setResults] = useState<ResultFile[]>([]); const input = useRef<HTMLInputElement>(null);
+  const [subtitle, setSubtitle] = useState<File>();
+  const [generation, setGeneration] = useState(false);
+  const [subtitleOptions, setSubtitleOptions] = useState(defaultSubtitles);
+  const primary = items[0]; const duration = primary?.info.duration;
+  useEffect(() => () => { items.forEach(item => item.info.url && URL.revokeObjectURL(item.info.url)); results.forEach(result => URL.revokeObjectURL(URL.createObjectURL(result.blob))); }, []);
+  const resultVersions=useRef(new Map<Blob,{key:string;token:number|undefined;revision:number}>());
+  const previous=useRef('');
+  const config=JSON.stringify([tool,items.map(item=>item.id),mode,start,end,splitBy,count,hours,minutes,seconds,targetSize,sizeUnit,ranges,subtitle?.name,subtitle?.size,subtitleOptions]);
+  useLayoutEffect(()=>{if(previous.current&&previous.current!==config){if(items.length||subtitle)changed();else loaded();}previous.current=config;},[config]);
+  const clearResults = () => {for(const value of resultVersions.current.values())release(value.key,value.token);resultVersions.current.clear();setResults([]);};
+  const [saving,setSaving]=useState(false);
+  useLayoutEffect(()=>{commands({open:()=>{if(!busy)input.current?.click();},save:()=>results.length?results.length===1?download(results[0]):downloadAll():setStatus('Process media first, then save the output files.')});});
+  const choose = async (files: File[]) => {
+    if(busy||saving)return;
+    setError('');
+    if(tool==='subtitles'&&files.some(file=>file.type.startsWith('audio/'))){setError('Choose a video file to burn subtitles into.');return;}
+    if(!files.length||files.some(file=>!acceptedMedia(file))){setError('Choose supported video or audio files.');return;}
+    const valid=tool==='join'?files:files.slice(0,1);
+    if(valid.reduce((total,file)=>total+file.size,0)>256*1024*1024){setError('Choose media under 256 MiB in total.');return;}
+    const finish=desktop.beginOperation(),before=stamp(),selected:Selected[]=[];setBusy(true);
+    try{
+      for(const file of valid)selected.push({id:crypto.randomUUID(),file,info:await inspectMedia(file)});
+      if(before!==stamp()||!await confirmReplace()){selected.forEach(item=>item.info.url&&URL.revokeObjectURL(item.info.url));return;}
+      items.forEach(item=>item.info.url&&URL.revokeObjectURL(item.info.url));clearResults();discardDrafts();setSubtitle(undefined);setItems(selected);
+      const known=selected[0]?.info.duration;if(known){setEnd(Number(known.toFixed(3)));setRanges([{start:0,end:Number((known/2).toFixed(3))},{start:Number((known/2).toFixed(3)),end:Number(known.toFixed(3))}]);}
+    }catch(reason){selected.forEach(item=>item.info.url&&URL.revokeObjectURL(item.info.url));setError((reason as Error).message);}finally{setBusy(false);finish();if(input.current)input.current.value='';}
+  };
+  const changeTool = async (next: Tool) => { if (busy || saving || next===tool || !await confirmReplace()) return;discardDrafts(); items.forEach(item => item.info.url && URL.revokeObjectURL(item.info.url)); setTool(next); setSubtitle(undefined); setItems([]); setError(""); clearResults(); setMode(next === "trim" ? "precise" : "fast"); if (input.current) input.current.value = ""; };
+  const remove = async (id: string) => { if(busy||saving||!await confirmReplace())return;clearResults();discardDrafts();setSubtitle(undefined); setItems(current => { const found = current.find(item => item.id === id); if (found?.info.url) URL.revokeObjectURL(found.info.url); return current.filter(item => item.id !== id); }); };
+  const move = (index: number, offset: number) => setItems(current => { const next = [...current]; const target = index + offset; if (target < 0 || target >= next.length) return current; [next[index], next[target]] = [next[target], next[index]]; return next; });
+  const computedRanges = () => { if (tool === "trim") return [{ start, end }]; if (splitBy === "ranges") return ranges; if (!duration) throw new Error("This split method needs a browser-previewable file with a known duration. Use custom ranges instead."); if (splitBy === "count") return equalRanges(duration, count); if (splitBy === "size") return sizeRanges(duration, primary.file.size, targetSize * (sizeUnit === "GB" ? 1024 ** 3 : 1024 ** 2)); return durationRanges(duration, hours * 3600 + minutes * 60 + seconds); };
+  const process = async () => {
+    if(busy||saving)return;
+    if(resultVersions.current.size&&!await confirmReplace())return;
+    const finish=desktop.beginOperation(),revision=stamp();
+    setError(""); setBusy(true); setProgress(0); setStatus("Starting local media engine…");
+    const notify = (event: { kind: "progress"; value: number } | { kind: "log"; message: string }) => event.kind === "progress" ? setProgress(event.value) : setStatus(event.message);
+    try { const output = tool === "subtitles" ? await burnSubtitles(primary.file, await subtitle!.text(), subtitleOptions, notify, duration) : tool === "join" ? await joinMedia(items.map(i => i.file), mode, notify) : await splitMedia(primary.file, computedRanges(), mode, notify); if(output.reduce((sum,file)=>sum+file.blob.size,0)>512*1024*1024)throw Error('Output exceeds the 512 MiB desktop limit. Process a shorter range.');
+      clearResults();output.forEach((result,index)=>{const key='media-output-'+index;retain(key);resultVersions.current.set(result.blob,{key,token:draftStamp(key),revision});});setResults(output); setProgress(1); setStatus(`${output.length} output file${output.length === 1 ? "" : "s"} ready to save`); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : "Media processing failed."); setStatus("Processing stopped"); }
+    finally { setBusy(false);finish(); }
+  };
+  const download = async (result: ResultFile) => {
+    if(saving)return;setError('');setSaving(true);const version=resultVersions.current.get(result.blob);
+    try{const ok=await save(result.blob,result.name,version?.revision);if(ok&&version)release(version.key,version.token);setStatus(ok?'Saved '+result.name:'Save cancelled — output is still available.');}
+    catch(reason){setError((reason as Error).message);}finally{setSaving(false);}
+  };
+  const downloadAll = async () => {
+    if(saving)return;setError('');setSaving(true);const finish=desktop.beginOperation(),files=[...results],versions=files.map(file=>resultVersions.current.get(file.blob));
+    try{setStatus('Packaging output files…');const zip=await createZip(files);const ok=await save(zip,safeStem(primary?.file.name??'mediasplat')+'-parts.zip',versions[0]?.revision);if(ok)versions.forEach(version=>{if(version)release(version.key,version.token);});setStatus(ok?'Saved all output files.':'Save cancelled — outputs are still available.');}
+    catch(reason){setError((reason as Error).message);}finally{setSaving(false);finish();}
+  };
+  const accept = "video/*,audio/*,.mkv,.avi,.wmv,.ogm,.m4v,.mov,.flac,.m2ts,.mts,.ts";
+  return <div className="app-shell">
+    <header><a className="brand" href="../../"><img src={`${import.meta.env.BASE_URL}icon.svg`} alt=""/><span><strong>MediaSplat™</strong><small>Private media editing, video subtitle generation &amp; burn-in, and audio transcription</small></span></a><div className="header-actions"><AboutInfo/><button className="privacy" onClick={() => alert("MediaSplat processes files locally with its bundled media engine. Saving opens a native destination picker. No account is needed. Speech models are optional downloads.")}>● Local processing</button></div></header>
+    <main>
+      <section className="hero"><p className="eyebrow">Local processing · Native file saving</p><h1>Cut and combine media without the upload.</h1><p>Trim, split, join, transcribe audio or video, or permanently burn subtitles into video. MP4, M4V, MOV, MKV, WebM, AVI, WMV, OGG, OGM, MP3, WAV, FLAC, and more.</p></section>
+      <nav className="tool-tabs" aria-label="Media tools">{(["trim", "split", "join", "subtitles", "transcribe"] as Tool[]).map(name => <button key={name} aria-pressed={tool === name} onClick={() => changeTool(name)}><span>{name === "trim" ? "✂" : name === "split" ? "▥" : "⛓"}</span>{name === "subtitles" ? "Subtitles" : name[0].toUpperCase() + name.slice(1)}<small>{name === "trim" ? "Keep one section" : name === "split" ? "Create multiple parts" : name === "subtitles" ? "Generate or import captions" : name === "transcribe" ? "Speech to SRT or text" : "Combine in order"}</small></button>)}</nav>
+      <section className="workspace">
+        {error && !primary && <div className="error" role="alert">{error}</div>}
+        <div className="drop-zone" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void choose([...e.dataTransfer.files]); }}>
+          <input ref={input} type="file" accept={accept} disabled={busy || saving} multiple={tool === "join"} onChange={e => void choose([...(e.target.files ?? [])])}/><div className="drop-icon">＋</div><h2>{tool === "join" ? "Choose two or more media files" : tool === "subtitles" ? "Choose a video file" : "Choose a video or audio file"}</h2><p>Drop files here or <button className="link-button" onClick={() => input.current?.click()}>browse your device</button></p><small>Files stay on this device. Choose up to 256 MiB of media; save your outputs before closing.</small>
+        </div>
+        {items.length > 0 && <div className="editor">
+          <div className="files"><div className="section-title"><h2>{tool === "join" ? "Join order" : "Source"}</h2><span>{items.length} file{items.length === 1 ? "" : "s"}</span></div>{items.map((item, index) => <article className="file-row" key={item.id}><div className="file-symbol">{item.file.type.startsWith("audio/") ? "♫" : "▶"}</div><div className="file-name"><strong>{item.file.name}</strong><small>{formatBytes(item.file.size)} · {secondsLabel(item.info.duration)} · {item.info.previewable ? "Preview available" : "Process only"}</small></div>{tool === "join" && <div className="order-buttons"><button aria-label={`Move ${item.file.name} up`} disabled={index === 0} onClick={() => {if(!busy&&!saving)move(index, -1);}}>↑</button><button aria-label={`Move ${item.file.name} down`} disabled={index === items.length - 1} onClick={() => {if(!busy&&!saving)move(index, 1);}}>↓</button></div>}<button className="remove" aria-label={`Remove ${item.file.name}`} disabled={busy || saving} onClick={() => remove(item.id)}>×</button></article>)}</div>
+          {primary?.info.url && tool !== "join" && (primary.file.type.startsWith("audio/") ? <audio className="preview" src={primary.info.url} controls/> : <video className="preview" src={primary.info.url} controls/>)}
+          <div className="settings">{tool === "transcribe" && <SubtitleGenerator key={primary.id} source={{ name: primary.file.name, duration, load: async () => primary.file }} downloadTranscript/>}{tool === "subtitles" && <fieldset disabled={busy || saving}><legend>Burn in subtitles</legend><p>Subtitles become permanently visible in the downloaded MP4. The video is re-encoded locally; long videos can take time.</p><button className="secondary" onClick={() => setGeneration(true)}>Generate subtitles…</button><p>Generate captions from English speech, or choose an existing subtitle file.</p>{subtitle && <p role="status">Selected subtitles: {subtitle.name}</p>}<label>Subtitle file (SRT or VTT)<input type="file" accept=".srt,.vtt" onChange={e => setSubtitle(e.target.files?.[0])}/></label><div className="field-grid">{(["fontSize", "margin", "outline", "offset"] as const).map(key => <label key={key}>{{fontSize: "Font size (at 1080p)", margin: "Bottom margin (at 1080p)", outline: "Outline width", offset: "Timing offset (seconds; positive = later)"}[key]}<input type="number" step={key === "offset" ? "0.1" : "1"} min={key === "offset" ? -86400 : key === "fontSize" ? 12 : 0} max={key === "offset" ? 86400 : key === "fontSize" ? 120 : key === "outline" ? 10 : 300} value={subtitleOptions[key]} onChange={e => setSubtitleOptions({...subtitleOptions, [key]: e.target.valueAsNumber})}/></label>)}</div><label className="checkbox-field"><input type="checkbox" checked={subtitleOptions.background} onChange={e => setSubtitleOptions({...subtitleOptions, background: e.target.checked})}/>Black subtitle background</label></fieldset>}
+
+            {tool === "trim" && <fieldset disabled={busy || saving}><legend>Range to keep</legend><div className="field-grid"><label>Start (seconds)<input aria-label="Start time" type="number" min="0" step="0.1" value={start} onChange={e => setStart(e.target.valueAsNumber)}/></label><label>End (seconds)<input aria-label="End time" type="number" min="0" max={duration} step="0.1" value={end} onChange={e => setEnd(e.target.valueAsNumber)}/></label></div>{duration && <input aria-label="Trim start slider" className="range" type="range" min="0" max={duration} step="0.1" value={Math.min(start, duration)} onChange={e => setStart(Math.min(e.target.valueAsNumber, end - .1))}/>}</fieldset>}
+            {tool === "split" && <fieldset disabled={busy || saving}><legend>How to split</legend><div className="segmented split-options">{(["count", "duration", "size", "ranges"] as const).map(value => <button aria-pressed={splitBy === value} onClick={() => setSplitBy(value)} key={value}>{value === "count" ? "Equal parts" : value === "duration" ? "By time" : value === "size" ? "By size" : "Ranges"}</button>)}</div>
+              {splitBy === "count" && <label>Number of equal parts<input aria-label="Number of parts" type="number" min="2" max="100" value={count} onChange={e => setCount(e.target.valueAsNumber)}/></label>}
+              {splitBy === "duration" && <div><div className="presets"><span>Quick:</span>{[5, 6, 10].map(value => <button key={value} onClick={() => { setHours(0); setMinutes(value); setSeconds(0); }}>{value} min</button>)}</div><div className="time-fields"><label>Hours<input aria-label="Segment hours" type="number" min="0" max="23" value={hours} onChange={e => setHours(e.target.valueAsNumber)}/></label><label>Minutes<input aria-label="Segment minutes" type="number" min="0" max="59" value={minutes} onChange={e => setMinutes(e.target.valueAsNumber)}/></label><label>Seconds<input aria-label="Segment seconds" type="number" min="0" max="59.999" step="0.1" value={seconds} onChange={e => setSeconds(e.target.valueAsNumber)}/></label></div><p className="hint">The final segment contains the remaining time.</p></div>}
+              {splitBy === "size" && <div><div className="size-fields"><label>Target size per part<input aria-label="Target size" type="number" min="1" step="1" value={targetSize} onChange={e => setTargetSize(e.target.valueAsNumber)}/></label><label>Unit<select aria-label="Size unit" value={sizeUnit} onChange={e => setSizeUnit(e.target.value as "MB" | "GB")}><option>MB</option><option>GB</option></select></label></div><p className="hint">Estimated from average bitrate. Variable bitrate and container overhead mean final sizes can differ, especially in Fast mode.</p></div>}
+              {splitBy === "ranges" && <div className="ranges">{ranges.map((range, index) => <div className="range-row" key={index}><span>Part {index + 1}</span><input aria-label={`Part ${index + 1} start`} type="number" min="0" step=".1" value={range.start} onChange={e => setRanges(current => current.map((r, i) => i === index ? {...r, start: e.target.valueAsNumber} : r))}/><span>to</span><input aria-label={`Part ${index + 1} end`} type="number" min="0" step=".1" value={range.end} onChange={e => setRanges(current => current.map((r, i) => i === index ? {...r, end: e.target.valueAsNumber} : r))}/><button aria-label={`Remove part ${index + 1}`} disabled={ranges.length === 1} onClick={() => setRanges(current => current.filter((_, i) => i !== index))}>×</button></div>)}<button className="secondary" onClick={() => setRanges(current => [...current, { start: current.at(-1)?.end ?? 0, end: (current.at(-1)?.end ?? 0) + 10 }])}>＋ Add range</button></div>}
+            </fieldset>}
+            {tool !== "subtitles" && tool !== "transcribe" && <fieldset disabled={busy || saving}><legend>{tool === "join" ? "Join quality" : "Cut quality"}</legend><div className="mode-cards"><label className={mode === "fast" ? "selected" : ""}><input type="radio" name="mode" checked={mode === "fast"} onChange={() => setMode("fast")}/><strong>Fast & lossless</strong><small>No re-encoding. Cuts may align to keyframes; joined streams must match.</small></label><label className={mode === "precise" ? "selected" : ""}><input type="radio" name="mode" checked={mode === "precise"} onChange={() => setMode("precise")}/><strong>{tool === "join" ? "Normalize & join" : "Precise cut"}</strong><small>Re-encodes to {primary.file.type.startsWith("audio/") ? "MP3" : "MP4"} for exact cuts and broader compatibility.</small></label></div></fieldset>}
+          </div>
+          {error && <div className="error" role="alert">{error}</div>}
+          {tool !== "transcribe" && <div className="action-bar"><ProcessingProgress busy={busy} progress={progress} status={status} estimate={tool === "subtitles"}/>{busy ? <button className="danger" onClick={() => { cancelProcessing(); setStatus("Processing cancelled"); }}>Cancel</button> : <button className="primary" disabled={saving || !primary || (tool === "subtitles" && !subtitle) || (tool === "join" && items.length < 2)} onClick={() => void process()}>{tool === "trim" ? "Trim media" : tool === "split" ? "Split media" : tool === "subtitles" ? "Burn subtitles to MP4" : "Join media"}</button>}</div>}
+          {results.length > 0 && <section className="results" aria-label="Output files"><div className="results-head"><h2>Output files ready</h2>{results.length > 1 && <button className="download-all" disabled={saving || busy} onClick={() => void downloadAll()}>Save all as ZIP</button>}</div>{results.map(result => <article key={result.name}><div><strong>{result.name}</strong><small>{formatBytes(result.blob.size)}</small></div><button className="download" disabled={saving || busy} onClick={() => void download(result)}>Save</button></article>)}</section>}
+        </div>}
+      </section>
+      {generation && primary && <SubtitleGenerationDialog source={{ name: primary.file.name, duration, load: async () => primary.file }} onClose={() => setGeneration(false)} actionLabel="Use subtitles for burn-in" onUse={async cues => {if(resultVersions.current.size&&!await confirmReplace())throw Error("Keep your existing output files or save them before replacing them."); setSubtitle(new File([cuesToSrt(cues)], `${safeStem(primary.file.name)}.srt`, { type: 'application/x-subrip' })); setSubtitleOptions(current => ({ ...current, offset: 0 })); clearResults(); setStatus(`${cues.length} generated captions selected. Ready to burn into MP4.`); setGeneration(false); }}/>}
+      <section className="trust"><div><strong>⌂ On-device</strong><p>Processing uses the bundled FFmpeg engine on this device.</p></div><div><strong>◎ Broad format support</strong><p>A file can be processable even when your browser cannot preview it.</p></div><div><strong>◇ Honest quality choices</strong><p>Choose lossless keyframe cuts or precise re-encoded output.</p></div></section>
+    </main><footer>MediaSplat™ · AGPL-3.0-or-later · Local processing · Native file saving · No analytics or tracking</footer>
+  </div>;
+}

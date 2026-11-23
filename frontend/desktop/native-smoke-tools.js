@@ -1,11 +1,11 @@
 /* Synthetic data only, enabled by the explicit --smoke-test command line. */
-(async()=>{
- const desktop=SplatDesktop,app=go.main.App,id=desktop.profile.id,checks=[],errors=[],saved=[];
+window.SplatToolSmoke=async function(id){
+ const desktop=SplatDesktop,app=go.main.App,checks=[],errors=[],saved=[];
  const wait=async(fn,label)=>{const start=Date.now();while(!fn()){if(Date.now()-start>120000)throw Error('Timed out: '+label);await new Promise(r=>setTimeout(r,75));}};
  const check=(value,label)=>{if(!value)throw Error(label);checks.push(label);};
  const originalSave=desktop.saveBlob;
  desktop.saveBlob=async(blob,name,details)=>{if(id==='imagesplat'&&name==='ImageSplat.png'&&saved.some(s=>s.name==='ImageSplat.png'))name='ImageSplat-cutout.png';const ok=await originalSave(blob,name,details);saved.push({blob,name,ok});return ok;};
- const report=async(passed,error)=>app.CompleteSmoke(JSON.stringify({passed,profile:id,checks,errors,error:error?String(error.message||error)+'\n'+String(error.stack||''):null,userAgent:navigator.userAgent},null,2));
+ const report=async(passed,error)=>({passed,profile:id,checks,errors,error:error?String(error.message||error)+'\n'+String(error.stack||''):null,userAgent:navigator.userAgent});
  const deadline=setTimeout(()=>void report(false,Error('Native smoke deadline exceeded')),210000);
  try{
   await wait(()=>desktop.frames.get(id)?.contentDocument?.readyState==='complete'&&desktop.frames.get(id)?.contentDocument?.title.length>0,'tool document');
@@ -35,17 +35,17 @@
   }else if(id==='gifsplat'){
    importFiles('frameInput',[await png('red','red.png'),await png('blue','blue.png')]);await wait(()=>doc.querySelectorAll('.frame-row').length===2,'import GIF frames');check(true,'two local image frames imported');await warning();
    set('delayInput','200');$('generateBtn').click();await wait(()=>!$('downloadBtn').disabled&&!desktop.busy,'GIF encoding');check(!!doc.querySelector('#previewWrap img'),'generated animation preview');$('downloadBtn').click();await wait(()=>saved.length===1,'GIF save');
-   check(saved[0].ok&&await saved[0].blob.slice(0,6).text()==='GIF89a','GIF89a saved through native writer');check(!desktop.dirty.length,'saved animation clears matching unsaved state');set('delayInput','350');check(desktop.dirty.includes('GIFsplat'),'timing change remains unsaved');
+   check(saved[0].ok&&await saved[0].blob.slice(0,6).text()==='GIF89a','GIF89a saved through native writer');check(!desktop.dirty.some(name=>name.toLowerCase()===id),'saved animation clears matching unsaved state');set('delayInput','350');check(desktop.dirty.includes('GIFsplat'),'timing change remains unsaved');
    check(typeof win.DrawSplatGifEncoder.videoSupported==='function','shared video capability detection available');
   }else if(id==='qrsplat'){
    await wait(()=>doc.querySelector('#qrPreview svg')&&!desktop.busy,'QR startup');set('qrContent','https://example.org/standalone');set('designName','Native QR');check($('payloadPreview').textContent==='https://example.org/standalone','local URL QR generation');await warning();
    $('downloadSvg').click();await wait(()=>saved.length===1,'SVG save');check(saved[0].ok&&/svg/.test(await saved[0].blob.text()),'SVG saved through native writer');
-   $('downloadPng').click();await wait(()=>saved.length===2,'PNG save');check(saved[1].ok&&saved[1].blob.type==='image/png','PNG saved through native writer');check(!desktop.dirty.length,'QR export clears matching unsaved state');
+   $('downloadPng').click();await wait(()=>saved.length===2,'PNG save');check(saved[1].ok&&saved[1].blob.type==='image/png','PNG saved through native writer');check(!desktop.dirty.some(name=>name.toLowerCase()===id),'QR export clears matching unsaved state');
    set('contentType','wifi');set('wifiName','Library;Guest');set('wifiPassword','synthetic:password');$('saveDesign').click();check(!win.localStorage.getItem('qrsplat.designs.v1').includes('synthetic:password'),'saved Wi-Fi designs exclude passwords');
    check($('payloadPreview').textContent.includes('Library\\;Guest'),'Wi-Fi separators escaped');check(!$('backendSetup').hidden&&desktop.onlineEnabled===false,'optional services available with connections off by default');
   }else if(id==='imagesplat'){
    importFiles('imageInput',[await png('red','red.png')]);await wait(()=>doc.querySelectorAll('#layerList .layer').length===1,'image import');check(true,'local image imported as layer');await warning();
-   doc.querySelector('[data-action="exportPng"]').click();await wait(()=>saved.length===1,'image export');check(saved[0].ok&&saved[0].blob.type==='image/png','artwork PNG saved natively');check(!desktop.dirty.length,'full artwork export clears matching unsaved state');
+   doc.querySelector('[data-action="exportPng"]').click();await wait(()=>saved.length===1,'image export');check(saved[0].ok&&saved[0].blob.type==='image/png','artwork PNG saved natively');check(!desktop.dirty.some(name=>name.toLowerCase()===id),'full artwork export clears matching unsaved state');
    doc.querySelector('[data-action="duplicate"]').click();await wait(()=>doc.querySelectorAll('#layerList .layer').length===2,'duplicate layer');check(desktop.dirty.includes('ImageSplat'),'new layer remains unsaved');
    doc.querySelector('[data-action="undo"]').click();check(doc.querySelectorAll('#layerList .layer').length===1,'layer undo restores original artwork');
    doc.querySelector('#layerList .layer').click();doc.querySelector('[data-action="removeBg"]').click();await wait(()=>$('bs-process'),'background studio');check($('bs-mode').value==='white','offline white background mode');$('bs-process').click();await wait(()=>!$('bs-apply').disabled,'white background worker');check(true,'background worker runs offline');$('bs-apply').click();await wait(()=>!$('bs-process'),'apply cutout');
@@ -55,8 +55,9 @@
 
   }else throw Error('Unknown profile '+id);
   if(id!=='ciphersplat'){
-   await wait(()=>!desktop.busy,'ready for project save');$('desktopSaveProject').click();await wait(()=>saved.some(s=>s.name===id+'.'+id)&&!desktop.busy,'project native save');const project=saved.find(s=>s.name===id+'.'+id);check(project.ok,'editable project saved through Go');const data=JSON.parse(await project.blob.text());check(data.format==='SplatWorks-project'&&data.tool===id,'portable project schema');importFiles('desktopProjectInput',[new win.File([await project.blob.arrayBuffer()],'native-project.'+id,{type:'application/json'})]);await wait(()=>document.getElementById('leaveDialog').open||$('statusLine')?.textContent.includes('Opened editable project')||$('scanMessage')?.textContent.includes('Opened editable project'),'project open or discard prompt');if(document.getElementById('leaveDialog').open)document.getElementById('discardWork').click();await wait(()=>!desktop.busy,'project restored');check(!desktop.dirty.length,'project opens with its saved editable state');
+   await wait(()=>!desktop.busy,'ready for project save');$('desktopSaveProject').click();await wait(()=>saved.some(s=>s.name===id+'.'+id)&&!desktop.busy,'project native save');const project=saved.find(s=>s.name===id+'.'+id);check(project.ok,'editable project saved through Go');const data=JSON.parse(await project.blob.text());check(data.format==='SplatWorks-project'&&data.tool===id,'portable project schema');importFiles('desktopProjectInput',[new win.File([await project.blob.arrayBuffer()],'native-project.'+id,{type:'application/json'})]);await wait(()=>document.getElementById('leaveDialog').open||$('statusLine')?.textContent.includes('Opened editable project')||$('scanMessage')?.textContent.includes('Opened editable project'),'project open or discard prompt');if(document.getElementById('leaveDialog').open)document.getElementById('discardWork').click();await wait(()=>!desktop.busy,'project restored');check(!desktop.dirty.some(name=>name.toLowerCase()===id),'project opens with its saved editable state');
   }
-  await wait(()=>!desktop.busy,'operations complete');check(errors.length===0,'no JavaScript errors');clearTimeout(deadline);await report(true);
- }catch(error){clearTimeout(deadline);await report(false,error);}
-})();
+  await wait(()=>!desktop.busy,'operations complete');check(errors.length===0,'no JavaScript errors');clearTimeout(deadline);return await report(true);
+ }catch(error){clearTimeout(deadline);return await report(false,error);} finally{desktop.saveBlob=originalSave;}
+};
+if(SplatDesktop.profile.id!=='desktop')void window.SplatToolSmoke(SplatDesktop.profile.id).then(result=>go.main.App.CompleteSmoke(JSON.stringify(result)));

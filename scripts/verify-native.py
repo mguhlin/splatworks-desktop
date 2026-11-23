@@ -65,7 +65,24 @@ if report.get('profile'):
         if profile=='qrsplat':assert not project['data'].get('wifiPassword')
     assert not list(root.glob('.splatworks-*')),'Unfinished output remains'
     print(f'Native {profile} report and actual export files verified: {root}');sys.exit()
-assert len(report['checks'])>=55,report
+assert len(report['checks'])>=130,report
+import wave,struct,xml.etree.ElementTree as ET
+for tool in ['gifsplat','qrsplat','imagesplat','audiosplat','videosplat','mediasplat']:
+    assert any(check.startswith(tool+':') for check in report['checks']),tool
+assert (root/'GIFsplat-animation.gif').read_bytes().startswith(b'GIF89a')
+ET.parse(root/'native-qr.svg')
+for name in ['native-qr.png','ImageSplat.png','ImageSplat-cutout.png']:
+    assert (root/name).read_bytes().startswith(b'\x89PNG\r\n\x1a\n')
+assert (root/'native.mp4').read_bytes()[4:8]==b'ftyp'
+for tool in ['gifsplat','qrsplat','imagesplat']:
+    assert json.loads((root/(tool+'.'+tool)).read_text())['tool']==tool
+for tool in ['audiosplat','videosplat']:
+    assert next(root.glob('*.'+tool+'.json')).stat().st_size>100
+with wave.open(str(root/'joined-media.wav'),'rb') as audio:
+    assert audio.getnframes()>16000
+with __import__('zipfile').ZipFile(root/'native-media-parts.zip') as archive:
+    assert len(archive.namelist())==2
+assert (root/'native-trim-part-01.mp3').stat().st_size>100
 import zipfile
 for app in ['listsplat','gridsplat','writesplat','showsplat','layoutsplat','plansplat']:
     file=next(root.glob('*.'+app+('.json' if app!='layoutsplat' else '')))

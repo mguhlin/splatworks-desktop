@@ -1,8 +1,21 @@
 # SplatWorks Desktop development handoff
 
-The eight-app suite is published as `v1.0.0-rc.14`. The six smaller standalone
-apps remain at `tools-v1.0.0-rc.5`. Stable publisher signing and physical-device
-qualification remain open.
+The fourteen-app Home chooser and media integration are implemented for the next
+candidate. The verified public baseline remains `v1.0.0-rc.14` until the new
+candidate's native workflow and public package checks finish. Standalone packages
+remain `tools-v1.0.0-rc.5`.
+
+Home starts without loading an editor, places all fourteen apps around the central
+SplatWorks logo, and retains mounted workspaces on return. GIFsplat, QRSplat,
+ImageSplat, AudioSplat, VideoSplat and MediaSplat join the existing eight apps.
+ImageSplat includes the pinned Fast model/runtime in `core-assets-manifest.json`.
+Media imports/builds stay isolated from the browser checkout; MediaSplat native
+adapters use awaited saves, output drafts, close/replacement warnings and explicit
+256 MiB input / 512 MiB output limits. The shared native smoke now exercises all
+fourteen apps and actual exports. Build-runner checks do not qualify physical
+file pickers, accessibility, recording or hardware codecs.
+
+## Previous public baseline
 
 ## Published candidates
 

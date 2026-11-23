@@ -4,55 +4,125 @@
     "name": "PDFsplat",
     "path": "/solutions/pdfsplat/",
     "description": "Organize, annotate, recognize text, and export PDFs.",
-    "source": "solutions/pdfsplat"
+    "source": "solutions/pdfsplat",
+    "icon": "solutions/pdfsplat/pdfsplat.png",
+    "purpose": "PDFs & OCR"
   },
   {
     "id": "ciphersplat",
     "name": "CipherSplat",
     "path": "/solutions/CipherSplat/",
     "description": "Encrypt and unlock files, folders, and text locally.",
-    "source": "solutions/CipherSplat"
+    "source": "solutions/CipherSplat",
+    "icon": "desktop/icons/ciphersplat.png",
+    "purpose": "Protect files"
   },
   {
     "id": "listsplat",
     "name": "ListSplat",
     "path": "/splatworks/listsplat/",
     "description": "Build databases, lists, forms, and reports.",
-    "source": "splatworks/listsplat"
+    "source": "splatworks/listsplat",
+    "icon": "splatworks/listsplat/listsplat_icon.png",
+    "purpose": "Lists & databases"
   },
   {
     "id": "gridsplat",
     "name": "GridSplat",
     "path": "/splatworks/gridsplat/",
     "description": "Work with spreadsheets, formulas, and charts.",
-    "source": "splatworks/gridsplat"
+    "source": "splatworks/gridsplat",
+    "icon": "splatworks/gridsplat/gridsplat_icon.png",
+    "purpose": "Spreadsheets"
   },
   {
     "id": "writesplat",
     "name": "WriteSplat",
     "path": "/splatworks/writesplat/",
     "description": "Write and format documents.",
-    "source": "splatworks/writesplat"
+    "source": "splatworks/writesplat",
+    "icon": "splatworks/writesplat/writesplat_icon.png",
+    "purpose": "Documents"
   },
   {
     "id": "showsplat",
     "name": "ShowSplat",
     "path": "/splatworks/showsplat/",
     "description": "Create slides and export presentations.",
-    "source": "splatworks/showsplat"
+    "source": "splatworks/showsplat",
+    "icon": "splatworks/showsplat/showsplat_icon.png",
+    "purpose": "Presentations"
   },
   {
     "id": "layoutsplat",
     "name": "LayoutSplat",
     "path": "/splatworks/layoutsplat/",
     "description": "Design publications, newsletters, and page layouts.",
-    "source": "splatworks/layoutsplat"
+    "source": "splatworks/layoutsplat",
+    "icon": "splatworks/layoutsplat/icon.svg",
+    "purpose": "Page layouts"
   },
   {
     "id": "plansplat",
     "name": "PlanSplat",
     "path": "/splatworks/plansplat/",
     "description": "Organize tasks, courses, and study time.",
-    "source": "splatworks/plansplat"
+    "source": "splatworks/plansplat",
+    "icon": "splatworks/plansplat/icon.svg",
+    "purpose": "Plans & tasks"
+  },
+  {
+    "id": "gifsplat",
+    "name": "GIFsplat",
+    "path": "/solutions/gifsplat/",
+    "description": "Create animated GIFs from local image frames.",
+    "source": "solutions/gifsplat",
+    "icon": "desktop/icons/gifsplat.png",
+    "purpose": "Animated GIFs"
+  },
+  {
+    "id": "qrsplat",
+    "name": "QRSplat",
+    "path": "/solutions/qrsplat/",
+    "description": "Create standard QR codes offline, including text, links, and Wi-Fi.",
+    "source": "solutions/qrsplat",
+    "icon": "desktop/icons/qrsplat.png",
+    "purpose": "QR codes"
+  },
+  {
+    "id": "imagesplat",
+    "name": "ImageSplat",
+    "path": "/solutions/imagesplat/",
+    "description": "Edit, annotate, crop, blur, and export images locally.",
+    "source": "solutions/imagesplat",
+    "icon": "desktop/icons/imagesplat.png",
+    "purpose": "Images & photos"
+  },
+  {
+    "id": "audiosplat",
+    "name": "AudioSplat",
+    "path": "/solutions/audiosplat/",
+    "description": "Record, arrange and edit multitrack audio with effects and local WAV/MP3 exports.",
+    "source": "solutions/audiosplat",
+    "icon": "desktop/icons/audiosplat.png",
+    "purpose": "Audio editing"
+  },
+  {
+    "id": "videosplat",
+    "name": "VideoSplat",
+    "path": "/solutions/videosplat/",
+    "description": "Edit local video with layered timelines, titles, captions, audio mixing and local exports.",
+    "source": "solutions/videosplat",
+    "icon": "desktop/icons/videosplat.png",
+    "purpose": "Video editing"
+  },
+  {
+    "id": "mediasplat",
+    "name": "MediaSplat",
+    "path": "/solutions/mediasplat/",
+    "description": "Trim, split, join, and caption local video and audio.",
+    "source": "solutions/mediasplat",
+    "icon": "solutions/mediasplat/icon.svg",
+    "purpose": "Trim, split & join"
   }
 ]

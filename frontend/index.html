@@ -10,12 +10,20 @@
 </head>
 <body>
   <header class="desktop-bar">
-    <a class="desktop-brand" href="#pdfsplat" aria-label="SplatWorks Desktop home">SplatWorks <span>Desktop</span></a>
-    <details id="appsMenu"><summary>Apps <span id="currentApp">PDFsplat</span></summary><nav id="tools" aria-label="Installed tools"></nav></details>
+    <a class="desktop-brand" href="#home" aria-label="SplatWorks Desktop home">SplatWorks <span>Desktop</span></a>
+    <button id="homeButton" type="button" hidden>Home</button><details id="appsMenu"><summary>Apps <span id="currentApp">Choose an app</span></summary><nav id="tools" aria-label="Installed tools"></nav></details>
     <span class="local-label">Files stay on this device</span>
     <button id="settingsButton" type="button">Settings</button><button id="helpButton" type="button">Help</button>
   </header>
-  <main id="workspaces" aria-label="Tool workspace"></main>
+  <main id="workspaces" aria-label="Tool workspace">
+    <section id="appHome" aria-labelledby="homeTitle" hidden>
+      <div class="app-orbit">
+        <div class="home-center"><img src="/assets/brand/SplatWorks_logo.png" alt="SplatWorks" width="220" height="220"><h1 id="homeTitle">What would you like to make?</h1><p>Choose an app to begin.</p></div>
+        <div id="homeApps" aria-label="Choose an app"></div>
+      </div>
+      <p class="home-note">Your apps work locally. Return Home anytime; your work stays open.</p>
+    </section>
+  </main>
   <footer class="desktop-footer"><span id="desktopStatus" role="status" aria-live="polite">Starting local tools…</span><span id="desktopVersion"></span></footer>
   <dialog id="leaveDialog" aria-labelledby="leaveTitle" aria-describedby="leaveMessage">
     <h1 id="leaveTitle">Unsaved work</h1>
@@ -24,12 +32,13 @@
   </dialog>
   <dialog id="helpDialog" aria-labelledby="helpTitle">
     <h1 id="helpTitle">SplatWorks Desktop</h1>
-    <p>ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat, PDFsplat, and CipherSplat run locally. Choose an app from the Apps menu. The editors, import libraries, PDF and OCR engines, English and Spanish OCR models, and encryption tools are included.</p>
+    <p>ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat, PDFsplat, CipherSplat, GIFsplat, QRSplat, ImageSplat, AudioSplat, VideoSplat, and MediaSplat run locally. Choose an app on Home or from the Apps menu. The editors, import libraries, PDF and OCR engines, English and Spanish OCR models, and encryption tools are included.</p>
     <h2>Your files</h2><p>Use Open file or drag files into a tool. Ctrl/Command+S saves editable work; other exports keep the original project marked as unsaved. Google Drive and Calendar connections are available in the browser editions. Saving opens a native destination picker. Switching tools keeps each workspace open. The app warns before discarding unsaved work and waits for active operations before closing. It does not create automatic recovery copies.</p>
     <p>GridSplat project files keep worksheet data, formulas and cell formatting. Export charts and picture graphs as images to keep their appearance.</p>
     <p>CipherSplat restores folders inside a new folder at your chosen destination. Existing folders are never overlaid. Passwords cannot be recovered; test an encrypted copy before deleting an original.</p>
     <h2>Features to review</h2><p>PDF text replacement and visual covers preserve underlying content. They are not secure redaction. OCR requires review and does not create a tagged, accessible PDF.</p>
     <p>Live camera and screen capture are available in the browser edition. In this desktop edition, import existing photos for scanning. WebDeck exports open in your browser for presentation and printing.</p>
+    <p>AudioSplat and VideoSplat save portable editable projects as well as media exports. MediaSplat trims, splits, joins, and captions media; save its output files before closing. Media imports are limited to 256 MiB in total in MediaSplat. ImageSplat includes the Fast background-removal model. Speech models are optional downloads: enable online connections in Settings to obtain one before using it offline.</p>
     <h2>About this edition</h2><p>This is a Go desktop shell using Wails and the existing local web tools. Native saves are streamed in chunks. The tools retain their existing PDF and browser memory limits.</p>
     <p>The shell is AGPL-3.0-or-later. Office apps are GPL-3.0-only. Bundled dependencies retain their licenses. <a href="https://github.com/mguhlin/splatworks-desktop">Source, licenses, and downloads</a> · <a href="https://splatworks.org">SplatWorks website</a>. Website links open in your browser and require an internet connection.</p>
     <form method="dialog"><button autofocus>Close help</button></form>

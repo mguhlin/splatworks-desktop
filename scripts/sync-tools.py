@@ -14,7 +14,8 @@ parser.add_argument('source', type=Path, help='local DrawSplat repository')
 args = parser.parse_args()
 source = args.source.resolve()
 dest = ROOT / 'frontend'
-registry = json.loads((ROOT / 'tools.json').read_text(encoding='utf-8'))
+all_tools = json.loads((ROOT / 'tools.json').read_text(encoding='utf-8'))
+registry = [t for t in all_tools if t['source'].startswith('splatworks/') or t['id'] in ['pdfsplat','ciphersplat']]
 ignored = shutil.ignore_patterns('node_modules', 'downloads', 'test-results', 'playwright-report', '.DS_Store', '*.zip', 'integrity.json', 'dist', '.vite', '*.tsbuildinfo', '__pycache__', '*.pyc', '*.pyo', '.pytest_cache', '.git')
 
 # Import committed inputs only; a developer's ignored caches are not release assets.
@@ -116,11 +117,11 @@ subprocess.run(['node',str(dest/'scripts/build-pdfsplat.mjs')],check=True)
 
 # Export docs are kept as source material. The shell supplies a short offline
 # help page instead of navigating away from an open document.
-(dest / 'tools.json').write_text(json.dumps(registry, indent=2) + '\n', encoding='utf-8')
+(dest / 'tools.json').write_text(json.dumps(all_tools, indent=2) + '\n', encoding='utf-8')
 revision = subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()
 files = {}
 owned = [t['source']+'/' for t in registry]+['vendor/','scripts/','docs/','assets/icons/','assets/brand/','assets/backgrounds/','assets/coloring-book/','assets/scratch-art/','assets/smithsonian-animals/','splatworks/shared/','solutions/mediasplat/ffmpeg/']
-shared = {'LICENSE','NOTICE.md','tools.json'} | {'splatworks/shared/'+n for n in ['google-drive.js','google-drive-auth.js','LICENSE.txt']} | {'assets/js/'+n for n in ['app-language.js','pdf-ui-strings.js','pdf-language-loader.js','action-cards.js','widget-i18n.js']} | {'assets/css/'+n for n in ['app-language.css','action-cards.css','action-icons.css']}
+shared = {'LICENSE','NOTICE.md'} | {'splatworks/shared/'+n for n in ['google-drive.js','google-drive-auth.js','LICENSE.txt']} | {'assets/js/'+n for n in ['app-language.js','pdf-ui-strings.js','pdf-language-loader.js','action-cards.js','widget-i18n.js']} | {'assets/css/'+n for n in ['app-language.css','action-cards.css','action-icons.css']}
 for file in sorted(dest.rglob('*')):
     rel=file.relative_to(dest).as_posix()
     if (rel in shared or any(rel.startswith(prefix) for prefix in owned)) and file.is_file() and 'node_modules' not in file.parts and file.relative_to(dest).parts[0] not in ['desktop'] and file.name not in ['index.html', 'source-manifest.json']:

@@ -62,6 +62,7 @@
       if([...document.querySelectorAll('dialog[open],[role=dialog][aria-modal=true]')].some(dialog=>dialog.getClientRects().length)){event.preventDefault();return;}
       if(desktop.command(desktop.toolId(location.pathname),event.key.toLowerCase()==='s'?'save':'open'))event.preventDefault();
     }
-    if((event.ctrlKey||event.metaKey)&&/^[1-8]$/.test(event.key)){event.preventDefault();desktop.selectIndex(Number(event.key)-1);}
+    if((event.ctrlKey||event.metaKey)&&event.key==='Home'){event.preventDefault();desktop.showHome();}
+    if((event.ctrlKey||event.metaKey)&&/^[1-9]$/.test(event.key)){event.preventDefault();desktop.selectIndex(Number(event.key)-1);}
   });
 })();

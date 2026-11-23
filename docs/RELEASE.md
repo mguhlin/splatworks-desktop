@@ -1,6 +1,13 @@
-SplatWorks Desktop now brings eight apps together for Windows, Mac, and Linux:
+SplatWorks Desktop now brings fourteen apps together for Windows, Mac, and Linux:
 **ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat, PDFsplat,
-and CipherSplat.** Choose an app from the Apps menu; switching keeps workspaces open.
+CipherSplat, GIFsplat, QRSplat, ImageSplat, AudioSplat, VideoSplat, and MediaSplat.**
+
+Home opens with the SplatWorks logo in the middle and the app choices around it. A compact grid fits small screens. Return Home or switch apps without closing workspaces.
+
+- Create GIFs and QR codes, edit images, and remove photo backgrounds with the bundled Fast model.
+- Edit audio and layered video with portable project saves and local exports.
+- Use MediaSplat to trim, split, join, transcribe, and burn subtitles. Native saves retain outputs after cancellation or failure. MediaSplat accepts up to 256 MiB of source media and 512 MiB of outputs.
+- Download speech models explicitly through Settings-enabled connections before using them offline.
 
 - Save editable office work through native destination dialogs using the existing portable project formats. Browser editions can reopen those files.
 - Preserve unsaved work after cancelled/failed saves, reject stale imports after newer edits, and warn before replacing work or closing. Unfinished planner forms also trigger the close warning.

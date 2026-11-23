@@ -5,7 +5,7 @@ async function sourcePDF(){const pdf=await PDFDocument.create(),font=await pdf.e
 async function editorReady(pdf){await expect.poll(()=>pdf.locator('#fileInput').evaluate(input=>typeof input.onchange==='function')).toBe(true);}
 test('PDF insertion retains painted thumbnails while new previews are delayed',async({page})=>{
   await page.setViewportSize({width:1280,height:1000});
-  await page.goto('/');const pdf=page.frameLocator('#tool-pdfsplat');await editorReady(pdf);
+  await page.goto('/#pdfsplat');const pdf=page.frameLocator('#tool-pdfsplat');await editorReady(pdf);
   const doc=await PDFDocument.create();doc.addPage([600,800]).drawRectangle({x:0,y:0,width:600,height:800,color:rgb(0,0,1)});
   const bytes=Buffer.from(await doc.save());
   await pdf.locator('#fileInput').setInputFiles({name:'worksheet.pdf',mimeType:'application/pdf',buffer:bytes});
@@ -48,7 +48,7 @@ test('native PDF saves retain editable external and internal links',async({page}
       BeginSave:async()=>{__bytes=[];return 'pdf-save';},AppendSave:async(_,path,data)=>__bytes.push(data),
       FinishSave:async()=> 'linked.pdf',CancelSave:async()=>{}}}};
   });
-  await page.goto('/');const pdf=page.frameLocator('#tool-pdfsplat');await editorReady(pdf);
+  await page.goto('/#pdfsplat');const pdf=page.frameLocator('#tool-pdfsplat');await editorReady(pdf);
   await pdf.locator('#fileInput').setInputFiles({name:'lesson.pdf',mimeType:'application/pdf',buffer:await sourcePDF()});
   await expect(pdf.locator('#status')).toContainText('2 pages');
   await pdf.locator('#addLinkButton').click();await pdf.locator('#annotationLayer').press('Enter');
@@ -69,7 +69,7 @@ test('native PDF saves retain editable external and internal links',async({page}
 
 test('two offline workspaces retain open PDFs and export a valid edited copy',async({page})=>{
   const external=[],errors=[];page.on('request',req=>{if(!req.url().startsWith('http://127.0.0.1:4194')&&!/^(blob:|data:)/.test(req.url()))external.push(req.url());});page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('/');const pdf=page.frameLocator('#tool-pdfsplat');
+  await page.goto('/#pdfsplat');const pdf=page.frameLocator('#tool-pdfsplat');
   await editorReady(pdf);
   await pdf.locator('#fileInput').setInputFiles({name:'lesson.pdf',mimeType:'application/pdf',buffer:await sourcePDF()});
   await expect(pdf.locator('#status')).toContainText('2 pages');
@@ -114,7 +114,7 @@ test('desktop adapter streams saves and folder paths through native capabilities
       BeginFolderRestore:async()=> 'folder-token',AppendSaveDirectory:async(id,path)=>{window.__directory=path},AppendSave:async(...args)=>window.__writes.push(args),
       FinishSave:async()=>{window.__commits++;return 'saved-output'},CancelSave:async()=>{},OpenExternal:async()=>{},ToggleFullscreen:async()=>{}}}};
   });
-  await page.goto('/');await expect(page.locator('#desktopVersion')).toHaveText('vtest');
+  await page.goto('/#pdfsplat');await expect(page.locator('#desktopVersion')).toHaveText('vtest');
   await page.evaluate(async()=>{
     const bytes=new Uint8Array(2*1024*1024+17);bytes.fill(65);await SplatDesktop.saveBlob(new Blob([bytes]),'large.pdf');
     await SplatDesktop.saveFolder([{path:'classroom/empty.txt',blob:new Blob([])},{path:'classroom/notes.txt',blob:new Blob(['notes'])}],undefined,['classroom/empty-directory']);
@@ -127,7 +127,7 @@ test('desktop adapter streams saves and folder paths through native capabilities
 
 test('save cancellation and failure keep the workspace usable',async({page})=>{
   await page.addInitScript(()=>{window.__cancelled=[];window.go={main:{App:{Version:async()=> 'test',SmokeEnabled:async()=>false,BeginSave:async()=>'',AppendSave:async()=>{},FinishSave:async()=>'',CancelSave:async id=>__cancelled.push(id)}}};});
-  await page.goto('/');await expect(page.locator('#desktopVersion')).toHaveText('vtest');
+  await page.goto('/#pdfsplat');await expect(page.locator('#desktopVersion')).toHaveText('vtest');
   expect(await page.evaluate(()=>SplatDesktop.saveBlob(new Blob(['keep']),'source.pdf'))).toBe(false);
   await expect(page.locator('#desktopStatus')).toContainText('cancelled');
   await page.evaluate(async()=>{go.main.App.BeginSave=async()=> 'bad';go.main.App.AppendSave=async()=>{throw Error('Disk full')};try{await SplatDesktop.saveBlob(new Blob(['keep']),'source.pdf')}catch{}});

@@ -12,7 +12,7 @@ function wrap(text,name){
   if(begin<2||end<0)throw Error('Invalid function '+name);
   return text.slice(0,begin)+'\n  const desktopEnd=desktop.beginOperation();\n  try {'+text.slice(begin,end)+'\n  } finally { desktopEnd(); }'+text.slice(end);
 }
-for(const id of ['audiosplat','videosplat']){
+for(const id of ['audiosplat','videosplat','mediasplat']){
   const app='solutions/'+id;
   fs.copyFileSync(path.join(templates,'desktop.ts'),file(app+'/src/desktop.ts'));
   edit(app+'/vite.config.ts',text=>{

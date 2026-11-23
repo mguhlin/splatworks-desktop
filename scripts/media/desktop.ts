@@ -1,6 +1,6 @@
 /** Desktop ownership: native writes and volatile workspace bookkeeping only. */
 export const desktop = (window as any).SplatDesktop;
-export const tool = location.pathname.includes('audiosplat') ? 'audiosplat' : 'videosplat';
+export const tool = desktop.toolId(location.pathname);
 let revision = 0, savedRevision = 0;
 export function changed() { revision++; desktop.changed(tool); }
 export function stamp() { return revision; }
@@ -26,3 +26,5 @@ export function discardDraft(key:string) {
 }
 desktop.registerWorkspace(tool,{isDirty:()=>revision!==savedRevision||drafts.size>0,markSaved:(value:number)=>{if(value===revision)savedRevision=value;}});
 (window as any).SplatMediaSession={retain,draftStamp,release,discardDraft};
+
+export function discardDrafts(){drafts.clear();desktop.changed(tool);}

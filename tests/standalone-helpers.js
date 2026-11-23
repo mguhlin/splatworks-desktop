@@ -1,5 +1,5 @@
 const {test,expect}=require('@playwright/test');
-const profiles=require('../profiles.json'),tools=[...require('../tools.json'),...require('../standalone-tools.json')];
+const profiles=require('../profiles.json'),tools=[...new Map([...require('../tools.json'),...require('../standalone-tools.json')].map(t=>[t.id,t])).values()];
 const fs=require('fs/promises'),{PNG}=require('pngjs'),jsQR=require('jsqr');
 const csp="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' data: blob:; worker-src 'self' blob:; media-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'";
 async function start(page,id,{smoke=false}={}){

@@ -10,8 +10,11 @@
   const saved=[];const save=desktop.saveBlob;
   desktop.saveBlob=async(blob,name,details)=>{const ok=await save(blob,name,details);saved.push({blob,name,ok});return ok;};
   const report=async(passed,error)=>app.CompleteSmoke(JSON.stringify({passed,checks,error:error?String(error.message)+'\n'+String(error.stack||''):null,errors,userAgent:navigator.userAgent},null,2));
-  const deadline=setTimeout(()=>void report(false,Error('Native smoke deadline exceeded')),420000);
+  const deadline=setTimeout(()=>void report(false,Error('Native smoke deadline exceeded')),660000);
   try {
+    check(desktop.active==='home'&&desktop.frames.size===0,'suite starts on the app chooser without loading an editor');
+    check(document.querySelectorAll('#homeApps button').length===14,'all fourteen apps available on Home');
+    desktop.selectTool('pdfsplat');
     await wait(()=>desktop.frames.get('pdfsplat')?.contentWindow?.PDFLib,'PDF library');
     const pdf=desktop.frames.get('pdfsplat').contentWindow;
     await wait(()=>pdf.document.getElementById('fileInput')?.onchange,'PDF editor startup');
@@ -139,6 +142,15 @@
       else if(id==='plansplat')check(Object.values(office.PlanSplat.getPlanner().tasks).some(task=>task.title==='Native plansplat'),'reopened planner retains task');
       else check(dom.querySelector(fields[id]).value==='Native '+id,id+' reopened project retains title');
       check(!Object.keys(office.localStorage).some(key=>/autosave|recovery|draft|showsplat.deck|plansplat.timer/.test(key)),id+' avoids persistent document drafts');
+    }
+    // Additional desktop engines, using the same native writers as the individual builds.
+    for(const file of ['native-smoke-tools.js','native-smoke-media.js','native-smoke-mediasplat.js'])await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/desktop/'+file;script.onload=resolve;script.onerror=reject;document.head.append(script);});
+    for(const id of ['gifsplat','qrsplat','imagesplat','audiosplat','videosplat','mediasplat']){
+      desktop.selectTool(id);
+      const result=await (['gifsplat','qrsplat','imagesplat'].includes(id)?window.SplatToolSmoke(id):id==='mediasplat'?window.SplatMediaUtilitySmoke():window.SplatMediaSmokeRunner(id));
+      checks.push(...result.checks.map(label=>id+': '+label));errors.push(...result.errors);
+      if(!result.passed)throw Error(id+': '+result.error);
+      const frame=desktop.frames.get(id);desktop.showHome();check(desktop.frames.get(id)===frame&&frame.hidden,id+' retains its workspace on Home');
     }
     clearTimeout(deadline);await report(true);
   } catch(error) { clearTimeout(deadline);await report(false,error); }

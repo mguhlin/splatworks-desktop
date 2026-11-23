@@ -1,0 +1,42 @@
+{
+  "model": {
+    "repository": "onnx-community/ormbg-ONNX",
+    "revision": "034e2d884afbab897e10e78fc5bb566b29533fd6",
+    "license": "Apache-2.0",
+    "files": [
+      {
+        "path": "config.json",
+        "size": 27,
+        "sha256": "d0b94ab052ace79177085c66a00a3f014a973edb09999cb0108bb01e65ded060"
+      },
+      {
+        "path": "preprocessor_config.json",
+        "size": 283,
+        "sha256": "ed502c6ea29c5fb8aafdafdc5bcf1657dfca09888ff753e5c358672ebcfd448d"
+      },
+      {
+        "path": "onnx/model_quantized.onnx",
+        "size": 44315205,
+        "sha256": "ffbcae62a7b675d616e64cb392ee028786c4cf74f83596590fba13733ef00171"
+      }
+    ]
+  },
+  "files": {
+    "solutions/backdropsplat/model-provenance.json": "1a644c69fb22d986b0a4e26326f61624b8ace3530dd9622c584c1639e79430a2",
+    "solutions/backdropsplat/models/onnx-community/ormbg-ONNX/config.json": "d0b94ab052ace79177085c66a00a3f014a973edb09999cb0108bb01e65ded060",
+    "solutions/backdropsplat/models/onnx-community/ormbg-ONNX/onnx/model_quantized.onnx": "ffbcae62a7b675d616e64cb392ee028786c4cf74f83596590fba13733ef00171",
+    "solutions/backdropsplat/models/onnx-community/ormbg-ONNX/preprocessor_config.json": "ed502c6ea29c5fb8aafdafdc5bcf1657dfca09888ff753e5c358672ebcfd448d",
+    "solutions/backdropsplat/vendor/LICENSE-BEN2.txt": "a4843132cbd56c50f20ae008739d85b7563d38905fd692a337af52ad588c581a",
+    "solutions/backdropsplat/vendor/LICENSE-ORMBG.txt": "c20260156bfa6636b06e2272df6804e36c8097ece5e539a39796b2166a427d7b",
+    "solutions/backdropsplat/vendor/LICENSE-jinja.txt": "d6e7b19451c1b3d1d66353bb4b1274138953b3bfd9ae60c56e77b1f548796982",
+    "solutions/backdropsplat/vendor/LICENSE-jszip.txt": "566c953c6090b1218ca6217dd7359d45dde46581968586dc607d59a78af6a9c4",
+    "solutions/backdropsplat/vendor/LICENSE-onnxruntime.txt": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+    "solutions/backdropsplat/vendor/LICENSE-transformers.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "solutions/backdropsplat/vendor/ThirdPartyNotices-onnxruntime.txt": "e9e90971a8e75a9a8ac0c6412e29c1202d079998389915aa485f46c816c3b4cc",
+    "solutions/backdropsplat/vendor/checksums.json": "375f459900624cc7289a351d1991efd4e730851f4c990283c36ba483181cb60d",
+    "solutions/backdropsplat/vendor/ort-wasm-simd-threaded.jsep.mjs": "08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9",
+    "solutions/backdropsplat/vendor/ort-wasm-simd-threaded.jsep.wasm": "c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39",
+    "solutions/backdropsplat/vendor/ort.bundle.min.mjs": "96e80b413dda387fbcefbd2bb0015f6708323767cc0dd5383260106582e77781",
+    "solutions/backdropsplat/vendor/transformers.min.js": "aa5002b70e789798da263f5f99c62bd3e8fcd0c119258a493c40c180648365fa"
+  }
+}

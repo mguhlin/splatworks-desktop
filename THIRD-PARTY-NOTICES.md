@@ -29,11 +29,11 @@ its version, publisher and SHA-256 are recorded in the release's `-webview2.json
 Microsoft's installer manages the runtime and its own servicing independently of
 the application.
 
-ImageSplat additionally includes Transformers.js 3.8.1 (Apache-2.0), ONNX Runtime
+ImageSplat, both independently and in the combined suite, additionally includes Transformers.js 3.8.1 (Apache-2.0), ONNX Runtime
 Web 1.22.0-dev.20250409-89f8206ba4 (MIT), and the ORMBG q8 model at revision
 `034e2d884afbab897e10e78fc5bb566b29533fd6` (Apache-2.0). Runtime hashes and
 notices are in `ai-runtime/vendor/`; model hashes are in `ai-runtime/model.json`.
-ImageSplat archives include these terms under `licenses/AI/`. Original model
+ImageSplat archives include these terms under `licenses/AI/`; the combined suite also embeds the original terms beside `solutions/backdropsplat/vendor/`. Original model
 source: https://huggingface.co/onnx-community/ormbg-ONNX .
 
 Embedded FontSplat uses the bundled Liberation, DejaVu, Comic Neue and Noto
@@ -42,14 +42,14 @@ in ImageSplat distributions and beside the font sources. No FFmpeg core is
 required by the embedded still-image lettering workflow.
 
 
-AudioSplat and VideoSplat snapshots, source hashes and the reviewed browser revision
+AudioSplat, VideoSplat and MediaSplat snapshots, source hashes and the reviewed browser revision
 are recorded in `frontend/media-manifest.json`. Each media app includes dependency
 license texts in its `licenses/` directory. AudioSplat includes the LGPL-3.0
 MP3 encoder `@breezystack/lamejs`; VideoSplat includes React (MIT), Mediabunny (MPL-2.0),
 and `@ffmpeg/ffmpeg` (MIT). The separately bundled `@ffmpeg/core` 0.12.10 is
 GPL-2.0-or-later and includes GPL-enabled codec libraries. FFmpeg core, build source
 and component notices are documented in [Media engine sources](docs/MEDIA-SOURCES.md).
-DejaVu Sans and its notice accompany the FFmpeg assets. Both apps also include the
+DejaVu Sans and its notice accompany the FFmpeg assets. All three apps also include the
 shared local subtitle engines (Transformers.js, ONNX Runtime and whisper.cpp);
 original notices and GGML runtime sources remain alongside their assets.
 

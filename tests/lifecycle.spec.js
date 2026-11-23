@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const {PDFDocument}=require('../frontend/solutions/pdfsplat/vendor/pdf-lib.min.js');
 async function open(page,name='lesson.pdf'){
-  await page.goto('/');const pdf=page.frameLocator('#tool-pdfsplat');await expect.poll(()=>pdf.locator('#fileInput').evaluate(e=>!!e.onchange)).toBe(true);
+  await page.goto('/#pdfsplat');const pdf=page.frameLocator('#tool-pdfsplat');await expect.poll(()=>pdf.locator('#fileInput').evaluate(e=>!!e.onchange)).toBe(true);
   const doc=await PDFDocument.create();doc.addPage();await pdf.locator('#fileInput').setInputFiles({name,mimeType:'application/pdf',buffer:Buffer.from(await doc.save())});await expect(pdf.locator('#status')).toContainText(name+' opened.');return pdf;
 }
 async function edit(pdf){await pdf.locator('#addTextButton').click();await pdf.locator('#annotationLayer').press('Enter');await pdf.locator('#textValue').fill('Unsaved classroom work');await pdf.locator('#textValue').press('Tab');}

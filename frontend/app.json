@@ -4,9 +4,10 @@
   "slug": "splatworks-desktop",
   "binary": "SplatWorks-Desktop",
   "icon": "assets/brand/SplatWorks_logo.png",
-  "description": "Eight local apps for documents, spreadsheets, databases, presentations, publications, planning, PDFs, and encryption.",
+  "description": "Fourteen local apps for documents, spreadsheets, databases, presentations, publications, planning, PDFs, encryption, images, QR codes, GIFs, audio, video, and media conversion.",
   "smoke": "native-smoke.js",
   "help": [],
   "registry": "SplatWorksDesktop",
-  "settingsKey": "Desktop"
+  "settingsKey": "Desktop",
+  "bundledModels": true
 }

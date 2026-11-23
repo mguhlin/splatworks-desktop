@@ -28,25 +28,23 @@ func TestBundledOriginPolicy(t *testing.T) {
 	}
 }
 
-func TestCoreBundleExcludesStandaloneMediaApps(t *testing.T) {
-	data, err := bundled.ReadFile("frontend/app.json")
+func TestRegisteredWorkspacesAreBundled(t *testing.T) {
+	data, err := bundled.ReadFile("frontend/tools.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	var info DesktopInfo
-	if err = json.Unmarshal(data, &info); err != nil {
+	var tools []struct {
+		Path string `json:"path"`
+	}
+	if err = json.Unmarshal(data, &tools); err != nil {
 		t.Fatal(err)
 	}
-	if info.ID != "desktop" {
-		return
-	}
-	for _, path := range []string{
-		"frontend/solutions/audiosplat/index.html",
-		"frontend/solutions/videosplat/index.html",
-	} {
-		if file, err := bundled.Open(path); err == nil {
+	for _, tool := range tools {
+		file, err := bundled.Open("frontend" + tool.Path + "index.html")
+		if err != nil {
+			t.Errorf("registered workspace missing: %s: %v", tool.Path, err)
+		} else {
 			file.Close()
-			t.Errorf("core app unnecessarily embeds %s", path)
 		}
 	}
 }

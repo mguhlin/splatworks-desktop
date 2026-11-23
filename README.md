@@ -1,8 +1,8 @@
 # SplatWorks Desktop
 
-Eight SplatWorks apps in one local desktop application for Linux, Windows, and
+Fourteen SplatWorks apps in one local desktop application for Linux, Windows, and
 macOS: ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat, PlanSplat, PDFsplat,
-and CipherSplat. Go and Wails provide the application shell and native file saving. The
+CipherSplat, GIFsplat, QRSplat, ImageSplat, AudioSplat, VideoSplat, and MediaSplat. Go and Wails provide the application shell and native file saving. The
 existing SplatWorks web tools provide the editors, import/export engines, OCR, and encryption.
 
 [Download desktop apps](https://splatworks.org/pages/download.html#desktop-apps) ·
@@ -39,11 +39,11 @@ download.
 
 ## Use
 
-Open **Apps** to choose a workspace. Switching apps keeps each document open.
+The app opens on **Home**, with the SplatWorks logo surrounded by all fourteen app choices. Choose a workspace there or from **Apps**. Return **Home** anytime; switching keeps each document open.
 Open a local file with the tool's picker or supported drop area. Saves use native
 destination dialogs and report success after writing. The app warns before
 replacing unsaved work and waits for operations before closing. No automatic
-recovery copies are written. Ctrl/Cmd+1 through Ctrl/Cmd+8 switch apps; Ctrl/Cmd+S
+recovery copies are written. Ctrl/Cmd+Home returns to the chooser. Ctrl/Cmd+1 through Ctrl/Cmd+9 switch apps; Ctrl/Cmd+S
 saves and Ctrl/Cmd+O opens a file in the active app.
 
 Office projects use their existing portable formats. GridSplat saves spreadsheet
@@ -67,6 +67,8 @@ limits and existing import/export limitations still apply. Capture and recording
 webview APIs, codecs, device permissions and hardware. Importing existing photos
 works independently of those capture capabilities. WebDeck exports open in
 a browser for presentation and printing. Use the browser editions for Google Drive and Calendar integration.
+
+MediaSplat trims, splits, joins, burns subtitles, and generates transcripts. Its media inputs are limited to 256 MiB in total; outputs to 512 MiB. Save output files before closing. AudioSplat and VideoSplat also save portable editable projects. ImageSplat includes the pinned Fast background-removal model. Speech model downloads are optional and require enabling online connections first.
 
 ## Smaller standalone apps
 
@@ -117,7 +119,7 @@ dialogs. It runs the real desktop renderer, editing/export, chunked native saves
 CS4 authentication, folder restoration, and bundled OCR. `native-smoke.json`
 contains the result. On Linux it can run under Xvfb with networking disabled.
 The release workflow checks PDF/OCR/encryption plus save/reopen workflows for all
-six office apps on each build platform. It also runs Go save/security tests and
+six office apps and the six added image/media tools on each build platform. It also runs Go save/security tests and
 browser checks for lifecycle, save failure/cancellation and compatibility.
 It also installs, upgrades and uninstalls the Windows setup package, installs and
 removes the Linux package, and checks the Mac archive/DMG and both architectures.

@@ -4,7 +4,7 @@ The media apps embed adapted SplatWorks sources under `frontend/solutions/`.
 `frontend/media-manifest.json` records the reviewed browser revision and the hashes
 of the bundled source, production assets and notices. Desktop adapters and their
 rebuild scripts live in `scripts/media/`, `scripts/adapt-media-tools.mjs` and
-`scripts/sync-media-tools.py`. Runtime libraries retain their original licenses;
+`scripts/adapt-mediasplat.mjs` and `scripts/sync-media-tools.py`. Runtime libraries retain their original licenses;
 the application license does not replace them.
 
 - **FFmpeg WebAssembly core 0.12.10:** GPL-2.0-or-later. The matching
@@ -35,7 +35,7 @@ the application license does not replace them.
   Per-app lockfiles identify versions; original license notices accompany each
   media app. Model weights are optional user-selected files or explicit downloads,
   with their own upstream model licenses.
-- **React:** MIT. Its original notice accompanies VideoSplat.
+- **React:** MIT. Its original notice accompanies VideoSplat and MediaSplat.
 - **DejaVu Sans:** Bitstream Vera/DejaVu notices are bundled beside the FFmpeg assets.
 
 Full GPL-2.0 and LGPL-3.0 license texts accompany the distribution under `licenses/`.

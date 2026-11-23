@@ -1068,7 +1068,6 @@
     "splatworks/writesplat/vite.config.ts": "40f74aa450fe539401d0327dffa13c56da90bdc8046b10c5c1402b2ac87ab627",
     "splatworks/writesplat/vitest.config.ts": "1b96b9bca267cea71067834e6bdee146dc5517361cf07c221e46fb6d36ebd5f4",
     "splatworks/writesplat/writesplat_icon.png": "b40cc694b6519ef24c6fbc85c29fe85561d71bd74d6f1da10cb3dd80cc1163df",
-    "tools.json": "503280c1a3911415dd93c2eb536fe942efbdafe46269714b54b7ed49370f27f9",
     "vendor/a.html": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
     "vendor/from-source/README.md": "d5d18ee2e60434fa2682fc396657b565f9df2e6ac16b569070edff8ac946097b",
     "vendor/from-source/build-hash-wasm.sh": "a0ca3b3d5e042d4a1f4b1897f8528b334cbb7d145e3590c7d3543f38055e2737",

@@ -46,3 +46,5 @@ present. Test native save cancellation and edits made while a destination dialog
 is open. Check that closing an unsaved recording or transcript warns independently
 of saving the timeline. Verify optional model-download refusal when connections
 are off and local GGML transcription without networking.
+
+For the combined suite, start on Home and check all fourteen choices with a keyboard and screen reader. Return Home with unsaved work and verify that reopening an app retains it. In MediaSplat, trim, split and join representative files, save individual outputs and ZIPs, cancel or fail a save and retry, then generate and review captions with a locally available speech model. Verify close warnings for unsaved outputs and transcripts.
