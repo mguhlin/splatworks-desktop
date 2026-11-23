@@ -4,7 +4,8 @@ PDFsplat and CipherSplat in a local desktop application for Linux, Windows, and
 macOS. Go and Wails provide the application shell and native file saving. The
 existing SplatWorks web tools provide PDF rendering, editing, OCR, and encryption.
 
-[Download releases](https://github.com/mguhlin/splatworks-desktop/releases) ·
+[Download desktop apps](https://splatworks.org/pages/download.html#desktop-apps) ·
+[Short user guide](https://splatworks.org/wiki/desktop-apps.html) ·
 [SplatWorks](https://splatworks.org) ·
 [Browser-tool source](https://github.com/mguhlin/drawsplat)
 

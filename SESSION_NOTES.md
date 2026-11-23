@@ -53,18 +53,18 @@ The paired browser/core-app regression work is recorded in the sibling checkout'
 
 ## Evidence
 
-- 98 Chromium/WebKit checks passed locally and in core CI.
-- Go race tests and vet passed locally; five Python packaging tests passed.
+- 102 Chromium/WebKit checks passed locally and in core CI.
+- Go transfer race tests and vet passed locally; five Python packaging checks passed.
 - Both release workflows passed Linux, Windows and universal Mac build, native
   smoke, installer/archive and checksum checks. Linux native checks run offline.
 - All 98 public files were downloaded: seven core distribution artifacts and
   their checksums, plus 42 standalone artifacts and their checksums. Sizes and
   SHA-256 digests matched GitHub metadata and adjacent checksum files.
-- Downloaded Linux packages for all six standalone apps were extracted and run
-  with `--serve`; identities, tool registries, CSP and tool entry points passed.
-  The downloaded CipherSplat stylesheet contains the contrast fix.
-- The downloaded core Linux DEB passed six Chromium/WebKit checks for preserved
-  PDF thumbnails, CipherSplat contrast and native PDF-link save/reopen behavior.
+- The downloaded Linux suite and standalone CipherSplat each passed eight
+  Chromium/WebKit checks covering compatible encryption, text round trips,
+  cancelled saves and mode/Help lifecycle. The suite checks also exercised PDF
+  interoperability. The other five standalone apps passed native CI; their
+  published files were verified by size and digest here.
 
 Ignored evidence is under `output/public/`; browser logs are in `/tmp/` and do not
 survive every environment. A fresh checkout can reproduce package verification:
