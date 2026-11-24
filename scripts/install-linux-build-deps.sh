@@ -6,6 +6,7 @@ set -euo pipefail
 sudo python3 - <<'PY'
 import pathlib, re
 paths = [pathlib.Path('/etc/apt/sources.list')]
+paths += list(pathlib.Path('/etc/apt').glob('apt-mirrors*.txt'))
 directory = pathlib.Path('/etc/apt/sources.list.d')
 paths += list(directory.glob('*.list')) + list(directory.glob('*.sources'))
 for path in paths:

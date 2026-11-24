@@ -1,6 +1,6 @@
 # SplatWorks Desktop development handoff
 
-The fourteen-app suite is published as `v1.0.0-rc.15`, source `a8f75bd`.
+The fourteen-app suite is published as `v1.0.0-rc.19`, source `0af1ab4`.
 The six smaller standalone packages remain `tools-v1.0.0-rc.5`, source `ef4bf55`.
 Stable publisher signing and physical-device qualification remain open.
 
@@ -8,7 +8,7 @@ Stable publisher signing and physical-device qualification remain open.
 
 | Distribution | Release | Verified workflow |
 | --- | --- | --- |
-| Fourteen-app suite | [v1.0.0-rc.15](https://github.com/mguhlin/splatworks-desktop/releases/tag/v1.0.0-rc.15) | [Release checks and delivery](https://github.com/mguhlin/splatworks-desktop/actions/runs/45268392420) |
+| Fourteen-app suite | [v1.0.0-rc.19](https://github.com/mguhlin/splatworks-desktop/releases/tag/v1.0.0-rc.19) | [Release checks and delivery](https://github.com/mguhlin/splatworks-desktop/actions/runs/45290400624) |
 | Six standalone apps | [tools-v1.0.0-rc.5](https://github.com/mguhlin/splatworks-desktop/releases/tag/tools-v1.0.0-rc.5) | [Release checks and delivery](https://github.com/mguhlin/splatworks-desktop/actions/runs/45225214790) |
 
 Home starts without loading an editor. All fourteen app choices surround the
@@ -18,13 +18,33 @@ open a specific tool. Single-app profiles still open their own editor directly.
 
 The suite includes ListSplat, GridSplat, WriteSplat, ShowSplat, LayoutSplat,
 PlanSplat, PDFsplat, CipherSplat, GIFsplat, QRSplat, ImageSplat, AudioSplat,
-VideoSplat and MediaSplat. ImageSplat bundles the pinned Fast model and runtime.
-MediaSplat has native output/ZIP saves, independent output drafts, replacement
-and close warnings, retryable cancelled/failed saves, and snapshot tracking that
-preserves newer settings and subtitle-file changes. Input media is limited to
-256 MiB in total and output to 512 MiB. Audio/Video retain portable project saves.
-Speech models are optional explicit downloads or local files; online connections
-default off. No automatic document, credential or recovery persistence is allowed.
+VideoSplat and MediaSplat. Office apps share GridSplat's palette. Tools share
+AudioSplat's DrawSplat™ Tools header and rainbow band. App controls, layouts,
+icons, document colors and the WriteSplat theme switch remain intact. Styling
+lives in `frontend/desktop/theme.{css,js}` and activates only for the combined
+suite. Browser app code and published standalone packages are unchanged.
+
+VideoSplat can choose a recording mode before optional device setup. Denial has
+clear retry/system-settings guidance. Linux has a native, deny-by-default
+camera/microphone consent handler restricted to `wails://wails/`; device labels
+remain unavailable until consent. Synthetic policy controls refuse production
+calls. Capture and cropping prefer WebM where available and fall back to MP4,
+with matching filenames. Avoid forcing a low H.264 level: it rejects normal
+720p camera output. Debian packages declare all four GStreamer plugin sets
+(good, bad, ugly and libav). Portable users need these system dependencies.
+
+CipherSplat keeps its name and existing formats. Its native workspace is inert
+until all input handlers load. This fixes an early-typing race between app.js and
+browser.js that could leave the action button disabled. A delayed-script test
+proves focus is blocked until initialization, then text input enables encryption.
+
+ImageSplat bundles the pinned Fast model and runtime. MediaSplat has native
+output/ZIP saves, independent output drafts, replacement/close warnings and
+retryable saves. Snapshot tracking preserves newer settings and subtitle files.
+Inputs are limited to 256 MiB and outputs to 512 MiB. Audio/Video retain portable
+project saves. Speech models are optional explicit downloads or local files;
+online connections default off. No automatic document, credential or recovery
+persistence is allowed.
 
 ## Source ownership and rebuilds
 
@@ -32,74 +52,98 @@ Browser apps live in the sibling `drawsplat_github` repository. Keep adapters he
 The registry and bundled `frontend/tools.json` must stay identical with unique IDs.
 
 - `scripts/sync-tools.py` imports committed office/PDF/Cipher inputs, retaining
-  snapshot ownership separately from small/media apps. Office snapshot: `ccaad8a`.
+  ownership separately from small/media apps. Office snapshot: `ccaad8a`.
 - `scripts/sync-small-tools.py` imports GIF/QR/Image and embedded helpers.
 - `scripts/sync-media-tools.py` builds Audio/Video/Media in isolation from the
   explicit browser checkout; `adapt-media-tools.mjs`, `adapt-mediasplat.mjs` and
-  `scripts/media/` apply desktop boundaries. Media snapshot: `eed7b56`.
+  `scripts/media/` apply native boundaries. Media snapshot: `01ffa8b`.
 - `scripts/prepare-core-assets.py` verifies the pinned AI model and bundles its
   runtime, licenses and `core-assets-manifest.json`. Never fetch app code at runtime.
-- `scripts/check-assets.py` checks all four manifests, 1790 hashes, local engines,
+- `scripts/check-assets.py` checks all four manifests, 1791 hashes, local engines,
   entry points and icons. Import committed files only; ignored developer caches
   previously caused an integrity failure before publication.
 
-Office project saving/reopening, in-memory file handoffs, native chart/image
-exports and Help remain qualified. Grid projects preserve sheet data, formulas
-and formatting; save chart appearance as an image. ShowSplat explicitly saves
-WebDeck HTML for browser presentation. Print exported HTML/PDF in a browser;
-cloud-account workflows use browser editions. See `docs/OFFICE.md`.
+Office project saving/reopening, in-memory handoffs, native chart/image exports
+and Help remain qualified. Grid projects preserve sheet data, formulas and
+formatting; save chart appearance as an image. ShowSplat explicitly saves WebDeck
+HTML for browser presentation. Print exported HTML/PDF in a browser; cloud-account
+workflows use browser editions. See `docs/OFFICE.md`.
 
 ## Evidence
 
-- The exact candidate passed 150 Chromium/WebKit checks. One initial five-second
-  CipherSplat cancellation assertion timed out; ten local WebKit repetitions and
-  the full same-source CI rerun passed. Native encryption checks also passed.
-- Each platform passed 157 native checks with actual Go output files and all
-  fourteen engines. Linux native execution ran with networking disabled.
+- All 188 Chromium/WebKit checks passed locally and in the tagged workflow.
+  Forty repeated CipherSplat startup/lifecycle cases also passed. Startup tests
+  wait for initialized handlers before entering synthetic data.
+- Linux passed 163 native checks, including denied permission, retry, capture
+  through VideoSplat's actual recording function, decoding the recorded video,
+  and saving through Go. Windows and Mac each passed 157 native checks. Linux
+  execution ran with networking disabled; the installed Debian app also passed.
+- A Debian host and isolated Ubuntu 24.04 runtime independently passed native
+  synthetic-device checks. Ubuntu's offline MP4 independently verified as H.264
+  video at 1280×720 with AAC audio. Use normal 30 fps for three seconds in this
+  test; very short 5 fps clips do not reliably flush the MP4 encoder.
 - Windows install/upgrade/uninstall, Linux install/removal and Mac archive/DMG
-  integrity and universal-architecture checks passed. Mac native execution used
-  Intel build runners; Apple-silicon physical qualification remains open.
-- Go transfer race tests, policy tests, vulnerability scanning and five Python
-  packaging tests passed in CI. Snapshot and engine hashes passed.
-- All fourteen release files match public GitHub sizes/digests and SHA-256 sidecars.
-  Linux/Windows package bytes came from the tagged CI artifacts; public sidecars
-  and both Mac distributions were downloaded directly. Mac hashes also match
-  checksum records read from its qualified CI artifact.
-- The downloaded Linux binary served the production security policy and passed
-  another 80 Chromium/WebKit office/PDF/Cipher/home/media interface checks.
-  These use loopback browser automation; native webviews were exercised in CI.
-- Standalones retain their earlier qualification: 84 files verified against
-  public metadata/checksums, with all native/platform checks passing.
+  integrity and universal-architecture checks passed. Mac execution used Intel
+  runners; Apple-silicon physical qualification remains open.
+- Go policy/transfer race tests, vulnerability scanning, five Python packaging
+  tests and all snapshot/engine hashes passed in CI.
+- All fourteen release files were downloaded publicly and match GitHub sizes,
+  digests and SHA-256 sidecars. All seven payload hashes also match checksum
+  records read from the qualified CI artifacts.
+- The publicly downloaded Linux binary served the production security policy
+  and passed another 118 Chromium/WebKit interface checks. These use loopback
+  browser automation; native webviews were exercised separately in CI. The
+  companion source fixture must have an open log destination: an orphaned
+  Python server with closed stdout caused six initial browser-reopen failures;
+  restarting it produced a clean 118-case pass.
+- Standalones retain their earlier qualification: 84 public files verified,
+  with all native/platform checks passing.
 
-Ignored receipts are under `output/native-proof/rc15/`, `output/pre-release/` and
-`output/public/v1.0.0-rc.15-verified.json`. The local runtime used isolated WebKit
-libraries in `output/toolchain/host-runtime/` for the loopback check. Go 1.27.4
-and Wails 2.17.1 are available; pkg-config and GTK/WebKit development headers are
-absent, so native compilation and package installation ran in CI.
+Release receipts are under `output/native-proof/rc19/`,
+`output/pre-release/rc19-*-checksums/` and
+`output/public/v1.0.0-rc.19-verified.json`. Additional native reproduction receipts
+are in `output/ubuntu-normal-fps/` and
+`output/native-recording-verified-proof/`. The host uses isolated headers and
+runtime libraries under `output/toolchain/` via `/tmp/splat-native-env.sh`.
+Set TMPDIR and GOTMPDIR to `output/toolchain/go-tmp` because host /tmp is nearly
+full. No host development packages were installed.
 
-The website catalogue and short guide live in `data/desktop-apps.json` and
-`docs/desktop-apps.md` in the sibling checkout. Both explain the Home chooser,
-fourteen apps and further desktop work. School privacy/agreement resources stay
-at https://splatworks.org/schools/ . Preserve the user's unrelated untracked
-`pages/audit_instructions.md` in that checkout.
+Earlier rc.16–rc.18 candidates were not published. Preserve their tags/history.
+Linux setup downloads were slow on the hosted EC2 mirror; optional package
+recommendations also pulled an unused speech model. The build helper installs
+required codecs and xauth explicitly without recommendations. Its follow-up
+mirror handling covers both source lists and `/etc/apt/apt-mirrors*.txt` files.
+Failed native runs retain readable diagnostics; installed-app tests restore
+output ownership on exit. Do not weaken release gates to bypass setup delays.
 
-## CipherSplat and PDF compatibility
+## Website and user guidance
 
-CipherSplat retains its name, CS4/legacy formats, CipherEnc-derived automatic input
+The catalogue and short guide are in `data/desktop-apps.json` and
+`docs/desktop-apps.md` in the sibling checkout, published in source `c90f063`.
+Both explain the fourteen-app suite and further desktop work. The guide identifies
+combined-desktop styling and recording setup explicitly. All 153 website checks
+passed in CI, plus 15 live Chromium/Firefox/WebKit navigation checks. Clean and
+.html download/wiki routes serve the expected content and links without
+maintenance timestamps. School privacy/agreement resources remain at
+https://splatworks.org/schools/ . Preserve that checkout's unrelated untracked
+`pages/audit_instructions.md`.
+
+## Compatibility and qualification boundaries
+
+CipherSplat retains CS4/legacy compatibility, CipherEnc-derived automatic input
 detection, local OpenPGP key import/fingerprints, compressed and verified saves,
-empty-directory restoration, and static Help. Cancelled/failed results stay open
-for retry; mode changes and replacement protect unsaved work. PDFsplat retains
+empty-directory restoration and static Help. Cancelled/failed results remain
+retryable; mode changes and replacement protect unsaved work. PDFsplat retains
 editable web/file links and internal destinations, stable painted thumbnails
-during page edits, and local English/Spanish OCR. Covers are not secure redaction.
+during page edits and local English/Spanish OCR. Covers are not secure redaction.
 
-## Qualification boundaries
-
-Automated editing, native saves, lifecycle, package integrity and delivery checks
-PASS. Actual file pickers, screen readers, touch, capture/recording permissions,
-representative physical devices, publisher signing and notarization remain
-NOT_RUN. The security checks are scoped evidence, not a complete security audit;
-school deployment still requires institution-specific review.
+Automated editing, native saves, lifecycle, synthetic Linux recording, package
+integrity and delivery checks PASS. Actual file pickers, interactive OS/native
+consent dialogs, screen readers, touch, physical cameras/microphones, screen
+sharing and representative physical devices remain NOT_RUN. Publisher signing
+and notarization remain open. These checks are scoped evidence rather than a
+complete security audit; schools still require institution-specific review.
 
 Decision: CONDITIONAL for unsigned evaluation candidates. Do not publish stable
 releases or set physical-approval flags without evidence from `docs/SIGNING.md`
-and `docs/VALIDATION.md`. Never promote a candidate merely by dropping its suffix.
+and `docs/VALIDATION.md`. Never promote a candidate by dropping its suffix.
