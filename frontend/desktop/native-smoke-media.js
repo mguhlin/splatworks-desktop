@@ -31,8 +31,10 @@ window.SplatMediaSmokeRunner=async function(id){
      check(stream.getVideoTracks().some(track=>track.readyState==='live')&&stream.getAudioTracks().some(track=>track.readyState==='live'),'native permission retry opens synthetic camera and microphone');
      check(recording.state==='recording','native recording encoder is available');
      await new Promise(resolve=>setTimeout(resolve,3000));const blob=await Promise.race([recording.stop(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Native recording did not finish')),20000))]);recording=undefined;
-     const preview=doc.createElement('video'),url=win.URL.createObjectURL(blob);preview.muted=true;preview.preload='auto';preview.style.cssText='position:fixed;width:1px;height:1px;opacity:0';doc.body.append(preview);preview.src=url;void preview.play().catch(()=>{});
-     try{preview.load();await wait(()=>preview.readyState>=2||preview.error,'recorded video decode');check(!preview.error&&preview.videoWidth>0,'native recording contains decodable video frames');}finally{preview.pause();preview.removeAttribute('src');preview.load();preview.remove();win.URL.revokeObjectURL(url);}
+     const preview=doc.createElement('video'),url=win.URL.createObjectURL(blob);preview.muted=true;preview.playsInline=true;preview.preload='auto';preview.style.cssText='position:fixed;top:8px;left:8px;width:80px;height:60px;z-index:99999';doc.body.append(preview);preview.src=url;
+     // load() cancels a pending play(). Start playback afterwards and keep this
+     // synthetic preview visible so WebKit does not suspend hidden video decode.
+     try{preview.load();void preview.play().catch(()=>{});await wait(()=>preview.readyState>=2||preview.error,'recorded video decode');check(!preview.error&&preview.videoWidth>0,'native recording contains decodable video frames');}finally{preview.pause();preview.removeAttribute('src');preview.load();preview.remove();win.URL.revokeObjectURL(url);}
      check(blob.size>100,'native camera and microphone produce an actual recording');check(await desktop.saveBlob(blob,'native-camera.'+(blob.type.startsWith('video/mp4')?'mp4':'webm')),'native recording saves through Go');
     }finally{recording?.cancel();}
    }
