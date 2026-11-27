@@ -51,6 +51,33 @@
     await open(await edited.blob.arrayBuffer(),'desktop-reopened.pdf');
     check(pdf.document.querySelectorAll('.text-object').length===0,'saved annotations flatten and reopened document renders');
 
+    // Standard form authoring and PDF password export through the real Go save path.
+    const formDoc=await pdf.PDFLib.PDFDocument.create(),formPage=formDoc.addPage(pdf.Array.of(500,600));
+    formPage.drawText('Native form fixture',{x:40,y:550,size:18});
+    formPage.drawLine({start:pdf.JSON.parse('{"x":100,"y":500}'),end:pdf.JSON.parse('{"x":440,"y":500}'),thickness:1});
+    formPage.drawRectangle({x:40,y:435,width:14,height:14,borderWidth:1,borderColor:pdf.PDFLib.rgb(0,0,0)});
+    for(let n=0;n<5;n++)formPage.drawRectangle({x:100+n*20,y:375,width:18,height:24,borderWidth:1,borderColor:pdf.PDFLib.rgb(0,0,0)});
+    await open(await formDoc.save(),'native-form.pdf');
+    pdf.document.getElementById('formFieldsButton').click();pdf.document.getElementById('detectFormFields').click();
+    await wait(()=>pdf.document.getElementById('formFieldsStatus').textContent.includes('candidate fields added'),'native field detection');
+    check(pdf.document.querySelectorAll('#formFieldsList fieldset').length>=3,'native form detector finds lines, boxes and character cells');
+    pdf.document.querySelector('#formFieldsDialog form button').click();
+    const nativeText=pdf.document.querySelector('.pdf-form-field[type=text]');nativeText.value='Native form value';nativeText.dispatchEvent(new pdf.Event('change',{bubbles:true}));
+    const nativeCheck=pdf.document.querySelector('.pdf-form-field[type=checkbox]');nativeCheck.checked=true;nativeCheck.dispatchEvent(new pdf.Event('change',{bubbles:true}));
+    select.value='pdf';select.dispatchEvent(new pdf.Event('change',{bubbles:true}));
+    await wait(()=>saved.some(item=>item.name==='native-form-edited.pdf')&&!desktop.busy,'native standard form save');
+    const nativeForm=saved.find(item=>item.name==='native-form-edited.pdf'),formCopy=await pdf.PDFLib.PDFDocument.load(new pdf.Uint8Array(await nativeForm.blob.arrayBuffer()));
+    check(formCopy.getForm().getFields().some(f=>f instanceof pdf.PDFLib.PDFTextField&&f.getText()==='Native form value'),'native export retains standard form text');
+    check(formCopy.getForm().getFields().some(f=>f instanceof pdf.PDFLib.PDFCheckBox&&f.isChecked()),'native export retains standard checkbox state');
+    pdf.document.getElementById('pdfPasswordButton').click();pdf.document.getElementById('pdfOpenPassword').value='native-password-fixture';pdf.document.getElementById('pdfOpenPasswordConfirm').value='native-password-fixture';pdf.document.getElementById('pdfPasswordForm').requestSubmit();
+    await wait(()=>saved.some(item=>item.name==='native-form-protected.pdf')&&!desktop.busy,'native standard PDF password save');
+    const protectedPdf=saved.find(item=>item.name==='native-form-protected.pdf'),protectedBytes=new pdf.Uint8Array(await protectedPdf.blob.arrayBuffer());
+    const locked=pdf.pdfjsLib.getDocument({data:protectedBytes.slice(),password:'wrong'});let refused=false;try{await locked.promise;}catch(error){refused=error.name==='PasswordException';}finally{await locked.destroy();}
+    check(refused,'native standard PDF refuses the wrong password');
+    const unlockedPdf=pdf.pdfjsLib.getDocument({data:protectedBytes.slice(),password:'native-password-fixture'}),plain=await unlockedPdf.promise;
+    check((await(await plain.getPage(1)).getAnnotations()).some(f=>f.fieldValue==='Native form value'),'native standard PDF opens with correct password and form values');await unlockedPdf.destroy();
+    await open(await edited.blob.arrayBuffer(),'desktop-reopened.pdf');
+
     desktop.selectTool('ciphersplat');
     await wait(()=>typeof desktop.frames.get('ciphersplat')?.contentWindow?.runRequested==='function','CipherSplat startup');
     const cipher=desktop.frames.get('ciphersplat').contentWindow;

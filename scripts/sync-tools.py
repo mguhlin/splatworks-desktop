@@ -82,7 +82,7 @@ for name in ['actions', 'tools']:
 for name in ['LICENSE', 'NOTICE.md']:
     copy_file(name)
     shutil.copy2(source / name, ROOT / name)
-for name in ['pdfsplat-save-as.md', 'pdfsplat-ocr.md', 'pdfsplat-odt-toolbar.md']:
+for name in ['pdfsplat-save-as.md', 'pdfsplat-ocr.md', 'pdfsplat-odt-toolbar.md', 'pdfsplat-fillable-forms.md']:
     copy_file('docs/' + name)
 
 pages = [dest / tool['source'] / 'index.html' for tool in registry]
